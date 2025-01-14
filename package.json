@@ -61,7 +61,7 @@
         "@lumino/widgets": "^2.5.0"
     },
     "devDependencies": {
-        "@jupyterlab/builder": "^3.6.8",
+        "@jupyterlab/builder": "^4.3.4",
         "@jupyterlab/testutils": "^4.0.0",
         "@types/jest": "^29.2.0",
         "@types/json-schema": "^7.0.11",

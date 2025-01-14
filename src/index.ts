@@ -100,7 +100,8 @@ class APODWidget extends Widget {
 * Activate the APOD widget extension.
 */
 function activate(app: JupyterFrontEnd, palette: ICommandPalette, restorer: ILayoutRestorer | null) {
-  console.log('JupyterLab extension jupyterlab_apod is activated!');
+  console.log('JupyterLab extension jupyterlab_apod is activated! hello123');
+  console.log('Test222')
 
   // Declare a widget variable
   let widget: MainAreaWidget<APODWidget>;

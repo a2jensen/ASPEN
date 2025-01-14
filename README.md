@@ -4,7 +4,42 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh//main?urlpath=lab)
 
 
-A JupyterLab extension. Test 2 for astronomy.
+JupyterLab Extension aimed at making code reuse easier.
+
+## Developer Setup (written by Angelo)
+These commands were pulled from the Jupyter Lab extension tutorial.
+
+- Run this command to create a named conda environment
+```bash
+conda create -n aspen --override-channels --strict-channel-priority -c conda-forge -c nodefaults jupyterlab=4 nodejs=20 git copier=9 jinja2-time
+```
+
+activate the environment
+```bash
+conda activate aspen
+```
+
+install project dependencies
+```bash
+pip install -ve .
+```
+
+The above command copies the frontend part of the extension into JupyterLab. We can run this pip install command again every time we make a change to copy the change into JupyterLab. Even better, we can use the develop command to create a symbolic link from JupyterLab to our source directory. This means our changes are automatically available in JupyterLab:
+
+```bash
+jupyter labextension develop --overwrite .
+```
+
+After the install completes, open a second terminal. Run these commands to activate the jupyterlab-ext environment and start JupyterLab in your default web browser.
+
+```bash
+conda activate jupyterlab-ext
+jupyter lab
+```
+
+Afterwords, navigate to the dev console and look for a message along the lines of "JupyterLab extension jupyterlab_apod is activated!" You should be setup now.
+
+## EVEYTHING BELOW THIS WAS PRE MADE AND NOT WRITTEN BY ME - Angelo
 
 ## Requirements
 
