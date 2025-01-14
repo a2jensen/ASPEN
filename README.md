@@ -7,7 +7,7 @@
 JupyterLab Extension aimed at making code reuse easier.
 
 ## Developer Setup (written by Angelo)
-These commands were pulled from the Jupyter Lab extension tutorial.
+These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.
 
 - Run this command to create a named conda environment
 ```bash
@@ -78,14 +78,6 @@ The `jlpm` command is JupyterLab's pinned version of
 pip install -e "."
 # Link your development version of the extension with JupyterLab
 jupyter labextension develop . --overwrite
-# Rebuild extension Typescript source after making changes
-jlpm build
-```
-
-SETUP for Angelo:
-```bash
-# Clone the repo to your local environment
-yarn install
 # Rebuild extension Typescript source after making changes
 jlpm build
 ```
