@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.3.7
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: a2jensen@Ucsd.edu
+author_name: AJ
+has_binder: true
+has_settings: false
+kind: frontend
+labextension_name: jupyterlab_apod
+project_short_description: A JupyterLab extension. Test 2 for astronomy.
+python_name: jupyterlab_apod
+repository: ''
+test: true
+
