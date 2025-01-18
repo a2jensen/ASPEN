@@ -1,3 +1,4 @@
+// https://github.com/jupyterlab/jupyterlab/tree/main/galata
 import { expect, test } from '@jupyterlab/galata';
 
 /**

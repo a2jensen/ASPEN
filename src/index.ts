@@ -1,159 +1,144 @@
 /**
- * WORK WITH YARN and not npm install commands
+ * jupyterlab/application
+ * provides core components necessary to build and integrate extensions into jupyter lab. imports from package help manage the application lifecycle, plugins, and layout
+ * 
+ * JupyterFrontEnd : base class for jupyters front end application
+ * provides APIs to interact with core application(adding widgets, commands, menus). you have access to app.shell for managing layout and adding widgets to specific areas(main, left, right). provides commands interface to register + execute commands
+ * 
+ * JupyterFrontEndPlugin: structure used to define a jupyterlab extension. specifies how the extension integrates with jupyterlab(required services, activation logic)
+ * structure : id, autoStart : boolean, requires : specify dependencies needed, activate : main function to initialize plugin
+ * 
  */
 
 import {
-  ILayoutRestorer,
-  JupyterFrontEnd,
-  JupyterFrontEndPlugin
-} from '@jupyterlab/application';
-
-import {
-  ICommandPalette,
-  MainAreaWidget,
-  WidgetTracker
-} from '@jupyterlab/apputils';
-
-import { Widget } from '@lumino/widgets';
-
-interface APODResponse {
-  copyright: string;
-  date: string;
-  explanation: string;
-  media_type: 'video' | 'image';
-  title: string;
-  url: string;
-};
-
-class APODWidget extends Widget {
-  /**
-  * Construct a new APOD widget.
-  */
-  constructor() {
-    super();
-
-    this.addClass('my-apodWidget');
-
-    // Add an image element to the panel
-    this.img = document.createElement('img');
-    this.node.appendChild(this.img);
-
-    // Add a summary element to the panel
-    this.summary = document.createElement('p');
-    this.node.appendChild(this.summary);
-  }
-
-  /**
-  * The image element associated with the widget.
-  */
-  readonly img: HTMLImageElement;
-
-  /**
-  * The summary text element associated with the widget.
-  */
-  readonly summary: HTMLParagraphElement;
-
-  /**
-  * Handle update requests for the widget.
-  */
-  async updateAPODImage(): Promise<void> {
-
-    const response = await fetch(`https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=${this.randomDate()}`);
-
-    if (!response.ok) {
-      const data = await response.json();
-      if (data.error) {
-        this.summary.innerText = data.error.message;
-      } else {
-        this.summary.innerText = response.statusText;
-      }
-      return;
-    }
-
-    const data = await response.json() as APODResponse;
-
-    if (data.media_type === 'image') {
-      // Populate the image
-      this.img.src = data.url;
-      this.img.title = data.title;
-      this.summary.innerText = data.title;
-      if (data.copyright) {
-        this.summary.innerText += ` (Copyright ${data.copyright})`;
-      }
-    } else {
-      this.summary.innerText = 'Random APOD fetched was not an image.';
-    }
-  }
-
-  /**
-  * Get a random date string in YYYY-MM-DD format.
-  */
-  randomDate(): string {
-    const start = new Date(2010, 1, 1);
-    const end = new Date();
-    const randomDate = new Date(start.getTime() + Math.random()*(end.getTime() - start.getTime()));
-    return randomDate.toISOString().slice(0, 10);
-  }
-}
+    ILayoutRestorer, // restore widgets layout and state on refresh
+    JupyterFrontEnd, 
+    JupyterFrontEndPlugin,
+} from '@jupyterlab/application'
 
 /**
-* Activate the APOD widget extension.
+ * This package contains utilities for creating user-friendly and interactive JupyterLab extensions. It simplifies common tasks like creating commands, widgets, and UI elements.
+ * 
+ * ICommandPalette: Represents JupyterLab’s command palette, a searchable  interface for executing commands.
+ * Allows developers to add custom commands to the palette.
+ *Example: You can add an entry to the command palette, such as:
+ palette.addItem({ command: 'example:do-something', category: 'My Extensions' });
+ * MainAreaWidget : a wrapper widget specefially designed for main area
+ of jupyterLab. provides consistent layout/behavior for widgets displayed in the main workspace. automatically manages widget titles, closable states, and restoration.
+ * WidgetTracker : tracks state and existence of widgets created by extension. essential for integrating with ILayoutRestorer and ensuring widgets persist across sessions.
 */
-function activate(app: JupyterFrontEnd, palette: ICommandPalette, restorer: ILayoutRestorer | null) {
-  console.log('JupyterLab extension jupyterlab_apod is activated! hello123');
-  console.log('Test222')
 
-  // Declare a widget variable
-  let widget: MainAreaWidget<APODWidget>;
+// https://jupyterlab.readthedocs.io/en/3.0.x/api/modules/apputils.html
+import {
+    ICommandPalette,
+    WidgetTracker, Dialog,
+    showDialog, showErrorMessage
+} from '@jupyterlab/apputils'
 
-  // Add an application command
-  const command: string = 'apod:open';
-  app.commands.addCommand(command, {
-    label: 'Random Astronomy Picture',
-    execute: () => {
-      if (!widget || widget.isDisposed) {
-        const content = new APODWidget();
-        widget = new MainAreaWidget({content});
-        widget.id = 'apod-jupyterlab';
-        widget.title.label = 'Astronomy Picture';
-        widget.title.closable = true;
-      }
-      if (!tracker.has(widget)) {
-        // Track the state of the widget for later restoration
-        tracker.add(widget);
-      }
-      if (!widget.isAttached) {
-        // Attach the widget to the main work area if it's not there
-        app.shell.add(widget, 'main');
-      }
-      widget.content.updateAPODImage();
+/**Lumino is the underlying framework that powers JupyterLab's layout and widget system. It provides a flexible and responsive API for creating and managing UI components.
+Widget
+The base class for all UI components in Lumino.
+Provides methods and properties for managing DOM elements, layouts, and interactivity.
+Key Features:
+Directly manipulates the DOM (node property).
+Emits signals to handle events.
+Allows nesting widgets to create complex layouts. */
 
-      // Activate the widget
-      app.shell.activateById(widget.id);
+
+// contents manager from jupyterlabs services, allows API writes to JSON file
+// https://jupyterlab.readthedocs.io/en/3.4.x/api/classes/services.contentsmanager-1.html
+import { Contents } from '@jupyterlab/services'
+
+import DialogBodyWidget from "./Dialog";
+import Sidebar from "./Sidebar";
+
+// function called when command button is clicked
+async function openInputDialog(contentsManager: Contents.IManager): Promise<void> {
+    // Create dialog body (form)
+    const DialogWidget = new DialogBodyWidget();
+  
+    // Show dialog
+    const result = await showDialog({
+      title: 'Enter Code',
+      body : DialogWidget,
+      buttons: [
+        Dialog.cancelButton(),
+        Dialog.okButton({ label: 'Save' })
+      ] 
+    });    
+  
+    // Handle dialog submission
+    if (result.button.accept) {
+      const inputValue = DialogWidget.getValue();
+      if (!inputValue) {
+        DialogWidget.showError(); // if input is empty throw error
+        return;
+      }
+
+      const filePath = 'user_snippets/snippets.json';
+      const jsonData = {
+        timestamp : new Date().toISOString(),
+        value : inputValue
+      };
+
+      const fileContent = JSON.stringify(jsonData, null, 2);
+      // add in funcionality of updating json file as well
+      try {
+        await contentsManager.save(filePath, {
+            type: 'file',
+            format : 'text',
+            content : fileContent
+        });
+      } catch ( error : unknown ){
+        console.error("Failed saving data to path")
+        showErrorMessage("Error reached", "Failed to save snippet", [
+          Dialog.cancelButton(),
+          Dialog.okButton({label : 'retry'})
+        ])
+        
+      }
     }
-  });
-
-  // Add the command to the palette.
-  palette.addItem({ command, category: 'Tutorial' });
-
-  // Track and restore the widget state
-  let tracker = new WidgetTracker<MainAreaWidget<APODWidget>>({
-    namespace: 'apod'
-  });
-  if (restorer) {
-    restorer.restore(tracker, {
-      command,
-      name: () => 'apod'
-    });
   }
+
+/** 
+ * Activate ASPEN extension
+ */
+function activate(app : JupyterFrontEnd, palette: ICommandPalette, restorer: ILayoutRestorer | null) {
+    console.log('ASPEN is activated!!!!!!')
+    console.log('activated component')
+
+    const contentsManager = app.serviceManager.contents;
+
+    //let widget : InputWidget; // declare input widget
+
+    // command to open widget, adding command to palette
+    const command = 'input:open';
+    app.commands.addCommand(command, {
+        label : 'Open ASPEN widget',
+        execute: () => openInputDialog(contentsManager)
+    })
+
+    palette.addItem({command, category : 'Tutorial'});
+
+    // track and restore widget state
+    const tracker = new WidgetTracker<DialogBodyWidget> ( {
+        namespace: 'input-widget'
+    });
+    if (restorer) {
+        restorer.restore(tracker, {
+            command,
+            name : () => 'input-widget'
+        });
+    }
+
 }
 
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'jupyterlab_apod',
-  autoStart: true,
-  requires: [ICommandPalette],
-  optional : [ILayoutRestorer],
-  activate: activate
-};
+    id : 'input-widget', // subject to change
+    autoStart: true,
+    requires: [ICommandPalette],
+    optional: [ILayoutRestorer],
+    activate: activate
+}
 
-export default plugin;
+export default [plugin, Sidebar];
