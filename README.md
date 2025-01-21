@@ -4,9 +4,17 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh//main?urlpath=lab)
 
 
-JupyterLab Extension aimed at making code reuse easier.
+JupyterLab Extension aimed at making code reuse easier. Inspiration taken directly from Elyra code snippets.
 
-## Developer Setup (written by Angelo)
+##  File Setup
+
+-Sidebar Component
+-CodeSnippet Component
+-Heatmap Component
+
+
+
+## Developer Setup (written by us)
 These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.
 
 - Run this command to create a named conda environment
@@ -30,6 +38,12 @@ The above command copies the frontend part of the extension into JupyterLab. We 
 jupyter labextension develop --overwrite .
 ```
 
+Install these libraries as well:
+```bash
+jlpm add @lumino/widgets
+jlpm add @jupyterlab/apputils @jupyterlab/application
+```
+
 After the install completes, open a second terminal. Run these commands to activate the jupyterlab-ext environment and start JupyterLab in your default web browser.
 
 ```bash
@@ -39,7 +53,16 @@ jupyter lab
 
 Afterwords, navigate to the dev console and look for a message along the lines of "JupyterLab extension jupyterlab_apod is activated!" You should be setup now.
 
-## EVEYTHING BELOW THIS WAS PRE MADE AND NOT WRITTEN BY ME - Angelo
+## Github Commands
+
+```bash
+git pull origin // pulls latest changes from remote
+git branch -r // lists all branches
+git checkout BRANCH_NAME // switch branches
+git merge origin/BRANCH_NAME // merge specified branch into your own branch
+```
+
+## EVEYTHING BELOW THIS WAS PRE MADE WITH THE REPO SETUP
 
 ## Requirements
 

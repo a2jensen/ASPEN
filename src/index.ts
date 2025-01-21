@@ -1,3 +1,5 @@
+// This file acts as the main entry point, where you import and export all your plugins or extensions.
+
 /**
  * jupyterlab/application
  * provides core components necessary to build and integrate extensions into jupyter lab. imports from package help manage the application lifecycle, plugins, and layout
