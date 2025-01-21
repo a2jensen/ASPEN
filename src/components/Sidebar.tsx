@@ -8,10 +8,10 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Widget } from '@lumino/widgets';
 import { ReactWidget } from '@jupyterlab/ui-components';
-import { GetSnippet } from '../lib/Hooks'
+import { GetSnippet } from '../library/Hooks'
 import Snippet  from "./Snippet";
 import SearchBar from "./Searchbar";
-import { CodeSnippet } from '../lib/types';
+import { CodeSnippet } from '../library/types';
 
 
 
