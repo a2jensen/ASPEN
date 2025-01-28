@@ -1,9 +1,9 @@
 
 import * as React from 'react';
-import { useState, useEffect } from "react";
+import {  useEffect } from "react";
 
 function Searchbar(){
-    const [ search, setSearch ] = useState();
+    //const [ search, setSearch ] = useState();
 
     useEffect(() => {
         try {
