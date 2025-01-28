@@ -1,8 +1,5 @@
-interface CodeSnippet {
-    title : string,
+export type CodeSnippet = {
+    id : string,
+    name: string;
     code : string,
-    language: string,
-    template : Record<string, string>
-} 
-
-export { CodeSnippet };
+};
