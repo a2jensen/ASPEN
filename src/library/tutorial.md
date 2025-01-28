@@ -157,3 +157,62 @@ const plugin: JupyterFrontEndPlugin<void> = {
 };
 
 export default plugin;
+
+
+
+/************ DUMP
+
+import {
+    ICommandPalette,
+    WidgetTracker, Dialog,
+    showDialog, showErrorMessage,
+} from '@jupyterlab/apputils'
+
+import { Contents } from '@jupyterlab/services'
+import { PostSnippet } from './library/Hooks';
+import DialogBodyWidget from "./Dialog";
+
+// function called when command button is clicked
+async function openInputDialog(contentsManager: Contents.IManager): Promise<void> {
+    // Create dialog body (form)
+    const DialogWidget = new DialogBodyWidget();
+  
+    // Show dialog
+    const result = await showDialog({
+      title: 'Enter Code',
+      body : DialogWidget,
+      buttons: [
+        Dialog.cancelButton(),
+        Dialog.okButton({ label: 'Save' })
+      ] 
+    });    
+  
+    // Handle dialog submission
+    if (result.button.accept) {
+      const inputValue = DialogWidget.getValue();
+      if (!inputValue) {
+        DialogWidget.showError(); // if input is empty throw error
+        return;
+      }
+
+      //const fileContent = JSON.stringify(jsonData, null, 2);
+      // add in funcionality of updating json file as well
+      try {
+        await PostSnippet(inputValue, contentsManager);
+        /**
+         * await contentsManager.save(filePath, {
+            type: 'file',
+            format : 'text',
+            content : fileContent
+        });
+         */
+      } catch ( error : unknown ){
+        console.error("Failed saving data to path")
+        showErrorMessage("Error reached", "Failed to save snippet", [
+          Dialog.cancelButton(),
+          Dialog.okButton({label : 'retry'})
+        ])
+        
+      }
+    }
+  }

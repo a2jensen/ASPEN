@@ -9,19 +9,19 @@ import { Widget } from '@lumino/widgets';
 import { ReactWidget } from '@jupyterlab/ui-components';
 
 // this component loads in snippet data for one individual snippet
-function Snippet(SnippetData) {
-    // updating snippet name
+function Template() {
+    // load in instance of class
 
-    // updating snippet extension 
+    // load in 
 
   return  (
     <div>
-        <h3>Code Templates</h3>
-        <p>This is the content inside the sidebar widget.</p>
+        <h3>Template</h3>
+        <p>Content inside the code template</p>
     </div>
   )
 }
 
-const myWidget: Widget = ReactWidget.create(<Snippet />);
+const myWidget: Widget = ReactWidget.create(<Template />);
 Widget.attach(myWidget, document.body);
-export default Snippet;
+export default Template;

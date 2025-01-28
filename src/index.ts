@@ -31,11 +31,7 @@ import {
 */
 
 // https://jupyterlab.readthedocs.io/en/3.0.x/api/modules/apputils.html
-import {
-    ICommandPalette,
-    WidgetTracker, Dialog,
-    showDialog, showErrorMessage
-} from '@jupyterlab/apputils'
+import { Widget } from '@lumino/widgets';
 
 /**Lumino is the underlying framework that powers JupyterLab's layout and widget system. It provides a flexible and responsive API for creating and managing UI components.
 Widget
@@ -49,98 +45,65 @@ Allows nesting widgets to create complex layouts. */
 
 // contents manager from jupyterlabs services, allows API writes to JSON file
 // https://jupyterlab.readthedocs.io/en/3.4.x/api/classes/services.contentsmanager-1.html
-import { Contents } from '@jupyterlab/services'
 
-import DialogBodyWidget from "./Dialog";
-import Sidebar from "./Sidebar";
 
-// function called when command button is clicked
-async function openInputDialog(contentsManager: Contents.IManager): Promise<void> {
-    // Create dialog body (form)
-    const DialogWidget = new DialogBodyWidget();
-  
-    // Show dialog
-    const result = await showDialog({
-      title: 'Enter Code',
-      body : DialogWidget,
-      buttons: [
-        Dialog.cancelButton(),
-        Dialog.okButton({ label: 'Save' })
-      ] 
-    });    
-  
-    // Handle dialog submission
-    if (result.button.accept) {
-      const inputValue = DialogWidget.getValue();
-      if (!inputValue) {
-        DialogWidget.showError(); // if input is empty throw error
-        return;
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
+  console.log("activate2 function started! updated to fileEditor!")
+  const { commands } = app;
+
+  // initialize code snippet in here
+  commands.addCommand('snippets:save', {
+    label: 'Save Code Snippet', // possibly "create template", "save template", "save code snippet to template"?
+    execute: () => {
+      const selectedText = window.getSelection()?.toString() || '';
+      if (selectedText){
+        console.log("success");
       }
+    },
+  }); 
 
-      const filePath = 'user_snippets/snippets.json';
-      const jsonData = {
-        timestamp : new Date().toISOString(),
-        value : inputValue
-      };
+  // adding command to files
+  app.contextMenu.addItem({
+    command: 'snippets:save',
+    selector: '.jp-FileEditor',
+    rank : 1
+  });
 
-      const fileContent = JSON.stringify(jsonData, null, 2);
-      // add in funcionality of updating json file as well
-      try {
-        await contentsManager.save(filePath, {
-            type: 'file',
-            format : 'text',
-            content : fileContent
-        });
-      } catch ( error : unknown ){
-        console.error("Failed saving data to path")
-        showErrorMessage("Error reached", "Failed to save snippet", [
-          Dialog.cancelButton(),
-          Dialog.okButton({label : 'retry'})
-        ])
-        
-      }
-    }
-  }
+  // adding command to notebook
+  app.contextMenu.addItem({
+    command: 'snippets:save',
+    selector: '.jp-Notebook',
+    rank: 1
+  })
 
-/** 
- * Activate ASPEN extension
+   // Create the widget
+   const widget = new Widget();
+   widget.id = 'custom-sidebar-widget';
+   widget.title.iconClass = 'jp-SideBar-tabIcon'; // Add a custom icon here
+   widget.title.caption = 'My Sidebar Widget';
+   widget.node.innerHTML = `
+     <div>
+       <h3>Code Templates</h3>
+       <p>This is the content inside the sidebar widget.</p>
+     </div>
+   `;
+
+   // Add the widget to the left sidebar
+   app.shell.add(widget, 'left', { rank: 500 });
+
+   // Restore state if the application restarts
+   restorer.add(widget, 'custom-sidebar-widget');
+};
+
+/**
+ * Inialize data for the code snippet extension
  */
-function activate(app : JupyterFrontEnd, palette: ICommandPalette, restorer: ILayoutRestorer | null) {
-    console.log('ASPEN is activated!!!!!!')
-    console.log('activated component')
-
-    const contentsManager = app.serviceManager.contents;
-
-    //let widget : InputWidget; // declare input widget
-
-    // command to open widget, adding command to palette
-    const command = 'input:open';
-    app.commands.addCommand(command, {
-        label : 'Open ASPEN widget',
-        execute: () => openInputDialog(contentsManager)
-    })
-
-    palette.addItem({command, category : 'Tutorial'});
-
-    // track and restore widget state
-    const tracker = new WidgetTracker<DialogBodyWidget> ( {
-        namespace: 'input-widget'
-    });
-    if (restorer) {
-        restorer.restore(tracker, {
-            command,
-            name : () => 'input-widget'
-        });
-    }
-
-}
-
 const plugin: JupyterFrontEndPlugin<void> = {
     id : 'input-widget', // subject to change
     autoStart: true,
-    requires: [ICommandPalette],
     optional: [ILayoutRestorer],
     activate: activate
 }
 
-export default [plugin, Sidebar];
+
+export default plugin ;
