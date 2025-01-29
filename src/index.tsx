@@ -45,10 +45,11 @@ Allows nesting widgets to create complex layouts. */
 
 // contents manager from jupyterlabs services, allows API writes to JSON file
 // https://jupyterlab.readthedocs.io/en/3.4.x/api/classes/services.contentsmanager-1.html
-
+//import React from "react";
+//import TemplateClass from "./TemplateClass";
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
-  console.log("activate2 function started! updated to fileEditor!")
+  console.log("activate function started! updated to fileEditor!")
   const { commands } = app;
 
   // initialize code snippet in here

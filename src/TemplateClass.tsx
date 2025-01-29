@@ -1,9 +1,10 @@
 //import { Widget } from "@lumino/widgets";
-//import Connections from "./ConnectionsClass";
+//import Connections from "./ConnectionsClass";//
 //import { TemplateManager } from "./TemplateManagerClass";
 
-/** 
-interface TemplateProps {
+
+ 
+/*interface TemplateProps {
     id : string,
     name: string,
     content: string, // change from content to codeSnippet?
@@ -11,10 +12,10 @@ interface TemplateProps {
     dateUpdated: Date,
     tags: string[],
     color : string,
-    connections : Connections[] // array of all the connected snippets
-}
+    //connections : Connections[] // array of all the connected snippets
+}*/
 
-export default class Template extends Widget {
+/*export default class Template extends Widget {
     // construct a
 
     // adding Template
@@ -24,5 +25,17 @@ export default class Template extends Widget {
     // updating Template
 
     // drag template
-}
-*/
+}*/
+
+import React from "react";
+import Annoyance from "./Annoyance";
+
+const TemplateClass = () => {
+    return (
+        <div>
+          <Annoyance /> { }
+        </div>
+      );
+};
+
+export default TemplateClass;

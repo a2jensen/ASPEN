@@ -40,24 +40,24 @@ export async function PostSnippet( snippet : string , contentsManager : Contents
 
 //}
 
-const snippetLibrary: CodeSnippet[] = [];
+//const snippetLibrary: CodeSnippet[] = [];
 
-export function addSnippet(name: string, code: string): void{
+/*export function addSnippet(name: string, code: string): void{
     const newSnippet: CodeSnippet = {
         id: new Date().getTime().toString(),
         name,
         code,
     };
     snippetLibrary.push(newSnippet);
-}
+}*/
 
-export function getSnippets(): CodeSnippet[]{
+/*export function getSnippets(): CodeSnippet[]{
     return snippetLibrary;
-}
+}*/
 
-export function removeSnippet(id: string): void{
+/*export function removeSnippet(id: string): void{
     const index = snippetLibrary.findIndex((snippet) => snippet.id === id );
     if (index !== -1){
         snippetLibrary.splice(index, 1);
     }
-}
+}*/
