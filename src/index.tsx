@@ -1,110 +1,81 @@
-// This file acts as the main entry point, where you import and export all your plugins or extensions.
-
 /**
- * jupyterlab/application
- * provides core components necessary to build and integrate extensions into jupyter lab. imports from package help manage the application lifecycle, plugins, and layout
- * 
- * JupyterFrontEnd : base class for jupyters front end application
- * provides APIs to interact with core application(adding widgets, commands, menus). you have access to app.shell for managing layout and adding widgets to specific areas(main, left, right). provides commands interface to register + execute commands
- * 
- * JupyterFrontEndPlugin: structure used to define a jupyterlab extension. specifies how the extension integrates with jupyterlab(required services, activation logic)
- * structure : id, autoStart : boolean, requires : specify dependencies needed, activate : main function to initialize plugin
- * 
+ * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
 
 import {
-    ILayoutRestorer, // restore widgets layout and state on refresh
-    JupyterFrontEnd, 
-    JupyterFrontEndPlugin,
+  ILayoutRestorer, // restore widgets layout and state on refresh
+  JupyterFrontEnd, 
+  JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
 
-/**
- * This package contains utilities for creating user-friendly and interactive JupyterLab extensions. It simplifies common tasks like creating commands, widgets, and UI elements.
- * 
- * ICommandPalette: Represents JupyterLab’s command palette, a searchable  interface for executing commands.
- * Allows developers to add custom commands to the palette.
- *Example: You can add an entry to the command palette, such as:
- palette.addItem({ command: 'example:do-something', category: 'My Extensions' });
- * MainAreaWidget : a wrapper widget specefially designed for main area
- of jupyterLab. provides consistent layout/behavior for widgets displayed in the main workspace. automatically manages widget titles, closable states, and restoration.
- * WidgetTracker : tracks state and existence of widgets created by extension. essential for integrating with ILayoutRestorer and ensuring widgets persist across sessions.
-*/
+import { INotebookTracker } from "@jupyterlab/notebook";
 
-// https://jupyterlab.readthedocs.io/en/3.0.x/api/modules/apputils.html
-import { Widget } from '@lumino/widgets';
-
-/**Lumino is the underlying framework that powers JupyterLab's layout and widget system. It provides a flexible and responsive API for creating and managing UI components.
-Widget
-The base class for all UI components in Lumino.
-Provides methods and properties for managing DOM elements, layouts, and interactivity.
-Key Features:
-Directly manipulates the DOM (node property).
-Emits signals to handle events.
-Allows nesting widgets to create complex layouts. */
-
-
-// contents manager from jupyterlabs services, allows API writes to JSON file
-// https://jupyterlab.readthedocs.io/en/3.4.x/api/classes/services.contentsmanager-1.html
-//import React from "react";
-//import TemplateClass from "./TemplateClass";
+import {LibraryWidget} from './LibraryWidget';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
-  console.log("activate function started! updated to fileEditor!")
+  console.log("ASPEN is activated :D ! Check123");
   const { commands } = app;
 
-  // initialize code snippet in here
-  commands.addCommand('snippets:save', {
-    label: 'Save Code Snippet', // possibly "create template", "save template", "save code snippet to template"?
+  // adding library Widget to the left side sidebar
+  const libraryWidgetLeft = new LibraryWidget();
+  libraryWidgetLeft.id = "jupyterlab-librarywidget-sidebarleft";
+  libraryWidgetLeft.title.iconClass = 'jp-SideBar-tabIcon'; 
+  libraryWidgetLeft.title.caption = "Library display of templates";
+
+  const libraryWidgetRight = new LibraryWidget();
+  libraryWidgetRight.id = "jupyterlab-librarywidget-sidebarleft";
+  libraryWidgetRight.title.iconClass = 'jp-SideBar-tabIcon'; 
+  libraryWidgetRight.title.caption = "Library display of templates";
+
+
+  // creating command for creating snippet/template
+  commands.addCommand('templates:create', {
+    label: 'Create Template / Save Code Snippet?',
     execute: () => {
-      const selectedText = window.getSelection()?.toString() || '';
-      if (selectedText){
-        console.log("success");
+      // case 1: editor is not a notebook
+      const snippet : string = window.getSelection()?.toString() || '';
+      if (snippet){
+        console.log("Snippet being saved : ", snippet);
+        libraryWidgetLeft.createTemplate(snippet);
+        libraryWidgetRight.createTemplate(snippet);
       }
+
+      // case 2: editor is a notebook
+
     },
   }); 
 
-  // adding command to files
+  // adding "create template/save snippet" commands to their respective context menus
   app.contextMenu.addItem({
-    command: 'snippets:save',
+    command: 'templates:create',
     selector: '.jp-FileEditor',
     rank : 1
   });
-
-  // adding command to notebook
   app.contextMenu.addItem({
-    command: 'snippets:save',
+    command: 'templates:create',
     selector: '.jp-Notebook',
     rank: 1
-  })
+  });
 
-   // Create the widget
-   const widget = new Widget();
-   widget.id = 'custom-sidebar-widget';
-   widget.title.iconClass = 'jp-SideBar-tabIcon'; // Add a custom icon here
-   widget.title.caption = 'My Sidebar Widget';
-   widget.node.innerHTML = `
-     <div>
-       <h3>Code Templates</h3>
-       <p>This is the content inside the sidebar widget.</p>
-     </div>
-   `;
+  // Adding the library widget to both left and right sidebars
+  app.shell.add(libraryWidgetLeft, 'left',{ rank: 600} );
+  app.shell.add(libraryWidgetRight, 'right', { rank : 300});
 
-   // Add the widget to the left sidebar
-   app.shell.add(widget, 'left', { rank: 500 });
+  // note: in order to add sidebar widget to right sidebar, we have to create another instance of it.
+  //app.shell.add(SidebarWidget, 'right', { rank: 300});
 
-   // Restore state if the application restarts
-   restorer.add(widget, 'custom-sidebar-widget');
+  // Restore state if the application restarts
+  restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
 };
 
 /**
- * Inialize data for the code snippet extension
- */
-const plugin: JupyterFrontEndPlugin<void> = {
-    id : 'input-widget', // subject to change
-    autoStart: true,
-    optional: [ILayoutRestorer],
-    activate: activate
+* Inialize code snippet extension
+*/
+const aspen: JupyterFrontEndPlugin<void> = {
+  id : 'input-widget', // subject to change
+  autoStart: true,
+  optional: [ILayoutRestorer],
+  activate: activate
 }
 
-
-export default plugin ;
+export default aspen;
