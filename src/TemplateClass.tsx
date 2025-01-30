@@ -1,10 +1,12 @@
-//import { Widget } from "@lumino/widgets";
-//import Connections from "./ConnectionsClass";//
+
+//import Connections from "./ConnectionsClass";
 //import { TemplateManager } from "./TemplateManagerClass";
+import * as React from 'react';
+import { Widget } from "@lumino/widgets";
+import { ReactWidget } from '@jupyterlab/ui-components';
 
-
- 
-/*interface TemplateProps {
+/**
+interface TemplateProps {
     id : string,
     name: string,
     content: string, // change from content to codeSnippet?
@@ -12,10 +14,20 @@
     dateUpdated: Date,
     tags: string[],
     color : string,
-    //connections : Connections[] // array of all the connected snippets
-}*/
+    //connections : Connections[] // array of all the connected snippet
+}
+ */
 
-/*export default class Template extends Widget {
+function TemplateComponent () {
+    return (
+       <div className=''>
+            <h3>Title</h3>
+            <div>Code Snippet</div>
+       </div>
+    )
+};
+
+class Template extends ReactWidget {
     // construct a
 
     // adding Template
@@ -25,17 +37,12 @@
     // updating Template
 
     // drag template
-}*/
+    render () {
+        return <TemplateComponent />;
+    }
+}
 
-import React from "react";
-import Annoyance from "./Annoyance";
+const TemplateClass : Widget = new Template();
+Widget.attach(TemplateClass, document.body);
 
-const TemplateClass = () => {
-    return (
-        <div>
-          <Annoyance /> { }
-        </div>
-      );
-};
-
-export default TemplateClass;
+export default Template;
