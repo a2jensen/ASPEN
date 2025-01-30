@@ -8,7 +8,7 @@ import {
   JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
 
-import { INotebookTracker } from "@jupyterlab/notebook";
+//import { INotebookTracker } from "@jupyterlab/notebook";
 
 import {LibraryWidget} from './LibraryWidget';
 
@@ -51,6 +51,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
     selector: '.jp-FileEditor',
     rank : 1
   });
+
   app.contextMenu.addItem({
     command: 'templates:create',
     selector: '.jp-Notebook',
@@ -66,6 +67,11 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
 
   // Restore state if the application restarts
   restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
+
+  // Continuously logs in the console characters user presses
+  document.addEventListener('keydown', (event) => {
+    console.log(`You pressed: ${event.key}`);
+  });
 };
 
 /**

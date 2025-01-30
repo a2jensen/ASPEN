@@ -58,7 +58,7 @@ Afterwords, navigate to the dev console and look for a message along the lines o
 ```bash
 git pull origin // pulls latest changes from remote
 git branch -r // lists all branches
-git checkout BRANCH_NAME // switch branches
+git switch BRANCH_NAME // switch branches
 git merge origin/BRANCH_NAME // merge specified branch into your own branch
 ```
 
