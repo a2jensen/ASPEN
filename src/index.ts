@@ -31,7 +31,8 @@ import {
 */
 
 // https://jupyterlab.readthedocs.io/en/3.0.x/api/modules/apputils.html
-import { Widget } from '@lumino/widgets';
+//import { Widget } from '@lumino/widgets';
+import TemplatesManager from './TemplateManagerClass';
 
 /**Lumino is the underlying framework that powers JupyterLab's layout and widget system. It provides a flexible and responsive API for creating and managing UI components.
 Widget
@@ -49,6 +50,7 @@ Allows nesting widgets to create complex layouts. */
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   console.log("activate2 function started! updated to fileEditor!")
+  console.log("templatesManager class added here")
   const { commands } = app;
 
   // initialize code snippet in here
@@ -76,20 +78,15 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
     rank: 1
   })
 
-   // Create the widget
-   const widget = new Widget();
-   widget.id = 'custom-sidebar-widget';
-   widget.title.iconClass = 'jp-SideBar-tabIcon'; // Add a custom icon here
-   widget.title.caption = 'My Sidebar Widget';
-   widget.node.innerHTML = `
-     <div>
-       <h3>Code Templates</h3>
-       <p>This is the content inside the sidebar widget.</p>
-     </div>
-   `;
+  const widget = new TemplatesManager();
+  widget.id = 'custom-sidebar-widget';
+  widget.title.iconClass = 'jp-SideBar-tabIcon'; // Add a custom icon here
+  widget.title.caption = 'My Sidebar Widget';
+
 
    // Add the widget to the left sidebar
-   app.shell.add(widget, 'left', { rank: 500 });
+   //app.shell.add(widget, 'left', { rank: 500 });
+   app.shell.add(widget, 'left',{ rank: 600} );
 
    // Restore state if the application restarts
    restorer.add(widget, 'custom-sidebar-widget');
