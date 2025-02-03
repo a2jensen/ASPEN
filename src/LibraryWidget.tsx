@@ -1,3 +1,5 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/naming-convention */
 //import { Widget } from '@lumino/widgets';
 
 // Importing class that allows us to integrate React Components into jupyterlabs UI framework

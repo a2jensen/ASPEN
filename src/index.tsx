@@ -1,19 +1,26 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 /**
  * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
-
+//new 
 import {
   ILayoutRestorer, // restore widgets layout and state on refresh
   JupyterFrontEnd, 
   JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
-
-//import { INotebookTracker } from "@jupyterlab/notebook";
-
+ 
+//importing the cell color changer
+import cellBackground from './cellBackground';
 import {LibraryWidget} from './LibraryWidget';
 
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
-  console.log("ASPEN is activated :D ! Check123");
+
+
+
+
+
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer) {
+  console.log("ASPEN is activated :D ! ");
   const { commands } = app;
 
   // adding library Widget to the left side sidebar
@@ -27,23 +34,23 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   libraryWidgetRight.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidgetRight.title.caption = "Library display of templates";
 
-
+  
   // creating command for creating snippet/template
   commands.addCommand('templates:create', {
     label: 'Create Template / Save Code Snippet?',
     execute: () => {
-      // case 1: editor is not a notebook
-      const snippet : string = window.getSelection()?.toString() || '';
-      if (snippet){
-        console.log("Snippet being saved : ", snippet);
+      const snippet: string = window.getSelection()?.toString() || '';
+      if (snippet) {
+        console.log("Snippet being saved:", snippet);
         libraryWidgetLeft.createTemplate(snippet);
         libraryWidgetRight.createTemplate(snippet);
       }
-
-      // case 2: editor is a notebook
-
-    },
-  }); 
+  
+      // Get the currently active widget
+      
+    }
+  });
+  
 
   // adding "create template/save snippet" commands to their respective context menus
   app.contextMenu.addItem({
@@ -66,22 +73,24 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   //app.shell.add(SidebarWidget, 'right', { rank: 300});
 
   // Restore state if the application restarts
-  restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
+
 
   // Continuously logs in the console characters user presses
   document.addEventListener('keydown', (event) => {
     console.log(`You pressed: ${event.key}`);
   });
+
+
 };
 
 /**
 * Inialize code snippet extension
 */
 const aspen: JupyterFrontEndPlugin<void> = {
-  id : 'input-widget', // subject to change
+  id : 'aspen-code-mirror-extension', // subject to change
   autoStart: true,
   optional: [ILayoutRestorer],
   activate: activate
 }
 
-export default aspen;
+export default [aspen, cellBackground];
