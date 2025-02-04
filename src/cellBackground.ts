@@ -2,54 +2,79 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 
+/**Notes- localStorage: Allows me to store key-value pairs, is it like an array ? i can store in memory
+ * How can I delete stuff from local storage and what is the diff from array and that what if i store in json file
+ * Its a built in browser feature?
+ * 
+ * 
+ */
+
+
+/**Text Boxes- In order to see the different options that can be added to code based off of diff instances
+ * - Be able to have a text box :D
+ * - Maybe try and do the hover thing a dialog appears perchance try out tut on code mirror
+ * - How would we connect that to templates?
+ */
+
+/** Issue- When reload  it changes the color :( :D FIXED
+ * 
+ */
+
 // Imports
 import { Extension, RangeSetBuilder } from '@codemirror/state'; 
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application';
 import { EditorExtensionRegistry, IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
-//When u print something it will give color
-// Issues: when reload it changes the color
-//fix the cellId
-//Next work on text box thing
+
+// Generates the id from data-cell-id
+function getCellId(view: EditorView): string {
+    const storedId = view.dom.getAttribute('data-cell-id');
+    if (storedId) {
+        return storedId;
+    }
+    //.cm-editor finds the code cells and gets the length of code cells so basically just going up 1
+    const newId = `cell-${document.querySelectorAll('.cm-editor').length}`;
+    view.dom.setAttribute('data-cell-id', newId); 
+
+    return newId; 
+}
+
+//using localstorage because it wont cause issue when reload, cant use array because when reload no work
+//makes sure that the color that is connected to the id is stored in order for when reload it appears
+//saw the cons not good if a lot of cells :o idk if better way to store it,
+function storeColor(cellId: string, color: string): void {
+    localStorage.setItem(cellId, color); }
 
 function getStoredColor(cellId: string): string | null {
     return localStorage.getItem(cellId); 
 }
 
-function storeColor(cellId: string, color: string): void {
-    localStorage.setItem(cellId, color); }
 
-// Generate unique identifier for code cells
-function getCellId(view: EditorView): string {
-    return `cell-${Math.random().toString(36).substr(2, 9)}`; // Random unique ID for each cell
-}
-//fix this ^^
 
+//colors for cell, can be changed later :O, make random colors idk how
 const colors = ['#d9d2e9', '#E5FFE5', '#ead1dc', '#FFF5E5', '#E5FFF5'];
 
 // Assign background color to code cell lines
 function getOrAssignColor(view: EditorView): DecorationSet {
+    //DecorationSet
     const builder = new RangeSetBuilder<Decoration>();
-    const cellId = getCellId(view); // Unique ID for the cell
-    let color = getStoredColor(cellId); // Retrieve stored color for the cell
+    const cellId = getCellId(view); //an idea for the new cell
+    const color = getStoredColor(cellId); // get the color that is connected to the id
 
-    
-    if (!color) {
-        color = colors[Math.floor(Math.random() * colors.length)]; 
-        storeColor(cellId, color); // Store the new color
-    }
-
+    if(color) {
+    //assigns the decoration/ color
     const background = Decoration.line({
         attributes: { class: 'cm-Back', style: `background-color: ${color};` }
     });
-
+    //adds the line to next spot
     for (const { from, to } of view.visibleRanges) {
         for (let pos = from; pos <= to; ) {
             const line = view.state.doc.lineAt(pos);
             builder.add(line.from, line.from, background);
             pos = line.to + 1;
         }
+     }
     }
 
     return builder.finish();
@@ -70,20 +95,28 @@ const updateCellBackground = ViewPlugin.fromClass(
             view.dom.addEventListener('keydown', (event) => {
                 if (event.ctrlKey && event.key === 'v') {
                     this.pasteFlag = true;
-                 // Update color on paste
                     console.log("Ctrl V pressed");
                 }
             });
 
             
         }
-        //makes it so only the pasted content is highlighted
+        //updates if paste is chosen, other options as well, like docChange(this allows highlight when I type)
         update(update: ViewUpdate) {
-            if (this.pasteFlag && update.docChanged) {
+            if (this.pasteFlag) {
+
+                const cellId = getCellId(update.view);
+                let color = getStoredColor(cellId);
+
+                //random color from the color list
+                if (!color) {
+                    color = colors[Math.floor(Math.random() * colors.length)];
+                    storeColor(cellId, color);
+                }
+
                 this.decorations = getOrAssignColor(update.view);
                 this.pasteFlag = false;
             }
-
         }
     },
     {
@@ -92,9 +125,7 @@ const updateCellBackground = ViewPlugin.fromClass(
 );
 
 export function applyBackgroundToActiveCell(view: EditorView): Extension {
-    return [
-        updateCellBackground
-    ];
+    return [updateCellBackground];
 }
 
 export function cellBackgroundExtension(): Extension {
@@ -115,11 +146,6 @@ const cellBackground: JupyterFrontEndPlugin<void> = {
                     EditorExtensionRegistry.createConfigurableExtension(() =>
                         cellBackgroundExtension()
                     ),
-                schema: {
-                    type: 'boolean',
-                    title: 'Enable cell backgrounds',
-                    description: 'Apply a background color to each code cell.'
-                }
             })
         );
     }
