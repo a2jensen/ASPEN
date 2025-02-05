@@ -69,8 +69,66 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
 
   // Continuously logs in the console characters user presses
-  document.addEventListener('keydown', (event) => {
+  document.addEventListener("keydown", (event) => {
     console.log(`You pressed: ${event.key}`);
+  });
+
+  // Interfere with copy
+  /*document.addEventListener("copy", (event: ClipboardEvent) => {
+    const selectedText = window.getSelection()?.toString();
+    if (!selectedText) return;
+
+    let copiedText = "hello " + selectedText;
+    event.clipboardData?.setData("text/plain", copiedText);
+    event.preventDefault();
+  });*/
+
+  // Interfere with paste
+  document.addEventListener("paste", (event: ClipboardEvent) => {
+    const clipboardData = event.clipboardData;
+    if (!clipboardData) return;
+
+    const clipboardText = clipboardData.getData("text/plain");
+    if (!clipboardText) return;
+    
+    let pastingText = "goodbye " + clipboardText;
+    clipboardData?.setData("text/plain", pastingText);
+    event.preventDefault();
+    alert("Paste");
+  });
+
+  // Listen for template copy (ctrl (or command) + shift + ???))
+  let isTemplateCopy = true; // currently there is no keyboard shortcut, copy is always overwritten
+
+  /*document.addEventListener("keydown", (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === ???) {
+        isCtrlShiftUPressed = true;
+      }
+  });
+  
+  document.addEventListener("keyup", (event: KeyboardEvent) => {
+      if (event.key === "Control" || event.key === "Shift" || event.key === "Meta" || event.key === ???) {
+        isCtrlShiftUPressed = false;
+      }
+  });*/
+
+  document.addEventListener("copy", (event: ClipboardEvent) => {
+    const selectedText = window.getSelection()?.toString();
+    if (!selectedText) return;
+
+    let copiedText: string;
+
+    if (isTemplateCopy) {
+      copiedText = "bonjour" + selectedText;
+      alert("Copied as a template");
+    }
+    else { // regular copy
+      copiedText = selectedText;
+      alert("Copied normally");
+    }
+
+    event.clipboardData?.setData("text/plain", copiedText);
+    event.preventDefault();
   });
 };
 
