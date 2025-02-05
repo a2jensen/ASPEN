@@ -12,6 +12,7 @@ import {
  
 //importing the cell color changer
 import cellBackground from './cellBackground';
+import textBox from './boxText';
 import {LibraryWidget} from './LibraryWidget';
 
 
@@ -93,4 +94,4 @@ const aspen: JupyterFrontEndPlugin<void> = {
   activate: activate
 }
 
-export default [aspen, cellBackground];
+export default [aspen, cellBackground, textBox];
