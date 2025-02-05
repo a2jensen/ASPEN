@@ -12,8 +12,6 @@ JupyterLab Extension aimed at making code reuse easier. Inspiration taken direct
 -CodeSnippet Component
 -Heatmap Component
 
-
-
 ## Developer Setup (written by us)
 These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.
 

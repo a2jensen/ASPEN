@@ -5,8 +5,10 @@
 import { ReactWidget } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 import * as React from 'react';
+import "../style/index.css";
+import "../style/base.css";
 
-interface TemplateProps {
+interface Template {
   id: string;
   name: string;
   content: string; // or code snippet?
@@ -17,16 +19,19 @@ interface TemplateProps {
   // connections : ???
 }
 
-
-function Library({ templates, deleteTemplate }: { templates: TemplateProps[], deleteTemplate : (id : string) => void }) {
+/**
+ * 
+ * React Library Component.
+ */
+function Library({ templates, deleteTemplate }: { templates: Template[], deleteTemplate : (id : string) => void }) {
   return (
-    <div className="library-Container">
-      <h3>Your Templates</h3>
-      <div>Sort Button </div>
+    <div className="library-container">
+      <h3 className="library-title">Your Templates</h3>
+      <div className="library-sort">Sort Button </div>
       {templates.length > 0 ? (
         /** Individual template */
         templates.map((template, index) => (
-          <div key={index} className="template-Container">
+          <div key={index} className="template-container">
             <h4 className="template-name">{template.name}</h4>
             <p className="template-snippet">{template.content}</p>
             <p className="template-date">date here</p>
@@ -43,7 +48,8 @@ function Library({ templates, deleteTemplate }: { templates: TemplateProps[], de
 // Wrapping library component and making it a widget
 // https://jupyterlab.readthedocs.io/en/latest/extension/virtualdom.html
 export class LibraryWidget extends ReactWidget {
-  private templates: TemplateProps[];
+  // array to store templates
+  private templates: Template[];
 
   constructor() {
     super();
@@ -52,7 +58,7 @@ export class LibraryWidget extends ReactWidget {
   }
 
   createTemplate(codeSnippet: string) {
-    const template: TemplateProps = {
+    const template: Template = {
       id: `${Date.now()}`,
       name: `Snippet ${this.templates.length + 1}`,
       content: codeSnippet,
