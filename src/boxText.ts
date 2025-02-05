@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 
+
 import { Extension } from '@codemirror/state'; 
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application';
-import { EditorExtensionRegistry, IEditorExtensionRegistry } from '@jupyterlab/codemirror';
+
 import {MatchDecorator} from "@codemirror/view"
 
 class PlaceholderWidget extends WidgetType{
@@ -34,7 +34,7 @@ class PlaceholderWidget extends WidgetType{
 
 
 const placeholderMatcher = new MatchDecorator({
-    regexp: /\b(\w+)\b/g, //every word I type is turned into textbox 
+    regexp: /\[\[(\w+)\]\]/g, //every word I type is turned into textbox// I think it is causing jupyter to crash? 
     decoration: match => Decoration.replace({
       widget: new PlaceholderWidget(match[1]),
     })
@@ -61,23 +61,4 @@ export function textBoxExtension(): Extension {
     return [placeholders]
 }
 
-//will be moved 
-const textBox: JupyterFrontEndPlugin<void> = {
-    id:'@aspen/code-mirror:textBox',
-    autoStart: true,
-    requires:[IEditorExtensionRegistry],
-    activate: (app: JupyterFrontEnd, extensions: IEditorExtensionRegistry) => {
-        extensions.addExtension(
-            Object.freeze({
-                name:'@aspen/codemirror:textBox',
-                default: 1,
-                factory: () =>
-                    EditorExtensionRegistry.createConfigurableExtension(() =>
-                        textBoxExtension()
-                    ),
-            })
-        );
-    }
-};
 
-export default textBox;

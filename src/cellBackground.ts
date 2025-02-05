@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
+
+/**TO FIX
+ * Entry Point move it to index
+ * Storage make it so its not in local storage but in JSON File, check Elyra and how they store things
+ * Also the ability for the colored background to move when I add more text (should be quuick fix perchance)
+ */
+
 // Imports
 import { Extension, RangeSetBuilder } from '@codemirror/state'; 
 
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
-
-import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application';
-
+import {JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application'
+import { textBoxExtension } from './boxText';
 import { EditorExtensionRegistry, IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 //when cells move it gets rid of color :o
@@ -16,6 +22,8 @@ import { EditorExtensionRegistry, IEditorExtensionRegistry } from '@jupyterlab/c
 // Generates the id from data-cell-id
 //storinng t, changing it,
 //id and color cant be connected idk?
+//differet way to store it dont make it rely on the data-cell-id because if changed/ swapped it wont work
+//just make it generate randomw id
 function getCellId(view: EditorView): string {
     const storedId = view.dom.getAttribute('data-cell-id');
     if (storedId) {
@@ -52,8 +60,8 @@ function getOrAssignColor(view: EditorView): DecorationSet {
     if(color) {
     //assigns the decoration/ color
     const background = Decoration.line({
-        //do i need cm-Back
-        attributes: { class: 'cm-Back', style: `background-color: ${color};` }
+       
+        attributes: { style: `background-color: ${color};` }
     });
     //adds the line to next spot
     for (const { from, to } of view.visibleRanges) {
@@ -78,7 +86,7 @@ const updateCellBackground = ViewPlugin.fromClass(
             this.decorations = getOrAssignColor(view);
             this.pasteFlag = false;
 
-            //its a bit weird the copy for color thing
+            //Weird: the highlight thing for copy b/c of background color you cant see it
             //maybe this can be changed when I select it and click on command and then it will turn into color
             view.dom.addEventListener('keydown', (event) => {
                 if (event.ctrlKey && event.key === 'v') {
@@ -91,8 +99,8 @@ const updateCellBackground = ViewPlugin.fromClass(
         }
         //updates if paste is chosen, other options as well, like docChange(this allows highlight when I type)
         update(update: ViewUpdate) {
-            if (this.pasteFlag) {
-                //what here
+            if (this.pasteFlag && update.docChanged) {
+                
                 const cellId = getCellId(update.view);
                 let color = getStoredColor(cellId);
 
@@ -120,7 +128,12 @@ export function cellBackgroundExtension(): Extension {
     return [updateCellBackground];
 }
 
+export function combinedExtension(): Extension {
+    return [updateCellBackground, textBoxExtension()];
+}
+
 // Will  be fizex/changed later :O and added to index
+///change the wayi create this extension maybe that is the issue?
 const cellBackground: JupyterFrontEndPlugin<void> = {
     id: '@aspen/codemirror:background',
     autoStart: true,
@@ -129,10 +142,9 @@ const cellBackground: JupyterFrontEndPlugin<void> = {
         extensions.addExtension(
             Object.freeze({
                 name: '@aspen/codemirror:cell-background',
-                default: 1,
                 factory: () =>
                     EditorExtensionRegistry.createConfigurableExtension(() =>
-                        cellBackgroundExtension()
+                        combinedExtension()
                     ),
             })
         );

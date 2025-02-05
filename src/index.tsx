@@ -9,20 +9,20 @@ import {
   JupyterFrontEnd, 
   JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
- 
+
 //importing the cell color changer
 import cellBackground from './cellBackground';
-import textBox from './boxText';
 import {LibraryWidget} from './LibraryWidget';
 
 
 
-
-
-
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer) {
+  
+  
   console.log("ASPEN is activated :D ! ");
   const { commands } = app;
+
+
 
   // adding library Widget to the left side sidebar
   const libraryWidgetLeft = new LibraryWidget();
@@ -94,4 +94,4 @@ const aspen: JupyterFrontEndPlugin<void> = {
   activate: activate
 }
 
-export default [aspen, cellBackground, textBox];
+export default [aspen, cellBackground];
