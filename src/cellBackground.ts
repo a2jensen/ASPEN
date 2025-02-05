@@ -89,7 +89,7 @@ const updateCellBackground = ViewPlugin.fromClass(
             //Weird: the highlight thing for copy b/c of background color you cant see it
             //maybe this can be changed when I select it and click on command and then it will turn into color
             view.dom.addEventListener('keydown', (event) => {
-                if (event.ctrlKey && event.key === 'v') {
+                if ((event.ctrlKey && event.key === 'v') ||( event.metaKey && event.key === 'v')) {
                     this.pasteFlag = true;
                     console.log("Ctrl V pressed");
                 }
