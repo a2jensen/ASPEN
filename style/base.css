@@ -9,3 +9,39 @@
     align-items: center;
     overflow: auto;
   }
+
+
+.library-container{
+    padding: 10px;
+}
+
+.library-title{
+}
+
+.library-sort{
+    
+}
+
+.template-container{
+    padding: 5px;
+    background-color: antiquewhite;
+}
+
+.template-name {
+
+}
+
+.template-snippet {
+
+}
+
+.template-date {
+
+}
+
+
+
+
+
+
+
