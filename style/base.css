@@ -16,7 +16,6 @@
 }
 
 .library-title{
-
 }
 
 .library-sort{
@@ -24,7 +23,8 @@
 }
 
 .template-container{
-
+    padding: 5px;
+    background-color: antiquewhite;
 }
 
 .template-name {
@@ -36,7 +36,7 @@
 }
 
 .template-date {
-    
+
 }
 
 

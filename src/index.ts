@@ -12,7 +12,7 @@ import {
 import { LibraryWidget } from './LibraryWidget';
 import { INotebookTracker } from "@jupyterlab/notebook";
 
-/** 
+
 function getSelectedText()  {
   console.log("Within the selected text function");
   let selectedText;
@@ -26,7 +26,7 @@ function getSelectedText()  {
     selectedText = document.getSelection();
   }
   return selectedText?.toString()
-}*/
+}
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTracker : INotebookTracker ) {
   console.log("ASPEN is activated with styling edits");
@@ -42,10 +42,38 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTra
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
+      //** ORIGINAL IMPLEMENTATION */
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
-        console.log("Snippet being saved : ", snippet);
+        //console.log("Snippet being saved : ", snippet);
         libraryWidget.createTemplate(snippet);
+      }
+      // EDITED IMPLEMENTATION
+      const highlightedCode = getSelectedText();
+      if ( highlightedCode === "" ){
+        // case where user right clicks the cell to save
+        const curr = document.getElementsByClassName('jp-Cell jp-mod-selected');
+        let code = '';
+        for (let i = 0; i < curr.length; i++){
+          // loop through each cell
+          const text =  curr[i] as HTMLElement;
+          const cellInputWrappers = text.getElementsByClassName(
+            'jp-Cell-inputWrapper'
+          )
+
+          for (const cellInputWrapper of cellInputWrappers){
+            const codeLines = cellInputWrapper.querySelectorAll('.CodeMirror-line');
+            for (const codeLine of codeLines ){
+              let codeLineText = codeLine.textContent;
+              if (codeLineText?.charCodeAt(0) === 8203){
+                // checks if first char in line is invalid
+                codeLineText = ''; // replace invalid line with empty string
+              }
+              code += codeLineText + `\n`;
+            }
+          }
+          console.log("Code", code);
+        }
       }
     },
   }); 
