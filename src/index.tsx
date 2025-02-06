@@ -68,12 +68,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   // Restore state if the application restarts
   restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
 
-  /* preliminary feature
-  // Continuously logs in the console characters user presses
-  document.addEventListener("keydown", (event) => {
-    console.log(`You pressed: ${event.key}`);
-  }); */
-
   // Interfere with copy every time
   document.addEventListener("copy", (event: ClipboardEvent) => {
     const selectedText = window.getSelection()?.toString();
