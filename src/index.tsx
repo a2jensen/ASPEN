@@ -78,21 +78,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
     event.preventDefault();
   });
 
-  /* unable to change data on clipboard when pasting
-  // Interfere with paste
-  document.addEventListener("paste", (event: ClipboardEvent) => {
-    const clipboardData = event.clipboardData;
-    if (!clipboardData) return;
-
-    const clipboardText = clipboardData.getData("text/plain");
-    if (!clipboardText) return;
-    
-    let pastingText = "goodbye " + clipboardText;
-    clipboardData?.setData("text/plain", pastingText);
-    event.preventDefault();
-    alert("Paste");
-  }); */
-
   /* inactive for now, would need to find a keyboard shortcut that isn't taken
   // Listen for template copy (ctrl (or command) + shift + ???))
   let isTemplateCopy = true; // currently there is no keyboard shortcut, copy is always overwritten
