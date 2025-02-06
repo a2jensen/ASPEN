@@ -7,6 +7,8 @@
 import { ReactWidget } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 import * as React from 'react';
+import "../style/index.css";
+import "../style/base.css";
 
 interface TemplateProps {
   id: string;
@@ -28,7 +30,7 @@ function Library({ templates, deleteTemplate }: { templates: TemplateProps[], de
       {templates.length > 0 ? (
         /** Individual template */
         templates.map((template, index) => (
-          <div key={index} className="template-Container">
+          <div key={index} className="template-container">
             <h4 className="template-name">{template.name}</h4>
             <p className="template-snippet">{template.content}</p>
             <p className="template-date">date here</p>

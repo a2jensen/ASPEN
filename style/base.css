@@ -10,8 +10,9 @@
     overflow: auto;
   }
 
-  .templateContainer {
-
+  .template-container {
+    padding: 6px;
+    background-color: var(--template-color, antiquewhite);
   }
 
   .templateTitle{

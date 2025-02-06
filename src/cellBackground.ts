@@ -48,6 +48,11 @@ function getOrAssignColor(view: EditorView): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const cellId = getCellId(view); 
     const color = getStoredColor(cellId); // getting color that is connected to the id
+    const templateContainer = document.querySelector('.template-container') as HTMLElement;
+    
+    if(color && templateContainer){
+        templateContainer.style.setProperty('--template-color', color);
+    }
 
     if(color) {
     //assigns the decoration/ color
@@ -81,7 +86,7 @@ const updateCellBackground = ViewPlugin.fromClass(
             //its a bit weird the copy for color thing
             //maybe this can be changed when I select it and click on command and then it will turn into color
             view.dom.addEventListener('keydown', (event) => {
-                if (event.ctrlKey && event.key === 'v') {
+                if ((event.ctrlKey && event.key === 'v') ||( event.metaKey && event.key === 'v')) {
                     this.pasteFlag = true;
                     console.log("Ctrl V pressed");
                 }
