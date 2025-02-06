@@ -68,21 +68,23 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
   // Restore state if the application restarts
   restorer.add(libraryWidgetLeft, 'custom-sidebar-widget');
 
+  /* preliminary feature
   // Continuously logs in the console characters user presses
   document.addEventListener("keydown", (event) => {
     console.log(`You pressed: ${event.key}`);
-  });
+  }); */
 
-  // Interfere with copy
-  /*document.addEventListener("copy", (event: ClipboardEvent) => {
+  // Interfere with copy every time
+  document.addEventListener("copy", (event: ClipboardEvent) => {
     const selectedText = window.getSelection()?.toString();
     if (!selectedText) return;
 
-    let copiedText = "hello " + selectedText;
+    let copiedText = "template start\n" + selectedText + "\ntemplate end";
     event.clipboardData?.setData("text/plain", copiedText);
     event.preventDefault();
-  });*/
+  });
 
+  /* unable to change data on clipboard when pasting
   // Interfere with paste
   document.addEventListener("paste", (event: ClipboardEvent) => {
     const clipboardData = event.clipboardData;
@@ -95,12 +97,13 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
     clipboardData?.setData("text/plain", pastingText);
     event.preventDefault();
     alert("Paste");
-  });
+  }); */
 
+  /* inactive for now, would need to find a keyboard shortcut that isn't taken
   // Listen for template copy (ctrl (or command) + shift + ???))
   let isTemplateCopy = true; // currently there is no keyboard shortcut, copy is always overwritten
 
-  /*document.addEventListener("keydown", (event: KeyboardEvent) => {
+  document.addEventListener("keydown", (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === ???) {
         isCtrlShiftUPressed = true;
       }
@@ -110,7 +113,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
       if (event.key === "Control" || event.key === "Shift" || event.key === "Meta" || event.key === ???) {
         isCtrlShiftUPressed = false;
       }
-  });*/
+  });
 
   document.addEventListener("copy", (event: ClipboardEvent) => {
     const selectedText = window.getSelection()?.toString();
@@ -129,7 +132,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer ) {
 
     event.clipboardData?.setData("text/plain", copiedText);
     event.preventDefault();
-  });
+  });*/
 };
 
 /**
