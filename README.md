@@ -6,13 +6,27 @@
 
 JupyterLab Extension aimed at making code reuse easier. Inspiration taken directly from Elyra code snippets.
 
+## Development Workflow
+
+Main branch : It is the live deployed version of the extension
+Development branch : We will first push our changes and handle all merge conflicts within the development branch
+Personal Branches: Our own branches where we will handle development of our assigned task
+
+-Each developer will have specific task(s) assigned to them.
+
+1. Work on your task inside your own personal branch
+2. Once your task is finished:
+    - Merge development branch into your branch
+    - Handle any merge conflicts
+    - Once you are satisfied with the current version of your branch after merging with development, create a pull request to push it into development
+
+
+
 ##  File Setup
 
 -Sidebar Component
 -CodeSnippet Component
 -Heatmap Component
-
-
 
 ## Developer Setup (written by us)
 These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.

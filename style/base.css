@@ -10,16 +10,40 @@
     overflow: auto;
   }
 
-  .templateContainer {
 
-  }
+.library-container{
+    padding: 10px;
+}
 
-  .templateTitle{
+.library-title{
+}
 
-  }
-
-  .templateCodeSnippet {
+.library-sort{
     
-  }
+}
+
+.template-container{
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: rgb(103, 103, 103);
+}
+
+.template-name {
+
+}
+
+.template-snippet {
+
+}
+
+.template-date {
+
+}
+
+
+
+
+
 
 
