@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
+//index add cellbackground
+
 /**
  * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
