@@ -9,3 +9,41 @@
     align-items: center;
     overflow: auto;
   }
+
+
+.library-container{
+    padding: 10px;
+}
+
+.library-title{
+}
+
+.library-sort{
+    
+}
+
+.template-container{
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: rgb(103, 103, 103);
+}
+
+.template-name {
+
+}
+
+.template-snippet {
+
+}
+
+.template-date {
+
+}
+
+
+
+
+
+
+
