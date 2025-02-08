@@ -1,97 +1,75 @@
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
-/**
- * This file acts as the main entry point, where you import and export all your plugins or extensions.
- */
-//new 
+
 import {
-  ILayoutRestorer, // restore widgets layout and state on refresh
-  JupyterFrontEnd, 
-  JupyterFrontEndPlugin,
-} from '@jupyterlab/application'
-
-//importing the cell color changer
-import cellBackground from './cellBackground';
-import {LibraryWidget} from './LibraryWidget';
+  ILayoutRestorer,
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
+} from '@jupyterlab/application';
+import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 
+import { LibraryWidget } from './LibraryWidget';
+import { combinedExtension } from './cellBackground';
 
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer) {
-  
-  
-  console.log("ASPEN is activated :D ! ");
+
+function activate(app: JupyterFrontEnd, restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
+  console.log("ASPEN is activated :D !");
   const { commands } = app;
 
-
-
-  // adding library Widget to the left side sidebar
-  const libraryWidgetLeft = new LibraryWidget();
-  libraryWidgetLeft.id = "jupyterlab-librarywidget-sidebarleft";
-  libraryWidgetLeft.title.iconClass = 'jp-SideBar-tabIcon'; 
-  libraryWidgetLeft.title.caption = "Library display of templates";
+  
 
   const libraryWidgetRight = new LibraryWidget();
-  libraryWidgetRight.id = "jupyterlab-librarywidget-sidebarleft";
-  libraryWidgetRight.title.iconClass = 'jp-SideBar-tabIcon'; 
+  libraryWidgetRight.id = "jupyterlab-librarywidget-sidebarright";
+  libraryWidgetRight.title.iconClass = 'jp-SideBar-tabIcon';
   libraryWidgetRight.title.caption = "Library display of templates";
 
-  
-  // creating command for creating snippet/template
   commands.addCommand('templates:create', {
     label: 'Create Template / Save Code Snippet?',
     execute: () => {
       const snippet: string = window.getSelection()?.toString() || '';
       if (snippet) {
         console.log("Snippet being saved:", snippet);
-        libraryWidgetLeft.createTemplate(snippet);
         libraryWidgetRight.createTemplate(snippet);
       }
-  
-      // Get the currently active widget
-      
     }
   });
-  
 
-  // adding "create template/save snippet" commands to their respective context menus
   app.contextMenu.addItem({
     command: 'templates:create',
     selector: '.jp-FileEditor',
-    rank : 1
+    rank: 1
   });
-
   app.contextMenu.addItem({
     command: 'templates:create',
     selector: '.jp-Notebook',
     rank: 1
   });
 
-  // Adding the library widget to both left and right sidebars
-  app.shell.add(libraryWidgetLeft, 'left',{ rank: 600} );
-  app.shell.add(libraryWidgetRight, 'right', { rank : 300});
+ 
+  app.shell.add(libraryWidgetRight, 'right', { rank: 300 });
 
-  // note: in order to add sidebar widget to right sidebar, we have to create another instance of it.
-  //app.shell.add(SidebarWidget, 'right', { rank: 300});
-
-  // Restore state if the application restarts
-
-
-  // Continuously logs in the console characters user presses
   document.addEventListener('keydown', (event) => {
     console.log(`You pressed: ${event.key}`);
   });
 
 
-};
-
-/**
-* Inialize code snippet extension
-*/
-const aspen: JupyterFrontEndPlugin<void> = {
-  id : 'aspen-code-mirror-extension', // subject to change
-  autoStart: true,
-  optional: [ILayoutRestorer],
-  activate: activate
+  extensions.addExtension({
+    name: '@aspen/codemirror:cell-background',
+    factory: () => ({
+      extension: combinedExtension(),
+      instance: () => combinedExtension(),
+      reconfigure: () => null
+    })
+  });
+  
 }
 
-export default [aspen, cellBackground];
+const aspen: JupyterFrontEndPlugin<void> = {
+  id: 'aspen-extension',
+  autoStart: true,
+  optional: [ILayoutRestorer, IEditorExtensionRegistry],
+  activate: activate
+};
+
+export default aspen;

@@ -9,11 +9,11 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetTy
 import {MatchDecorator} from "@codemirror/view"
 
 class PlaceholderWidget extends WidgetType{
-    name: string;  // Explicitly define type for TypeScript
+    name: string; 
 
     constructor(name: string) {
         super();
-        this.name = name; //the name inside box, only works on one word
+        this.name = name;
     }
 
     eq(other: PlaceholderWidget): boolean {
@@ -21,7 +21,6 @@ class PlaceholderWidget extends WidgetType{
     }
     toDOM(){
         const span = document.createElement("span");
-        span.className = "cm-placeholder";
         span.textContent = this.name;
         span.style.background = "#E0E0E0"; 
         span.style.color = "black";
@@ -34,9 +33,10 @@ class PlaceholderWidget extends WidgetType{
 
 
 const placeholderMatcher = new MatchDecorator({
-    regexp: /\[\[(\w+)\]\]/g, //every word I type is turned into textbox// I think it is causing jupyter to crash? 
+  // /\b\w+\b/g allows for every word to turn into text box  
+    regexp: /\b[A-Z][a-z]*\b/g , //to get text box [[]] is what is done /\[\[(\w+)\]\]/g
     decoration: match => Decoration.replace({
-      widget: new PlaceholderWidget(match[1]),
+      widget: new PlaceholderWidget(match[0]), //match[1] for [[]]
     })
   })
 
