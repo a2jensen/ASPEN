@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/naming-convention */
 //import { Widget } from '@lumino/widgets';

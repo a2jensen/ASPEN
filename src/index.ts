@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 /**
  * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
@@ -10,13 +12,17 @@ import {
 
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
-import { INotebookTracker } from "@jupyterlab/notebook";
+//import { INotebookTracker } from "@jupyterlab/notebook";
+import { combinedExtension } from './cellBackground';
+import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTracker : INotebookTracker ) {
+
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
   console.log("ASPEN is activated with styling edits. loadFunction implemented....");
   console.log("styling added");
   const { commands } = app;
+
 
   const libraryWidget = new LibraryWidget();
   libraryWidget.id = "jupyterlab-librarywidget-sidebarleft";
@@ -70,12 +76,33 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTra
     rank: 1
   });
 
+
   // Adding the library widget to both left and right sidebars
   app.shell.add(libraryWidget, 'right', { rank : 300});
 
   // Restore state if the application restarts
   restorer.add(libraryWidget, 'custom-sidebar-widget');
-};
+
+  //new
+  document.addEventListener("copy", (event: ClipboardEvent) => {
+    const selectedText = window.getSelection()?.toString();
+    if (!selectedText) {return;}
+    //turned into comments
+    const copiedText = "#template start\n" + selectedText + "\n#template end";
+    event.clipboardData?.setData("text/plain", copiedText);
+    event.preventDefault();
+  });
+
+  extensions.addExtension({
+    name: '@aspen/codemirror:cell-background',
+    factory: () => ({
+      extension: combinedExtension(),
+      instance: () => combinedExtension(),
+      reconfigure: () => null
+    })
+  });
+
+}
 
 /**
 * Inialize code snippet extension
@@ -83,10 +110,11 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTra
 const aspen: JupyterFrontEndPlugin<void> = {
   id : 'input-widget', // subject to change
   autoStart: true,
-  optional: [ILayoutRestorer],
+  optional: [ILayoutRestorer, IEditorExtensionRegistry],
   activate: activate
-}
+};
 
+//probably call this function for color cell
 function enableJupyterDropSupport() {
   document.addEventListener("drop", (event) => {
     event.preventDefault();
