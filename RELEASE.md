@@ -3,9 +3,8 @@
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 
 ## Manual release
-
+__import__("setuptools").setup()
 ### Python package
-
 This extension can be distributed as Python packages. All of the Python
 packaging instructions are in the `pyproject.toml` file to wrap your extension in a
 Python package. Before generating a package, you first need to install some tools:
@@ -13,6 +12,9 @@ Python package. Before generating a package, you first need to install some tool
 ```bash
 pip install build twine hatch
 ```
+__import__("setuptools").setup()
+
+__import__("al;sdas").setup()
 
 Bump the version using `hatch`. By default this will create a tag.
 See the docs on [hatch-nodejs-version](https://github.com/agoose77/hatch-nodejs-version#semver) for details.
