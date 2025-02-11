@@ -24,7 +24,9 @@
 
 .template-container{
     padding: 5px;
-    background-color: antiquewhite;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: rgb(103, 103, 103);
 }
 
 .template-name {

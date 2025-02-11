@@ -7,8 +7,10 @@
 //active template is colored only
 
 import { Extension, RangeSetBuilder } from '@codemirror/state'; 
+
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
-//import { textBoxExtension } from './boxText';
+
+import { textBoxExtension } from './boxText';
 
 
 
@@ -70,9 +72,12 @@ function getOrAssignColor(view: EditorView): DecorationSet {
 }
 
 
+
 // Update cell background when the code changes
+
 const updateCellBackground = ViewPlugin.fromClass(
     class {
+        
         decorations: DecorationSet;
         pasteFlag: boolean;
 
@@ -93,7 +98,10 @@ const updateCellBackground = ViewPlugin.fromClass(
      }
      //update will run and it will adjust depending if more code was added or removed so it will make template background bigger or smaller
         update(update: ViewUpdate) {
+           
+           
             if (this.pasteFlag) {
+        
                 const cellId = getCellId(update.view);
                 let color = getStoredColor(cellId);
 
