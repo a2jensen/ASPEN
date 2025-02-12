@@ -7,6 +7,7 @@
 import { ReactWidget } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 import * as React from 'react';
+import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
@@ -27,6 +28,14 @@ interface Template {
  * React Library Component.
  */
 function Library({ templates, deleteTemplate }: { templates: Template[], deleteTemplate : (id : string, name : string) => void }) {
+  const [ expandedTemplates, setExpandedTemplates ] = useState<{ [key: string]: boolean }>({});
+
+  const toggleTemplate = (id : string) => { 
+    setExpandedTemplates((prev) => ({
+      ...prev,
+      [id] : !prev[id], // Toggle specific templates expanded state
+    }))
+  };
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
@@ -36,18 +45,24 @@ function Library({ templates, deleteTemplate }: { templates: Template[], deleteT
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort Button </div>
+      <div className="library-sort">Sort Buttons </div>
+      {/**ADD A SORT DROPDWON */}
       {templates.length > 0 ? (
-        templates.map((template, index) => (
-          <div 
-            key={index} 
-            className="template-container"
-            draggable 
-            onDragStart={(event) => handleDragStart(event, template)}
-          >
-            <h4 className="template-name">{template.name}</h4>
-            <p className="template-snippet">{template.content}</p>
-            <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
+        templates.map((template) => (
+          <div key={template.id} className="template-item">
+            <div className="template-header">
+                <button className='toggle-btn' onClick={() => toggleTemplate(template.id)}>
+                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name}
+                </button>
+                <button className="delete-btn" onClick={() => deleteTemplate(template.id, template.name)}>
+                  ❌
+                </button>
+            </div>
+            {expandedTemplates[template.id] && (
+              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                <p className="template-snippet">{template.content}</p>
+              </div>
+            )}
           </div>
         ))
       ) : (
@@ -169,4 +184,3 @@ export class LibraryWidget extends ReactWidget {
 
 const libraryWidget : Widget = new LibraryWidget();
 Widget.attach(libraryWidget, document.body);
-
