@@ -24,5 +24,5 @@
     "src/components/Sidebar.tsx", 
     "src/components/Template.tsx",
     "src/components/Searchbar.tsx"
-, "src/library/Hooks.ts", "src/library/types.ts"  ]
+, "src/library/Hooks.ts", "src/library/types.ts", "src/library/TemplateWidget.tsx", "src/library/Dialog.ts"  ]
 }

@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
+//index add cellbackground
+
 /**
  * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
@@ -9,28 +13,12 @@ import {
 } from '@jupyterlab/application'
 
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
-import cellBackground from './cellBackground';
 import { LibraryWidget } from './LibraryWidget';
 import { INotebookTracker } from "@jupyterlab/notebook";
 
 
-function getSelectedText()  {
-  console.log("Within the selected text function");
-  let selectedText;
-  // user highlighted
-  if (window.getSelection()){
-    selectedText = window.getSelection();
-    console.log("Selected text in the first case", selectedText);
-  }
-  // user right clicked
-  else if (document.getSelection){
-    selectedText = document.getSelection();
-  }
-  return selectedText?.toString()
-}
-
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTracker : INotebookTracker ) {
-  console.log("ASPEN is activated with styling edits");
+  console.log("ASPEN is activated with styling edits. loadFunction implemented....");
   console.log("styling added");
   const { commands } = app;
 
@@ -46,36 +34,31 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTra
       //** ORIGINAL IMPLEMENTATION */
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
-        //console.log("Snippet being saved : ", snippet);
         libraryWidget.createTemplate(snippet);
       }
+      
+      //** EDITED IMPLEMENTATION currently logs HTML */
+      console.log("Grabbing the snippet with this new method..")
+      const curr = document.getElementsByClassName('jp-Cell jp-mod-selected');
+
+      console.log("Curr variable", curr);
+      if ( curr ) {
+        const text = curr[0];
+        console.log("Values at curr[0]", text);
+      }
+
       // EDITED IMPLEMENTATION
+      /** 
       const highlightedCode = getSelectedText();
       if ( highlightedCode === "" ){
         // case where user right clicks the cell to save
-        const curr = document.getElementsByClassName('jp-Cell jp-mod-selected');
-        let code = '';
-        for (let i = 0; i < curr.length; i++){
-          // loop through each cell
-          const text =  curr[i] as HTMLElement;
-          const cellInputWrappers = text.getElementsByClassName(
-            'jp-Cell-inputWrapper'
-          )
-
-          for (const cellInputWrapper of cellInputWrappers){
-            const codeLines = cellInputWrapper.querySelectorAll('.CodeMirror-line');
-            for (const codeLine of codeLines ){
-              let codeLineText = codeLine.textContent;
-              if (codeLineText?.charCodeAt(0) === 8203){
-                // checks if first char in line is invalid
-                codeLineText = ''; // replace invalid line with empty string
-              }
-              code += codeLineText + `\n`;
-            }
-          }
-          console.log("Code", code);
+        const curr = document.querySelector('jp-Cell jp-mod-selected');
+        if (curr){
+          const cellContent = curr.querySelector('.CodeMirror')?.innerHTML;
+          console.log(cellContent);
         }
       }
+      */
     },
   }); 
 
@@ -108,4 +91,60 @@ const aspen: JupyterFrontEndPlugin<void> = {
   activate: activate
 }
 
-export default [aspen, cellBackground];
+function enableJupyterDropSupport() {
+  document.addEventListener("drop", (event) => {
+    event.preventDefault();
+    
+    const data = event.dataTransfer?.getData("text/plain");
+    if (data) {
+      const Jupyter = (window as any).Jupyter;
+      if (Jupyter && Jupyter.notebook) {
+        const cell = Jupyter.notebook.get_selected_cell();
+        if (cell) {
+          cell.set_text(data);
+          Jupyter.notebook.execute_cells([Jupyter.notebook.get_selected_index()]);
+        }
+      }
+    }
+  });
+
+  document.addEventListener("dragover", (event) => {
+    event.preventDefault();
+  });
+}
+
+// Run this script when the extension loads
+if ((window as any).Jupyter) {
+  enableJupyterDropSupport();
+}
+
+/**
+ * Saves template to a JSON file
+ */
+/**
+function saveJSON(){
+
+} */
+
+/**
+ * 
+ * @returns code snippet
+ * 
+ */
+/** 
+function getSelectedText()  {
+  console.log("Within the selected text function");
+  let selectedText;
+  // user highlighted
+  if (window.getSelection()){
+    selectedText = window.getSelection();
+    console.log("Selected text in the first case", selectedText);
+  }
+  // user right clicked
+  else if (document.getSelection){
+    selectedText = document.getSelection();
+  }
+  return selectedText?.toString()
+}*/
+
+export default aspen;
