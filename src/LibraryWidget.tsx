@@ -5,7 +5,6 @@
 // Importing class that allows us to integrate React Components into jupyterlabs UI framework
 // https://jupyterlab.readthedocs.io/en/latest/api/classes/apputils.ReactWidget.html
 import { ReactWidget } from '@jupyterlab/ui-components';
-import { Widget } from '@lumino/widgets';
 import * as React from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
@@ -298,6 +297,5 @@ export class LibraryWidget extends ReactWidget {
   }
 }
 
-const libraryWidget : Widget = new LibraryWidget();
-Widget.attach(libraryWidget, document.body);
+
 
