@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { ReactWidget } from '@jupyterlab/ui-components';
-import { Widget } from '@lumino/widgets';
+//import { Widget } from '@lumino/widgets';
 import * as React from 'react';
 import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
@@ -122,14 +122,61 @@ export class LibraryWidget extends ReactWidget {
     });
   }
 
+  // function that will load on refresh
   loadTemplates() {
+    const contentsManager = new ContentsManager();
+    this.templates = []; // Clear existing templates before loading
+  
+    contentsManager.get('/snippets').then(model => {
+      if (model.type === 'directory') {
+        for (const file of model.content) {
+          contentsManager.get(file.path).then(fileModel => {
+            try {
+              const templateData = JSON.parse(fileModel.content as string);
+              const template: Template = {
+                id: templateData.id || `${Date.now()}`,
+                name: templateData.name || file.name,
+                content: templateData.content || "",
+                dateCreated: new Date(templateData.dateCreated || Date.now()),
+                dateUpdated: new Date(templateData.dateUpdated || Date.now()),
+                tags: templateData.tags || [],
+                color: templateData.color || "#ffffff",
+                connections : []
+              };
+  
+              this.templates.push(template);
+              console.log(`Loaded template: ${template.name}`, template);
+              this.update(); // Re-render after adding each template
+            } catch (error) {
+              console.error(`Error parsing JSON from ${file.path}:`, error);
+            }
+          }).catch(error => {
+            console.error(`Error loading file: ${file.path}`, error);
+          });
+        }
+      }
+    }).catch(error => {
+      console.error("Error fetching snippets directory:", error);
+    });
+  }
+
+  /**
+   * 
+   * @returns in-memory templates array
+   */
+  returnTemplateArray() {
     return this.templates;
   }
+
+  /** we will need to access the contents inside the notebook, iterate through and find the instances(find by their marker), and
+   * attatch them to their corresponding template
+   */
+  loadTemplateInstances(){}
 
   render() {
     return <Library templates={this.templates} deleteTemplate={this.deleteTemplate} />;
   }
 }
 
-const libraryWidget: Widget = new LibraryWidget();
-Widget.attach(libraryWidget, document.body);
+//const libraryWidget: Widget = new LibraryWidget();
+//Widget.attach(libraryWidget, document.body);
