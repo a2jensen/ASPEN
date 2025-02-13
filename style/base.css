@@ -41,6 +41,14 @@
 
 }
 
+.rename-input {
+    font-size: 16px;
+    padding: 4px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
 
 
 

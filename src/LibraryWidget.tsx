@@ -176,30 +176,7 @@ export class LibraryWidget extends ReactWidget {
 
   // not written yet
   editTemplate = (id: string, newName: string) => {
-    const contentsManager = new ContentsManager();
-    const template = this.templates.find((t) => t.id === id);
-    if (!template)
-      return;
-
-    const oldName = template.name;
-    const oldPath = `/snippets/${oldName}.json`;
-    const newPath = `/snippets/${newName}.json`;
-    template.name = newName;
-    template.dateUpdated = new Date();
-
-    contentsManager.rename(oldPath, newPath).then(() => {
-      return contentsManager.save(newPath, {
-        type : "file",
-        format: "text",
-        content: JSON.stringify(template, null, 2)
-      }).then(() => {
-        console.log(`Template renamed to ${newName} and saved successfully.`)
-      }).catch( (error : unknown ) => {
-        console.error("Error renaming template file", error);
-      })
-    }) 
-
-    this.update();
+    
   }
 
   /**
