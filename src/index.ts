@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
+//index add cellbackground
+
 /**
  * This file acts as the main entry point, where you import and export all your plugins or extensions.
  */
@@ -9,7 +11,6 @@ import {
   JupyterFrontEnd, 
   JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
-
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
 //import { INotebookTracker } from "@jupyterlab/notebook";
@@ -21,6 +22,8 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 //THIS CAN ALL BE MOVED TO SEPERATE FILE LATER!
 
 
+import { levenshtein } from './stringMatch';
+//import { NotebookPanel, INotebookModel } from '@jupyterlab/notebook';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
   console.log("ASPEN is activated with styling edits. loadFunction implemented....");
@@ -29,9 +32,62 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 
 
   const libraryWidget = new LibraryWidget();
+  const templates = libraryWidget.returnTemplateArray();
   libraryWidget.id = "jupyterlab-librarywidget-sidebarleft";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
+
+  /**
+   * Tracks when a snippet is PASTED IN, if so we will make it an instance of its template
+   */
+  document.addEventListener("paste", (event) => {
+    console.log("A snippet was just used");
+    const pastedText = event.clipboardData?.getData("text/plain");
+    console.log("Pasted text/snippet", pastedText);
+
+    if (!pastedText) return;
+    let bestMatch = null;
+    let bestScore = 0; // higher score = more similar
+    for (const template of templates) {
+      const distance = levenshtein(template.content , pastedText); // calculate levenshtein distance
+      const maxLen  = Math.max(pastedText.length, template.content.length);  // normalize the score
+      const similarityScore = 1 - distance / maxLen;
+      if (similarityScore > bestScore ) { 
+        bestScore = similarityScore
+        bestMatch = template;
+      }
+    }
+    if ( bestScore > 0.80) {
+      console.log(`Pasted snippet is similar to template ${bestMatch}, the score was ${bestScore}`);
+      bestMatch?.connections.push(pastedText);
+    }  
+  })
+
+  /**
+   * Tracks when a snippet is DROPPED IN, so we will make it an instance of its template
+   */
+  document.addEventListener("drop", (event) => {
+    event.preventDefault() // prevent default behavior (e.g. opening file in browser)
+    console.log("Possible template/snippet dragged in");
+
+    const droppedText = event.dataTransfer?.getData("text/plain");
+    if (!droppedText) return;
+    let bestMatch = null;
+    let bestScore = 0; // higher score = more similar
+    for (const template of templates) {
+      const distance = levenshtein(template.content , droppedText); // calculate levenshtein distance
+      const maxLen  = Math.max(droppedText.length, template.content.length);  // normalize the score
+      const similarityScore = 1 - distance / maxLen;
+      if (similarityScore > bestScore ) { 
+        bestScore = similarityScore
+        bestMatch = template;
+      }
+    }
+    if ( bestScore > 0.80) {
+      console.log(`Dropped snippet is similar to template ${bestMatch}, the score was ${bestScore}`);
+      bestMatch?.connections.push(droppedText);
+    }  
+  })
 
   // creating command for creating snippet/template
   commands.addCommand('templates:create', {
@@ -42,29 +98,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       if (snippet){
         libraryWidget.createTemplate(snippet);
       }
-      
-      //** EDITED IMPLEMENTATION currently logs HTML */
-      console.log("Grabbing the snippet with this new method..")
-      const curr = document.getElementsByClassName('jp-Cell jp-mod-selected');
-
-      console.log("Curr variable", curr);
-      if ( curr ) {
-        const text = curr[0];
-        console.log("Values at curr[0]", text);
-      }
-
-      // EDITED IMPLEMENTATION
-      /** 
-      const highlightedCode = getSelectedText();
-      if ( highlightedCode === "" ){
-        // case where user right clicks the cell to save
-        const curr = document.querySelector('jp-Cell jp-mod-selected');
-        if (curr){
-          const cellContent = curr.querySelector('.CodeMirror')?.innerHTML;
-          console.log(cellContent);
-        }
-      }
-      */
     },
   }); 
 
@@ -119,61 +152,26 @@ const aspen: JupyterFrontEndPlugin<void> = {
   activate: activate
 };
 
-//probably call this function for color cell
-function enableJupyterDropSupport() {
-  document.addEventListener("drop", (event) => {
-    event.preventDefault();
-    
-    const data = event.dataTransfer?.getData("text/plain");
-    if (data) {
-      const Jupyter = (window as any).Jupyter;
-      if (Jupyter && Jupyter.notebook) {
-        const cell = Jupyter.notebook.get_selected_cell();
-        if (cell) {
-          cell.set_text(data);
-          Jupyter.notebook.execute_cells([Jupyter.notebook.get_selected_index()]);
-        }
-      }
-    }
-  });
-
-  document.addEventListener("dragover", (event) => {
-    event.preventDefault();
-  });
-}
-
-// Run this script when the extension loads
-if ((window as any).Jupyter) {
-  enableJupyterDropSupport();
-}
-
 /**
- * Saves template to a JSON file
+ * HELPER FUNCTIONS
  */
-/**
-function saveJSON(){
 
-} */
 
-/**
- * 
- * @returns code snippet
- * 
- */
+// Function to get metadata from the currently active notebook
+// reference https://stackoverflow.com/questions/71736749/accessing-notebook-cell-metadata-and-html-class-attributes-in-jupyterlab-extensi
+// NOTE: links to relevant documentation are dead 
 /** 
-function getSelectedText()  {
-  console.log("Within the selected text function");
-  let selectedText;
-  // user highlighted
-  if (window.getSelection()){
-    selectedText = window.getSelection();
-    console.log("Selected text in the first case", selectedText);
+function getNotebookMetadata(app: JupyterFrontEnd) {
+  const notebookPanel = app.shell.currentWidget as NotebookPanel;
+
+  if (notebookPanel && notebookPanel.model) {
+      const model: INotebookModel = notebookPanel.model;
+      // NOTE, getMetaData returns a copy of the metadata
+      console.log('Notebook Metadata:', model.getMetadata);
+  } else {
+      console.warn('No active notebook found');
   }
-  // user right clicked
-  else if (document.getSelection){
-    selectedText = document.getSelection();
-  }
-  return selectedText?.toString()
-}*/
+}
+*/
 
 export default aspen;
