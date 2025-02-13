@@ -17,7 +17,7 @@ import { levenshtein } from './stringMatch';
 //import { NotebookPanel, INotebookModel } from '@jupyterlab/notebook';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, ) {
-  console.log("ASPEN is activated with styling edits. paste and drop listener added wooo!!!!!!");
+  console.log("ASPEN is activated with styling edits. indent case and styling added border color added");
   const { commands } = app;
 
   const libraryWidget = new LibraryWidget();

@@ -3,30 +3,40 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
-.my-apodWidget {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow: auto;
-  }
-
-
 .library-container{
-    padding: 10px;
 }
 
 .library-title{
+  font-size: large;
+  font-weight: bolder;
+  border-bottom: 2px solid black;
+  padding-bottom: 5px;
+  box-shadow: 0px 2px 0px black;
+  padding: 10px;
 }
 
 .library-sort{
     
 }
 
-.template-container{
-    padding: 5px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    background-color: rgb(103, 103, 103);
+.template-item{
+}
+
+.template-header {
+}
+
+.template-toggle {
+  background-color: gray;
+  width: 80%;
+}
+
+.template-delete {
+  background-color: gray;
+}
+
+.template-content {
+  padding: 3px;
+  border-color: black;
 }
 
 .template-name {
@@ -34,7 +44,11 @@
 }
 
 .template-snippet {
-
+  white-space: pre-wrap; /* Preserve spaces and line breaks */
+  font-family: monospace; /* Maintain code styling */
+  margin: 10px;
+  border-color: white;
+  font-size: smaller;
 }
 
 .template-date {
@@ -42,10 +56,11 @@
 }
 
 .rename-input, .edit-content-textarea {
-    width: 100%;
+    width: 80%;
     font-size: 1rem;
     border: 1px solid #ccc;
     padding: 5px;
+    align-items: center;
   }
   
   .edit-content-textarea {

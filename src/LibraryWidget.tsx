@@ -83,30 +83,31 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort Buttons</div>
+      <div className="library-sort">Sort</div>
       {templates.length > 0 ? (
-        templates.map((template, index) => ( //
-          <div key={index} className="template-container" draggable onDragStart={(event) => handleDragStart(event, template)}>   
-            <div key={template.id} className="template-item">
+        templates.map((template ) => ( //
+            <div className="template-item" key={template.id}>
+              {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
-                <button className='toggle-btn' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name}
+                <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
+                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name} 
                 </button>
-                <button className="delete-btn" onClick={() => deleteTemplate(template.id, template.name)}>
-                  ❌
+                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
+                  X
                 </button>
               </div>
-            {expandedTemplates[template.id] && (
+              {/** Section corresponding to when the template is opened */}
+              {expandedTemplates[template.id] && (
               <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
                 {renamingId === template.id ? (
                   <input
+                  className="rename-input"
                   type="text"
                   value={newName}
                   onChange={handleRenameChange}
                   onBlur={() => handleRenameConfirm(template.id)} // when user clicks outside, confirms rename
                   onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)} // when user presses enter, confirms rename
                   autoFocus // user can type in field without clicking first
-                  className="rename-input"
                   />
                 ) : (
                 <h4 className="template-name" onClick={() => handleRenameStart(template)}>
@@ -115,23 +116,37 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                 )}
                 {editingId === template.id ? (
                   <textarea
+                    className="edit-content-textarea"
                     value={newContent}
                     onChange={handleEditChange}
                     onBlur={() => handleEditConfirm(template.id)}
-                    onKeyDown={(e) => e.key === "Enter" && handleEditConfirm(template.id)}
+                    onKeyDown={(e) => {
+                      if ( e.key === "Enter" && !e.shiftKey){
+                        e.preventDefault()
+                        handleEditConfirm(template.id)
+                      } else if (e.key === "Tab") {
+                        e.preventDefault();
+                        const start = e.currentTarget.selectionStart;
+                        const end = e.currentTarget.selectionEnd;
+                        setNewContent(
+                          newContent.substring(0, start) + "  " + newContent.substring(end) // Inserts 2 spaces
+                        );
+                        setTimeout(() => {
+                          e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 2; // Move cursor
+                        }, 0);
+                      }
+                    }
+                    }
                     autoFocus
-                    className="edit-content-textarea"
                   />
                 ) : (
                   <p className="template-snippet" onClick={() => handleEditStart(template)}>
                     {template.content}
                   </p>
                 )}
-                <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
               </div>
               )}
             </div>
-          </div>
         ))
       ) : (
         <p>No templates available</p>
