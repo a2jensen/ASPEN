@@ -33,14 +33,17 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
-  
+
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState<string>("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newContent, setNewContent] = useState<string>("");
+
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
     event.dataTransfer.effectAllowed = "copy";
   };
-
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [newName, setNewName] = useState<string>("");
 
   const handleRenameStart = (template: Template) => {
     setRenamingId(template.id); // enter renaming mode
@@ -56,6 +59,22 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       renameTemplate(id, newName.trim());
     }
     setRenamingId(null); // exit renaming mode
+  }
+
+  const handleEditStart = (template: Template) => {
+    setEditingId(template.id); // enter editing mode
+    setNewContent(template.content); // current content is prefilled
+  }
+
+  const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewContent(event.target.value);
+  }
+
+  const handleEditConfirm = (id: string) => {
+    if (newContent.trim() !== "") {
+      editTemplate(id, newContent.trim());
+    }
+    setEditingId(null); // exit editing mode
   }
 
   return (
@@ -86,10 +105,24 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
               </h4>
             )}
 
-            <p className="template-snippet">{template.content}</p>
+            {editingId === template.id ? (
+              <textarea
+                value={newContent}
+                onChange={handleEditChange}
+                onBlur={() => handleEditConfirm(template.id)}
+                onKeyDown={(e) => e.key === "Enter" && handleEditConfirm(template.id)}
+                autoFocus
+                className="edit-content-textarea"
+              />
+            ) : (
+              <p className="template-snippet" onClick={() => handleEditStart(template)}>
+                {template.content}
+              </p>
+            )}
+
             <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
             <p onClick={() => handleRenameStart(template)}> Rename button</p>
-            <p onClick={() => editTemplate(template.id, template.content)}> Edit button</p>
+            <p onClick={() => handleEditStart(template)}> Edit button</p>
           </div>
         ))
       ) : (
@@ -174,9 +207,28 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
-  // not written yet
-  editTemplate = (id: string, newName: string) => {
-    
+  editTemplate = (id: string, newContent: string) => {
+    const contentsManager = new ContentsManager();
+    const template = this.templates.find((t) => t.id === id);
+    if (!template)
+      return;
+
+    template.content = newContent;
+    template.dateUpdated = new Date();
+
+    const filePath = `/snippets/${template.name}.json`;
+
+    contentsManager.save(filePath, {
+      type : "file",
+      format: "text",
+      content: JSON.stringify(template, null, 2)
+    }).then(() => {
+        console.log(`Template ${template.name} content updated successfully.`)
+      }).catch( (error : unknown ) => {
+        console.error("Error updating template content", error);
+      });
+
+    this.update();
   }
 
   /**

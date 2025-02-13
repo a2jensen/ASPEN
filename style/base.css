@@ -41,13 +41,18 @@
 
 }
 
-.rename-input {
-    font-size: 16px;
-    padding: 4px;
+.rename-input, .edit-content-textarea {
     width: 100%;
+    font-size: 1rem;
     border: 1px solid #ccc;
-    border-radius: 4px;
-}
+    padding: 5px;
+  }
+  
+  .edit-content-textarea {
+    min-height: 50px;
+  }
+
+
 
 
 
