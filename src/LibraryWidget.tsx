@@ -1,11 +1,9 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/naming-convention */
-//import { Widget } from '@lumino/widgets';
 
-// Importing class that allows us to integrate React Components into jupyterlabs UI framework
-// https://jupyterlab.readthedocs.io/en/latest/api/classes/apputils.ReactWidget.html
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
+import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
@@ -19,11 +17,10 @@ interface Template {
   dateUpdated: Date;
   tags: string[];
   color: string;
-  // connections : ???
+  connections: string[];
 }
 
 /**
- * 
  * React Library Component.
  */
 function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
@@ -32,15 +29,24 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
-
+  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
+
+  const toggleTemplate = (id: string) => {
+    setExpandedTemplates((prev) => ({
+      ...prev,
+      [id]: !prev[id], // Toggle specific template's expanded state
+    }));
+  };
+
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
+    event.dataTransfer.setData("application/json", JSON.stringify(template)); // Store full template info
     event.dataTransfer.effectAllowed = "copy";
   };
 
@@ -79,7 +85,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort Button </div>
+      <div className="library-sort">Sort Buttons</div>
       {templates.length > 0 ? (
         templates.map((template, index) => ( //
           <div 
@@ -131,11 +137,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   );
 }
 
-
-// Wrapping library component and making it a widget
-// https://jupyterlab.readthedocs.io/en/latest/extension/virtualdom.html
 export class LibraryWidget extends ReactWidget {
-  // array to store templates
   private templates: Template[];
 
   constructor() {
@@ -143,11 +145,6 @@ export class LibraryWidget extends ReactWidget {
     this.addClass('jp-TemplatesManager');
     this.templates = [];
     this.loadTemplates();
-  }
-
-  onAfterAttach( msg : any) {
-    super.onAfterAttach(msg);
-    //this.loadTemplates();
   }
 
   createTemplate(codeSnippet: string) {
@@ -159,11 +156,12 @@ export class LibraryWidget extends ReactWidget {
       dateUpdated: new Date(),
       tags: [],
       color: '#FFE694',
+      connections: []
     };
     this.templates.push(template);
     this.saveTemplate(template);
-    this.update(); // Re-render the sidebar with the new template
-  };
+    this.update();
+  }
 
   deleteTemplate = (id: string, name: string) => {
     const contentsManager = new ContentsManager();
@@ -171,11 +169,39 @@ export class LibraryWidget extends ReactWidget {
 
     contentsManager.delete(`/snippets/${name}.json`).then(() => {
       console.log(`File deleted successfully`);
-    }).catch((error : unknown ) => {
+    }).catch(error => {
       console.log(`Failed to delete the JSON file of snippet`, error);
-    }) 
+    });
 
-    this.update()
+    this.update();
+  }
+
+  renameTemplate = (id: string, newName: string) => {
+    const contentsManager = new ContentsManager();
+    const template = this.templates.find((t) => t.id === id);
+    if (!template)
+      return;
+
+    const oldName = template.name;
+    const oldPath = `/snippets/${oldName}.json`;
+    const newPath = `/snippets/${newName}.json`;
+
+    template.name = newName;
+    template.dateUpdated = new Date();
+
+    contentsManager.save(oldPath, {
+      type : "file",
+      format: "text",
+      content: JSON.stringify(template, null, 2)
+    }).then(() => {
+        return contentsManager.rename(oldPath, newPath);
+      }).then(() => {
+        console.log(`Template renamed to ${newName} and saved successfully.`)
+      }).catch( (error : unknown ) => {
+        console.error("Error renaming template file", error);
+      });
+
+    this.update();
   }
 
   renameTemplate = (id: string, newName: string) => {
@@ -230,23 +256,43 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
-  /**
-   * Function that saves to JSON file
-   */
-  saveTemplate(template : Template){
+  editTemplate = (id: string, newContent: string) => {
     const contentsManager = new ContentsManager();
-    const templateName = template.name;
-    contentsManager.save(`/snippets/${templateName}.json`, {
+    const template = this.templates.find((t) => t.id === id);
+    if (!template)
+      return;
+
+    template.content = newContent;
+    template.dateUpdated = new Date();
+
+    const filePath = `/snippets/${template.name}.json`;
+
+    contentsManager.save(filePath, {
       type : "file",
       format: "text",
       content: JSON.stringify(template, null, 2)
     }).then(() => {
-      console.log(`Saved ${template} to file successfully.`)
-    }).catch( (error : unknown ) => {
-      console.error("Error reading file", error);
-    })
+        console.log(`Template ${template.name} content updated successfully.`)
+      }).catch( (error : unknown ) => {
+        console.error("Error updating template content", error);
+      });
+
+    this.update();
   }
-  
+
+  saveTemplate(template: Template) {
+    const contentsManager = new ContentsManager();
+    contentsManager.save(`/snippets/${template.name}.json`, {
+      type: "file",
+      format: "text",
+      content: JSON.stringify(template, null, 2)
+    }).then(() => {
+      console.log(`Saved ${template.name} to file successfully.`);
+    }).catch(error => {
+      console.error("Error saving file", error);
+    });
+  }
+
   // function that will load on refresh
   loadTemplates() {
     const contentsManager = new ContentsManager();
@@ -265,7 +311,8 @@ export class LibraryWidget extends ReactWidget {
                 dateCreated: new Date(templateData.dateCreated || Date.now()),
                 dateUpdated: new Date(templateData.dateUpdated || Date.now()),
                 tags: templateData.tags || [],
-                color: templateData.color || "#FFE694",
+                color: templateData.color || "#ffffff",
+                connections : []
               };
   
               this.templates.push(template);
@@ -283,10 +330,19 @@ export class LibraryWidget extends ReactWidget {
       console.error("Error fetching snippets directory:", error);
     });
   }
-  
-  sortTemplates() {}
 
-  connectTemplate() {}
+  /**
+   * 
+   * @returns in-memory templates array
+   */
+  returnTemplateArray() {
+    return this.templates;
+  }
+
+  /** we will need to access the contents inside the notebook, iterate through and find the instances(find by their marker), and
+   * attatch them to their corresponding template
+   */
+  loadTemplateInstances(){}
 
   render() {
     return <Library templates={this.templates}
