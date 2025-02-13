@@ -1,12 +1,10 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/naming-convention */
-//import { Widget } from '@lumino/widgets';
 
-// Importing class that allows us to integrate React Components into jupyterlabs UI framework
-// https://jupyterlab.readthedocs.io/en/latest/api/classes/apputils.ReactWidget.html
 import { ReactWidget } from '@jupyterlab/ui-components';
-import { Widget } from '@lumino/widgets';
+//import { Widget } from '@lumino/widgets';
 import * as React from 'react';
+import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
@@ -19,35 +17,50 @@ interface Template {
   dateUpdated: Date;
   tags: string[];
   color: string;
-  // connections : ???
+  connections: string[];
 }
 
 /**
- * 
  * React Library Component.
  */
-function Library({ templates, deleteTemplate }: { templates: Template[], deleteTemplate : (id : string, name : string) => void }) {
-  
+function Library({ templates, deleteTemplate }: { templates: Template[], deleteTemplate: (id: string, name: string) => void }) {
+  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
+  //const [insertedTemplates, setInsertedTemplates] = useState<Set<string>>(new Set());
+  console.log("INSIDE LIB COMPONENT")
+
+  const toggleTemplate = (id: string) => {
+    setExpandedTemplates((prev) => ({
+      ...prev,
+      [id]: !prev[id], // Toggle specific template's expanded state
+    }));
+  };
+
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
+    event.dataTransfer.setData("application/json", JSON.stringify(template)); // Store full template info
     event.dataTransfer.effectAllowed = "copy";
   };
 
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort Button </div>
+      <div className="library-sort">Sort Buttons</div>
       {templates.length > 0 ? (
-        templates.map((template, index) => (
-          <div 
-            key={index} 
-            className="template-container"
-            draggable 
-            onDragStart={(event) => handleDragStart(event, template)}
-          >
-            <h4 className="template-name">{template.name}</h4>
-            <p className="template-snippet">{template.content}</p>
-            <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
+        templates.map((template) => (
+          <div key={template.id} className="template-item">
+            <div className="template-header">
+              <button className='toggle-btn' onClick={() => toggleTemplate(template.id)}>
+                {expandedTemplates[template.id] ? "▼" : "▶"} {template.name}
+              </button>
+              <button className="delete-btn" onClick={() => deleteTemplate(template.id, template.name)}>
+                ❌
+              </button>
+            </div>
+            {expandedTemplates[template.id] && (
+              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                <p className="template-snippet">{template.content}</p>
+              </div>
+            )}
           </div>
         ))
       ) : (
@@ -57,11 +70,7 @@ function Library({ templates, deleteTemplate }: { templates: Template[], deleteT
   );
 }
 
-
-// Wrapping library component and making it a widget
-// https://jupyterlab.readthedocs.io/en/latest/extension/virtualdom.html
 export class LibraryWidget extends ReactWidget {
-  // array to store templates
   private templates: Template[];
 
   constructor() {
@@ -69,11 +78,6 @@ export class LibraryWidget extends ReactWidget {
     this.addClass('jp-TemplatesManager');
     this.templates = [];
     this.loadTemplates();
-  }
-
-  onAfterAttach( msg : any) {
-    super.onAfterAttach(msg);
-    //this.loadTemplates();
   }
 
   createTemplate(codeSnippet: string) {
@@ -85,11 +89,12 @@ export class LibraryWidget extends ReactWidget {
       dateUpdated: new Date(),
       tags: [],
       color: '#ffffff',
+      connections: []
     };
     this.templates.push(template);
     this.saveTemplate(template);
-    this.update(); // Re-render the sidebar with the new template
-  };
+    this.update();
+  }
 
   deleteTemplate = (id: string, name: string) => {
     const contentsManager = new ContentsManager();
@@ -97,30 +102,26 @@ export class LibraryWidget extends ReactWidget {
 
     contentsManager.delete(`/snippets/${name}.json`).then(() => {
       console.log(`File deleted successfully`);
-    }).catch((error : unknown ) => {
+    }).catch(error => {
       console.log(`Failed to delete the JSON file of snippet`, error);
-    }) 
+    });
 
-    this.update()
+    this.update();
   }
 
-  /**
-   * Function that saves to JSON file
-   */
-  saveTemplate(template : Template){
+  saveTemplate(template: Template) {
     const contentsManager = new ContentsManager();
-    const templateName = template.name;
-    contentsManager.save(`/snippets/${templateName}.json`, {
-      type : "file",
+    contentsManager.save(`/snippets/${template.name}.json`, {
+      type: "file",
       format: "text",
       content: JSON.stringify(template, null, 2)
     }).then(() => {
-      console.log(`Saved ${template} to file successfully.`)
-    }).catch( (error : unknown ) => {
-      console.error("Error reading file", error);
-    })
+      console.log(`Saved ${template.name} to file successfully.`);
+    }).catch(error => {
+      console.error("Error saving file", error);
+    });
   }
-  
+
   // function that will load on refresh
   loadTemplates() {
     const contentsManager = new ContentsManager();
@@ -140,6 +141,7 @@ export class LibraryWidget extends ReactWidget {
                 dateUpdated: new Date(templateData.dateUpdated || Date.now()),
                 tags: templateData.tags || [],
                 color: templateData.color || "#ffffff",
+                connections : []
               };
   
               this.templates.push(template);
@@ -157,16 +159,24 @@ export class LibraryWidget extends ReactWidget {
       console.error("Error fetching snippets directory:", error);
     });
   }
-  
-  sortTemplates() {}
 
-  connectTemplate() {}
+  /**
+   * 
+   * @returns in-memory templates array
+   */
+  returnTemplateArray() {
+    return this.templates;
+  }
+
+  /** we will need to access the contents inside the notebook, iterate through and find the instances(find by their marker), and
+   * attatch them to their corresponding template
+   */
+  loadTemplateInstances(){}
 
   render() {
     return <Library templates={this.templates} deleteTemplate={this.deleteTemplate} />;
   }
 }
 
-const libraryWidget : Widget = new LibraryWidget();
-Widget.attach(libraryWidget, document.body);
-
+//const libraryWidget: Widget = new LibraryWidget();
+//Widget.attach(libraryWidget, document.body);
