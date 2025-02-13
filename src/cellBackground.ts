@@ -11,7 +11,7 @@ import { textBoxExtension } from './textBox';
 //highlight will be toggle, so if I click on templae then the instances of that template willl highlight but I need connections first 
 //Im going to work on the tracking of the positions I think ignore the code color and just keep working on, tracking and updating where everything is at  
 
-
+//drag and drop edit it 
 
 interface ISnippet{
     start_line: number;
@@ -55,7 +55,7 @@ function updateSnippetLineNumber(view: EditorView) {
     const docText = view.state.doc.toString();
     const snippetPattern = /#template start([\s\S]*?)#template end/g;
     let match;
-    let snippetIndex = 0; // Track index of existing snippets
+    let snippetIndex = 0; 
 
     while ((match = snippetPattern.exec(docText)) !== null && snippetIndex < snippetTracker.length) {
         const startPos = match.index;
@@ -64,9 +64,7 @@ function updateSnippetLineNumber(view: EditorView) {
         const newEndLine = view.state.doc.lineAt(endPos).number;
 
         // Update only if line numbers have changed
-        if (
-            snippetTracker[snippetIndex].start_line !== newStartLine ||
-            snippetTracker[snippetIndex].end_line !== newEndLine
+        if (snippetTracker[snippetIndex].start_line !== newStartLine || snippetTracker[snippetIndex].end_line !== newEndLine
         ) {
             console.log(`Snippet ${snippetIndex + 1} moved from ${snippetTracker[snippetIndex].start_line}-${snippetTracker[snippetIndex].end_line} to ${newStartLine}-${newEndLine}`);
 

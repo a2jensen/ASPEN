@@ -167,6 +167,7 @@ export class LibraryWidget extends ReactWidget {
   }
 
   createTemplate(codeSnippet: string) {
+    codeSnippet = "#template start\n" + codeSnippet + "\n#template end";
     const template: Template = {
       id: `${Date.now()}`,
       name: `Snippet ${this.templates.length + 1}`,
