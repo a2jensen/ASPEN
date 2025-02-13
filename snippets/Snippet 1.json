@@ -1,9 +1,10 @@
 {
-  "id": "1739399633526",
+  "id": "1739404203939",
   "name": "Snippet 1",
-  "content": "### Python package",
-  "dateCreated": "2025-02-12T22:33:53.526Z",
-  "dateUpdated": "2025-02-12T22:33:53.526Z",
+  "content": "print(\"hello\")",
+  "dateCreated": "2025-02-12T23:50:03.939Z",
+  "dateUpdated": "2025-02-12T23:50:03.939Z",
   "tags": [],
-  "color": "#ffffff"
+  "color": "#ffffff",
+  "connections": []
 }

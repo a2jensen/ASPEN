@@ -11,21 +11,54 @@ import {
   JupyterFrontEnd, 
   JupyterFrontEndPlugin,
 } from '@jupyterlab/application'
-
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
-import { INotebookTracker } from "@jupyterlab/notebook";
+import { levenshtein } from './stringMatch';
 
 
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, notebookTracker : INotebookTracker ) {
-  console.log("ASPEN is activated with styling edits. loadFunction implemented....");
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, ) {
+  console.log("ASPEN is activated with styling edits. paste listener added!!!");
   console.log("styling added");
   const { commands } = app;
 
   const libraryWidget = new LibraryWidget();
+  const templates = libraryWidget.loadTemplates();
   libraryWidget.id = "jupyterlab-librarywidget-sidebarleft";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
+
+  /**
+   * Tracks when a snippet is added in, if so we will make it an instance of its template
+   */
+  document.addEventListener("paste", (event) => {
+    console.log("A snippet was just used");
+    const pastedText = event.clipboardData?.getData("text/plain");
+    console.log("Pasted text/snippet", pastedText);
+
+    if (!pastedText) return;
+
+    let bestMatch = null;
+    let bestScore = 0; // higher score = more similar
+    
+    for (const template of templates) {
+      // calculate levenshtein distance
+      const distance = levenshtein(template.content , pastedText);
+
+      // normalize the score
+      const maxLen  = Math.max(pastedText.length, template.content.length);
+      const similarityScore = 1 - distance / maxLen;
+
+      if (similarityScore > bestScore ) { 
+        bestScore = similarityScore
+        bestMatch = template;
+      }
+    }
+
+    if ( bestScore > 0.85) {
+      console.log(`Pasted snippet is similar to template ${bestMatch}, the score was ${bestScore}`);
+    }
+    
+  })
 
   // creating command for creating snippet/template
   commands.addCommand('templates:create', {
