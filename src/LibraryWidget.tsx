@@ -7,7 +7,6 @@ import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
-import { useState } from "react";
 
 interface Template {
   id: string;
@@ -36,13 +35,12 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
-
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
     }));
-  };
+  }; 
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
@@ -88,46 +86,51 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       <div className="library-sort">Sort Buttons</div>
       {templates.length > 0 ? (
         templates.map((template, index) => ( //
-          <div 
-            key={index} //
-            className="template-container"
-            draggable 
-            onDragStart={(event) => handleDragStart(event, template)}
-          >
-            {renamingId === template.id ? (
-              <input
-                type="text"
-                value={newName}
-                onChange={handleRenameChange}
-                onBlur={() => handleRenameConfirm(template.id)} // when user clicks outside, confirms rename
-                onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)} // when user presses enter, confirms rename
-                autoFocus // user can type in field without clicking first
-                className="rename-input"
-              />
-            ) : (
-              <h4 className="template-name" onClick={() => handleRenameStart(template)}>
-                {template.name}
-              </h4>
-            )}
-
-            {editingId === template.id ? (
-              <textarea
-                value={newContent}
-                onChange={handleEditChange}
-                onBlur={() => handleEditConfirm(template.id)}
-                onKeyDown={(e) => e.key === "Enter" && handleEditConfirm(template.id)}
-                autoFocus
-                className="edit-content-textarea"
-              />
-            ) : (
-              <p className="template-snippet" onClick={() => handleEditStart(template)}>
-                {template.content}
-              </p>
-            )}
-
-            <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
-            <p onClick={() => handleRenameStart(template)}> Rename button</p>
-            <p onClick={() => handleEditStart(template)}> Edit button</p>
+          <div key={index} className="template-container" draggable onDragStart={(event) => handleDragStart(event, template)}>   
+            <div key={template.id} className="template-item">
+              <div className="template-header">
+                <button className='toggle-btn' onClick={() => toggleTemplate(template.id)}>
+                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name}
+                </button>
+                <button className="delete-btn" onClick={() => deleteTemplate(template.id, template.name)}>
+                  ❌
+                </button>
+              </div>
+            {expandedTemplates[template.id] && (
+              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                {renamingId === template.id ? (
+                  <input
+                  type="text"
+                  value={newName}
+                  onChange={handleRenameChange}
+                  onBlur={() => handleRenameConfirm(template.id)} // when user clicks outside, confirms rename
+                  onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)} // when user presses enter, confirms rename
+                  autoFocus // user can type in field without clicking first
+                  className="rename-input"
+                  />
+                ) : (
+                <h4 className="template-name" onClick={() => handleRenameStart(template)}>
+                  {template.name}
+                </h4>
+                )}
+                {editingId === template.id ? (
+                  <textarea
+                    value={newContent}
+                    onChange={handleEditChange}
+                    onBlur={() => handleEditConfirm(template.id)}
+                    onKeyDown={(e) => e.key === "Enter" && handleEditConfirm(template.id)}
+                    autoFocus
+                    className="edit-content-textarea"
+                  />
+                ) : (
+                  <p className="template-snippet" onClick={() => handleEditStart(template)}>
+                    {template.content}
+                  </p>
+                )}
+                <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
+              </div>
+              )}
+            </div>
           </div>
         ))
       ) : (
@@ -199,58 +202,6 @@ export class LibraryWidget extends ReactWidget {
         console.log(`Template renamed to ${newName} and saved successfully.`)
       }).catch( (error : unknown ) => {
         console.error("Error renaming template file", error);
-      });
-
-    this.update();
-  }
-
-  renameTemplate = (id: string, newName: string) => {
-    const contentsManager = new ContentsManager();
-    const template = this.templates.find((t) => t.id === id);
-    if (!template)
-      return;
-
-    const oldName = template.name;
-    const oldPath = `/snippets/${oldName}.json`;
-    const newPath = `/snippets/${newName}.json`;
-
-    template.name = newName;
-    template.dateUpdated = new Date();
-
-    contentsManager.save(oldPath, {
-      type : "file",
-      format: "text",
-      content: JSON.stringify(template, null, 2)
-    }).then(() => {
-        return contentsManager.rename(oldPath, newPath);
-      }).then(() => {
-        console.log(`Template renamed to ${newName} and saved successfully.`)
-      }).catch( (error : unknown ) => {
-        console.error("Error renaming template file", error);
-      });
-
-    this.update();
-  }
-
-  editTemplate = (id: string, newContent: string) => {
-    const contentsManager = new ContentsManager();
-    const template = this.templates.find((t) => t.id === id);
-    if (!template)
-      return;
-
-    template.content = newContent;
-    template.dateUpdated = new Date();
-
-    const filePath = `/snippets/${template.name}.json`;
-
-    contentsManager.save(filePath, {
-      type : "file",
-      format: "text",
-      content: JSON.stringify(template, null, 2)
-    }).then(() => {
-        console.log(`Template ${template.name} content updated successfully.`)
-      }).catch( (error : unknown ) => {
-        console.error("Error updating template content", error);
       });
 
     this.update();
