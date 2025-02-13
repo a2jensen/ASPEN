@@ -7,10 +7,10 @@
 import { ReactWidget } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 import * as React from 'react';
-import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
+import { useState } from "react";
 
 interface Template {
   id: string;
@@ -27,42 +27,69 @@ interface Template {
  * 
  * React Library Component.
  */
-function Library({ templates, deleteTemplate }: { templates: Template[], deleteTemplate : (id : string, name : string) => void }) {
-  const [ expandedTemplates, setExpandedTemplates ] = useState<{ [key: string]: boolean }>({});
-
-  const toggleTemplate = (id : string) => { 
-    setExpandedTemplates((prev) => ({
-      ...prev,
-      [id] : !prev[id], // Toggle specific templates expanded state
-    }))
-  };
+function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
+    templates: Template[],
+    deleteTemplate : (id : string, name : string) => void,
+    renameTemplate : (id : string, name : string) => void,
+    editTemplate : (id : string, name : string) => void,
+  }) {
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
     event.dataTransfer.effectAllowed = "copy";
   };
 
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState<string>("");
+
+  const handleRenameStart = (template: Template) => {
+    setRenamingId(template.id); // enter renaming mode
+    setNewName(template.name); // current name is prefilled
+  }
+
+  const handleRenameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewName(event.target.value);
+  }
+
+  const handleRenameConfirm = (id: string) => {
+    if (newName.trim() !== "") {
+      renameTemplate(id, newName.trim());
+    }
+    setRenamingId(null); // exit renaming mode
+  }
+
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort Buttons </div>
-      {/**ADD A SORT DROPDWON */}
+      <div className="library-sort">Sort Button </div>
       {templates.length > 0 ? (
-        templates.map((template) => (
-          <div key={template.id} className="template-item">
-            <div className="template-header">
-                <button className='toggle-btn' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name}
-                </button>
-                <button className="delete-btn" onClick={() => deleteTemplate(template.id, template.name)}>
-                  ❌
-                </button>
-            </div>
-            {expandedTemplates[template.id] && (
-              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
-                <p className="template-snippet">{template.content}</p>
-              </div>
+        templates.map((template, index) => ( //
+          <div 
+            key={index} //
+            className="template-container"
+            draggable 
+            onDragStart={(event) => handleDragStart(event, template)}
+          >
+            {renamingId === template.id ? (
+              <input
+                type="text"
+                value={newName}
+                onChange={handleRenameChange}
+                onBlur={() => handleRenameConfirm(template.id)} // when user clicks outside, confirms rename
+                onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)} // when user presses enter, confirms rename
+                autoFocus // user can type in field without clicking first
+                className="rename-input"
+              />
+            ) : (
+              <h4 className="template-name" onClick={() => handleRenameStart(template)}>
+                {template.name}
+              </h4>
             )}
+
+            <p className="template-snippet">{template.content}</p>
+            <p onClick={() => deleteTemplate(template.id, template.name)}> Delete button</p>
+            <p onClick={() => handleRenameStart(template)}> Rename button</p>
+            <p onClick={() => editTemplate(template.id, template.content)}> Edit button</p>
           </div>
         ))
       ) : (
@@ -99,7 +126,7 @@ export class LibraryWidget extends ReactWidget {
       dateCreated: new Date(),
       dateUpdated: new Date(),
       tags: [],
-      color: '#ffffff',
+      color: '#FFE694',
     };
     this.templates.push(template);
     this.saveTemplate(template);
@@ -117,6 +144,62 @@ export class LibraryWidget extends ReactWidget {
     }) 
 
     this.update()
+  }
+
+  renameTemplate = (id: string, newName: string) => {
+    const contentsManager = new ContentsManager();
+    const template = this.templates.find((t) => t.id === id);
+    if (!template)
+      return;
+
+    const oldName = template.name;
+    const oldPath = `/snippets/${oldName}.json`;
+    const newPath = `/snippets/${newName}.json`;
+
+    template.name = newName;
+    template.dateUpdated = new Date();
+
+    contentsManager.save(oldPath, {
+      type : "file",
+      format: "text",
+      content: JSON.stringify(template, null, 2)
+    }).then(() => {
+        return contentsManager.rename(oldPath, newPath);
+      }).then(() => {
+        console.log(`Template renamed to ${newName} and saved successfully.`)
+      }).catch( (error : unknown ) => {
+        console.error("Error renaming template file", error);
+      });
+
+    this.update();
+  }
+
+  // not written yet
+  editTemplate = (id: string, newName: string) => {
+    const contentsManager = new ContentsManager();
+    const template = this.templates.find((t) => t.id === id);
+    if (!template)
+      return;
+
+    const oldName = template.name;
+    const oldPath = `/snippets/${oldName}.json`;
+    const newPath = `/snippets/${newName}.json`;
+    template.name = newName;
+    template.dateUpdated = new Date();
+
+    contentsManager.rename(oldPath, newPath).then(() => {
+      return contentsManager.save(newPath, {
+        type : "file",
+        format: "text",
+        content: JSON.stringify(template, null, 2)
+      }).then(() => {
+        console.log(`Template renamed to ${newName} and saved successfully.`)
+      }).catch( (error : unknown ) => {
+        console.error("Error renaming template file", error);
+      })
+    }) 
+
+    this.update();
   }
 
   /**
@@ -154,7 +237,7 @@ export class LibraryWidget extends ReactWidget {
                 dateCreated: new Date(templateData.dateCreated || Date.now()),
                 dateUpdated: new Date(templateData.dateUpdated || Date.now()),
                 tags: templateData.tags || [],
-                color: templateData.color || "#ffffff",
+                color: templateData.color || "#FFE694",
               };
   
               this.templates.push(template);
@@ -178,7 +261,11 @@ export class LibraryWidget extends ReactWidget {
   connectTemplate() {}
 
   render() {
-    return <Library templates={this.templates} deleteTemplate={this.deleteTemplate} />;
+    return <Library templates={this.templates}
+      deleteTemplate={this.deleteTemplate}
+      renameTemplate={this.renameTemplate}
+      editTemplate={this.editTemplate}
+      />;
   }
 }
 

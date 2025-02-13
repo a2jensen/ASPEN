@@ -1,9 +1,0 @@
-{
-  "id": "1739313300703",
-  "name": "Snippet 2",
-  "content": "```bash\npip install build twine hatch\n```",
-  "dateCreated": "2025-02-11T22:35:00.703Z",
-  "dateUpdated": "2025-02-11T22:35:00.703Z",
-  "tags": [],
-  "color": "#ffffff"
-}
