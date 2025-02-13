@@ -18,6 +18,10 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 
 
+//THIS CAN ALL BE MOVED TO SEPERATE FILE LATER!
+
+
+
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
   console.log("ASPEN is activated with styling edits. loadFunction implemented....");
   console.log("styling added");
@@ -83,15 +87,16 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   // Restore state if the application restarts
   restorer.add(libraryWidget, 'custom-sidebar-widget');
 
-  //new
+
   document.addEventListener("copy", (event: ClipboardEvent) => {
     const selectedText = window.getSelection()?.toString();
     if (!selectedText) {return;}
-    //turned into comments
+   
     const copiedText = "#template start\n" + selectedText + "\n#template end";
     event.clipboardData?.setData("text/plain", copiedText);
     event.preventDefault();
   });
+
 
   extensions.addExtension({
     name: '@aspen/codemirror:cell-background',
