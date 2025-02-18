@@ -91,15 +91,9 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name} 
+                  {expandedTemplates[template.id] ? "v" : ">"}
                 </button>
-                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
-                  X
-                </button>
-              </div>
-              {/** Section corresponding to when the template is opened */}
-              {expandedTemplates[template.id] && (
-              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                
                 {renamingId === template.id ? (
                   <input
                   className="rename-input"
@@ -115,6 +109,16 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   {template.name}
                 </h4>
                 )}
+
+                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
+                  🗑
+                </button>
+              </div>
+              
+              {/** Section corresponding to when the template is opened */}
+              {expandedTemplates[template.id] && (
+              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                
                 {editingId === template.id ? (
                   <textarea
                     className="edit-content-textarea"
@@ -122,7 +126,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                     onChange={handleEditChange}
                     onBlur={() => handleEditConfirm(template.id)}
                     onKeyDown={(e) => {
-                      if ( e.key === "Enter" && !e.shiftKey){
+                      if (e.key === "Enter" && !e.shiftKey){
                         e.preventDefault()
                         handleEditConfirm(template.id)
                       } else if (e.key === "Tab") {

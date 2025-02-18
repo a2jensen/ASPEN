@@ -23,55 +23,72 @@
 }
 
 .template-header {
+  display: flex;
+  align-items: center;
+  /*gap: 8 px;*/
+  justify-content: space-between;
 }
 
 .template-toggle {
-  background-color: gray;
-  width: 80%;
+  background-color: none;
+  border: none;
+  font-size: 1rem;
+  /*width: 80%;*/
+  /*text-align: left;*/
 }
 
 .template-delete {
-  background-color: gray;
+  margin-left: auto;
+  background-color: rgb(185, 110, 204);
 }
 
 .template-content {
   padding: 3px;
-  border-color: black;
+  /*border-color: black;*/
 }
 
 .template-name {
+  font-size: 1 rem;
+  width: auto;
+  padding: 3px;
+  min-width: 100px;
+  border: 1px solid none; /*only diff*/
+}
 
+.rename-input {
+  font-size: 1 rem;
+  width: auto;
+  padding: 3px;
+  min-width: 100px;
+  border: 1px solid #000000; /*only diff*/
 }
 
 .template-snippet {
+  font-size: medium;
   white-space: pre-wrap; /* Preserve spaces and line breaks */
   font-family: monospace; /* Maintain code styling */
   margin: 10px;
-  border-color: white;
-  font-size: smaller;
+  padding: 2px;
+  border: 1px solid #ffffff;
+  
+  min-height: 50px;
+  resize: none;
+}
+
+.edit-content-textarea {
+  font-size: medium;
+
+  
+  margin: 10px;
+  
+  border: 1px solid #000000;
+  
+  min-height: 50px;
+  resize: none;
+  width: 90%;
+  box-sizing: border-box;
 }
 
 .template-date {
 
 }
-
-.rename-input, .edit-content-textarea {
-    width: 80%;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    padding: 5px;
-    align-items: center;
-  }
-  
-  .edit-content-textarea {
-    min-height: 50px;
-  }
-
-
-
-
-
-
-
-
-
