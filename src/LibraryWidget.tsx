@@ -156,10 +156,17 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   );
 }
 
+/**
+ * LibraryWidget extends ReactWidget, which in turn extends Widget.
+ * Widget is a core component of the Lumino library.
+ * 
+ * This class manages the template connection as well as renders the Library react component
+ */
 export class LibraryWidget extends ReactWidget {
   private templates: Template[];
 
   constructor() {
+    // super calls the parent class (ReactWidget) constructor
     super();
     this.addClass('jp-TemplatesManager');
     this.templates = [];
