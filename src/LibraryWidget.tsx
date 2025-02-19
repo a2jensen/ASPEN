@@ -129,9 +129,9 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   autoFocus // user can type in field without clicking first
                   />
                 ) : (
-                <h4 className="template-name" onClick={() => handleRenameStart(template)}>
+                <span className="template-name" onClick={() => handleRenameStart(template)}>
                   {template.name}
-                </h4>
+                </span>
                 )}
 
                 <div className="template-buttons">
@@ -369,6 +369,3 @@ export class LibraryWidget extends ReactWidget {
       />;
   }
 }
-
-
-
