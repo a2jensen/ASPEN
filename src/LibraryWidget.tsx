@@ -155,7 +155,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 
               {/** Section corresponding to when the template is opened */}
               {expandedTemplates[template.id] && (
-              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+              <div className="template-content"
+                    // cannot drag and drop the template currently being edited
+                    draggable={editingId !== template.id}
+                    onDragStart={(event) => {
+                        if (editingId !== template.id) {
+                          handleDragStart(event, template);
+                        }
+                      }}
+              >
                 
                 {editingId === template.id ? (
                   <textarea

@@ -26,6 +26,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 3px;
 }
 
 .template-toggle {
@@ -33,12 +34,14 @@
   border: none;
   font-size: 1rem;
   font-family: monospace;
+  padding: 3px;
 }
 
 .template-buttons {
   display: flex;
-  background-color: rgb(230, 230, 230);
+  background-color: #ffffff;
   gap: 2px;
+  padding: 3px;
 }
 
 .template-content {
@@ -66,7 +69,7 @@
   font-family: monospace; /* Maintain code styling */
   margin: 10px;
   padding: 10px;
-  min-height: 100px;
+  min-height: 15px;
   resize: none;
   border: 1px solid transparent;
   background-color: #f1f1f1;
