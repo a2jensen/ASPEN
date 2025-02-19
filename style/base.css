@@ -25,7 +25,6 @@
 .template-header {
   display: flex;
   align-items: center;
-  /*gap: 8 px;*/
   justify-content: space-between;
 }
 
@@ -33,18 +32,15 @@
   background-color: none;
   border: none;
   font-size: 1rem;
-  /*width: 80%;*/
-  /*text-align: left;*/
 }
 
 .template-delete {
   margin-left: auto;
-  background-color: rgb(185, 110, 204);
+  background-color: rgb(230, 230, 230);
 }
 
 .template-content {
   padding: 3px;
-  /*border-color: black;*/
 }
 
 .template-name {
@@ -52,40 +48,38 @@
   width: auto;
   padding: 3px;
   min-width: 100px;
-  border: 1px solid none; /*only diff*/
+  border: 1px solid none;
 }
 
+/* style and layout stays the same when editing, only colors border */
 .rename-input {
   font-size: 1 rem;
   width: auto;
   padding: 3px;
   min-width: 100px;
-  border: 1px solid #000000; /*only diff*/
+  border: 1px solid #000000;
 }
 
-.template-snippet {
+.template-snippet,
+.edit-content-textarea {
   font-size: medium;
   white-space: pre-wrap; /* Preserve spaces and line breaks */
   font-family: monospace; /* Maintain code styling */
   margin: 10px;
-  padding: 2px;
-  border: 1px solid #ffffff;
-  
+  padding: 10px;
   min-height: 50px;
   resize: none;
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
 }
 
-.edit-content-textarea {
-  font-size: medium;
+.template-snippet {
+  cursor: pointer;
+}
 
-  
-  margin: 10px;
-  
-  border: 1px solid #000000;
-  
-  min-height: 50px;
-  resize: none;
-  width: 90%;
+/* style and layout stays the same when editing, only colors border */
+.edit-content-textarea {
+  width: 95%;
   box-sizing: border-box;
 }
 

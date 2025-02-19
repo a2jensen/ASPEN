@@ -68,10 +68,24 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const handleEditStart = (template: Template) => {
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
+    console.log("editing mode"); //
+
+    // adjust height when edit starts to fit content
+    // not working!!!
+    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = "auto";
+      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
+      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
+    }
   }
 
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewContent(event.target.value);
+    const textarea = event.target;
+    setNewContent(textarea.value);
+    textarea.style.height = "auto";
+    console.log('scrollHeight:', textarea.scrollHeight); //
+    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically
   }
 
   const handleEditConfirm = (id: string) => {
@@ -114,7 +128,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   🗑
                 </button>
               </div>
-              
+
               {/** Section corresponding to when the template is opened */}
               {expandedTemplates[template.id] && (
               <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
