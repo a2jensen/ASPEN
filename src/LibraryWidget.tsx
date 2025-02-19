@@ -49,6 +49,16 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     event.dataTransfer.effectAllowed = "copy";
   };
 
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      console.log("Template content copied to clipboard");
+    }
+    catch (err) {
+      console.error("Could not copy template: ", err);
+    }
+  }
+
   const handleRenameStart = (template: Template) => {
     setRenamingId(template.id); // enter renaming mode
     setNewName(template.name); // current name is prefilled
@@ -85,7 +95,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     setNewContent(textarea.value);
     textarea.style.height = "auto";
     console.log('scrollHeight:', textarea.scrollHeight); //
-    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically
+    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically // not working !!!
   }
 
   const handleEditConfirm = (id: string) => {
@@ -124,9 +134,23 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                 </h4>
                 )}
 
-                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
-                  🗑
-                </button>
+                <div className="template-buttons">
+                  <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
+                    Copy
+                  </button>
+
+                  <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
+                    Rename
+                  </button>
+
+                  <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
+                    Edit
+                  </button>
+
+                  <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
+                    🗑
+                  </button>
+                </div>
               </div>
 
               {/** Section corresponding to when the template is opened */}

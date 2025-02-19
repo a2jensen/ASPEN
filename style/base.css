@@ -3,10 +3,10 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
-.library-container{
+.library-container {
 }
 
-.library-title{
+.library-title {
   font-size: large;
   font-weight: bolder;
   border-bottom: 2px solid black;
@@ -15,11 +15,11 @@
   padding: 10px;
 }
 
-.library-sort{
+.library-sort {
     
 }
 
-.template-item{
+.template-item {
 }
 
 .template-header {
@@ -29,14 +29,15 @@
 }
 
 .template-toggle {
-  background-color: none;
+  background-color: #ffffff;
   border: none;
   font-size: 1rem;
 }
 
-.template-delete {
-  margin-left: auto;
+.template-buttons {
+  display: flex;
   background-color: rgb(230, 230, 230);
+  gap: 2px;
 }
 
 .template-content {
@@ -74,7 +75,7 @@
 }
 
 .template-snippet {
-  cursor: pointer;
+  cursor: grab;
 }
 
 /* style and layout stays the same when editing, only colors border */
