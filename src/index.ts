@@ -13,12 +13,23 @@ import {
 } from '@jupyterlab/application'
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
+//import { INotebookTracker } from "@jupyterlab/notebook";
+import { combinedExtension } from './cellBackground';
+import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
+
+
+
+//THIS CAN ALL BE MOVED TO SEPERATE FILE LATER!
+
+
 import { levenshtein } from './stringMatch';
 //import { NotebookPanel, INotebookModel } from '@jupyterlab/notebook';
 
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, ) {
-  console.log("ASPEN is activated with styling edits. paste and drop listener added wooo!!!!!!");
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
+  console.log("ASPEN is activated with styling edits. loadFunction implemented....");
+  console.log("styling added");
   const { commands } = app;
+
 
   const libraryWidget = new LibraryWidget();
   const templates = libraryWidget.returnTemplateArray();
@@ -102,12 +113,34 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, ) {
     rank: 1
   });
 
+
   // Adding the library widget to both left and right sidebars
   app.shell.add(libraryWidget, 'right', { rank : 300});
 
   // Restore state if the application restarts
   restorer.add(libraryWidget, 'custom-sidebar-widget');
-};
+
+
+  document.addEventListener("copy", (event: ClipboardEvent) => {
+    const selectedText = window.getSelection()?.toString();
+    if (!selectedText) {return;}
+   
+    const copiedText = "#template start\n" + selectedText + "\n#template end";
+    event.clipboardData?.setData("text/plain", copiedText);
+    event.preventDefault();
+  });
+
+
+  extensions.addExtension({
+    name: '@aspen/codemirror:cell-background',
+    factory: () => ({
+      extension: combinedExtension(),
+      instance: () => combinedExtension(),
+      reconfigure: () => null
+    })
+  });
+
+}
 
 /**
 * Inialize code snippet extension
@@ -115,9 +148,9 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, ) {
 const aspen: JupyterFrontEndPlugin<void> = {
   id : 'input-widget', // subject to change
   autoStart: true,
-  optional: [ILayoutRestorer],
+  optional: [ILayoutRestorer, IEditorExtensionRegistry],
   activate: activate
-}
+};
 
 /**
  * HELPER FUNCTIONS

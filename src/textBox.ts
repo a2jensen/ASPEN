@@ -22,19 +22,35 @@ class PlaceholderWidget extends WidgetType{
     toDOM(){
         const span = document.createElement("span");
         span.textContent = this.name;
-        span.style.background = "#E0E0E0"; 
-        span.style.color = "black";
-        span.style.padding = "1px";
-        span.style.border = "1px dashed black"
-        span.style.borderRadius = "5px";
+        //span.style.background = "#E0E0E0"; 
+        //span.style.color = "black";
+        //span.style.padding = "1px";
+        span.style.textDecorationLine = "underline";
+        span.style.textDecorationColor = "#008000";
+        span.style.textDecorationThickness = "3px";
+
+        //span.style.border = "1px dashed black"
+        //span.style.borderRadius = "5px";
         return span;
     }
 }
 
 
+function getCustomRegExp(words: string[]): RegExp {
+  
+  const escapedWords = words.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); 
+  const pattern = `\\b(${escapedWords.join('|')})\\b`;
+  return new RegExp(pattern, 'g');
+}
+
+//soon change this so its where the words differ and it will be put in a list depending
+//but it has to be for specific cells
+//.doc.String() find where a word is repeated and highlight but in a cell
+const wordsToMatch = ["Example", "Test"];
+
 const placeholderMatcher = new MatchDecorator({
-  // /\b\w+\b/g allows for every word to turn into text box  
-    regexp: /\b[A-Z][a-z]*\b/g , //to get text box [[]] is what is done /\[\[(\w+)\]\]/g
+  
+    regexp:  getCustomRegExp(wordsToMatch), 
     decoration: match => Decoration.replace({
       widget: new PlaceholderWidget(match[0]), //match[1] for [[]]
     })
@@ -47,6 +63,7 @@ const placeholders = ViewPlugin.fromClass(class {
       
       this.placeholders = placeholderMatcher.createDeco(view)
     }
+
     update(update: ViewUpdate) {
       this.placeholders = placeholderMatcher.updateDeco(update, this.placeholders)
     }

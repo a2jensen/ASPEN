@@ -1,125 +1,147 @@
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
-
-
-//all same color differentiate by name
-//active template is colored only
-
+// Imports
 import { Extension, RangeSetBuilder } from '@codemirror/state'; 
-
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import { textBoxExtension } from './textBox';
 
-import { textBoxExtension } from './boxText';
+ 
 
+//highlight will be toggle, so if I click on templae then the instances of that template willl highlight but I need connections first 
+//Im going to work on the tracking of the positions I think ignore the code color and just keep working on, tracking and updating where everything is at  
 
+//drag and drop edit it 
 
-//just make it generate random id b/c i dont want it to depend on line, so random integer the code cell is assigned to and then a color
-//but now I have to make it so that color only activates when I click on template
-function getCellId(view: EditorView): string {
-    const storedId = view.dom.getAttribute('data-cell-id');
-    if (storedId) {
-        return storedId;
-    }
-    //.cm-editor finds the code cells and gets the length of code cells so basically just going up 1
-    //gotta change this
-    const newId = `cell-${document.querySelectorAll('.cm-editor').length}`;
-    view.dom.setAttribute('data-cell-id', newId); 
+interface ISnippet{
+    start_line: number;
+    end_line:number;
+    content: string;
+    //template_ID: number;//not yet i think idk if need
 
-    return newId; 
 }
 
-const cellColors: { [cellId: string]: string } = {};
+const snippetTracker: ISnippet[] = [];
 
-//way it is being stored will change later
-function storeColor(cellId: string, color: string): void {
-    cellColors[cellId] = color;
+
+//error does not update the content when in same cell but in diff cell it good
+function createSnippet(view: EditorView){
+    //issue here it does not find the newest instance of it
+    const docText = view.state.doc.toString();
+    
+    const snippetPattern = /#template start([\s\S]*?)#template end/;
+    const match = snippetPattern.exec(docText);
+    if(match){
+        const startPos = match.index
+        const endPos = startPos + match[0].length;
+        const startLine = view.state.doc.lineAt(startPos).number;
+        const endLine = view.state.doc.lineAt(endPos).number;
+        const content = match[1].trim();
+
+        snippetTracker.push({ start_line: startLine, end_line: endLine, content});
+        console.log("Snippet added:", snippetTracker);
     }
 
-function getStoredColor(cellId: string): string | null {
-    return cellColors[cellId] || null; 
+    
 }
 
 
-//colors for cells/ might just keep one color
-const colors = ['#d9d2e9', '#E5FFE5', '#ead1dc', '#FFF5E5', '#E5FFF5'];
+//error with code when I create an new cell and have a
+//also does not update new content need to add that
+
+function updateSnippetLineNumber(view: EditorView) {
+    console.log("checking for updates");
+
+    const docText = view.state.doc.toString();
+    const snippetPattern = /#template start([\s\S]*?)#template end/g;
+    let match;
+    let snippetIndex = 0; 
+
+    while ((match = snippetPattern.exec(docText)) !== null && snippetIndex < snippetTracker.length) {
+        const startPos = match.index;
+        const endPos = startPos + match[0].length;
+        const newStartLine = view.state.doc.lineAt(startPos).number;
+        const newEndLine = view.state.doc.lineAt(endPos).number;
+
+        // Update only if line numbers have changed
+        if (snippetTracker[snippetIndex].start_line !== newStartLine || snippetTracker[snippetIndex].end_line !== newEndLine
+        ) {
+            console.log(`Snippet ${snippetIndex + 1} moved from ${snippetTracker[snippetIndex].start_line}-${snippetTracker[snippetIndex].end_line} to ${newStartLine}-${newEndLine}`);
+
+            snippetTracker[snippetIndex].start_line = newStartLine;
+            snippetTracker[snippetIndex].end_line = newEndLine;
+
+            console.log("Snippet update:", snippetTracker);
+        }
+
+        snippetIndex++; // Move to next tracked snippet
+    }
+}
+
+
 
 // Assign background color to code cell lines
 function getOrAssignColor(view: EditorView): DecorationSet {
-    
     const builder = new RangeSetBuilder<Decoration>();
-    const cellId = getCellId(view); 
-    const color = getStoredColor(cellId); // getting color that is connected to the id
-    const templateContainer = document.querySelector('.template-container') as HTMLElement;
-    
-    if(color && templateContainer){
-        templateContainer.style.setProperty('--template-color', color);
-    }
 
-    if(color) {
-    //assigns the decoration/ color
-    const background = Decoration.line({
-       
-        attributes: { style: `background-color: ${color};` }
-    });
-    //adds the line to next spot
-    //this is wrong I think this is what I can use if text has been added on top or on bottom or in the middle
-    for (const { from, to } of view.visibleRanges) {
-        for (let pos = from; pos <= to; ) {
+    const docText = view.state.doc.toString();
+
+    const snippetPattern = /#template start([\s\S]*?)#template end/g;
+    let match;
+  
+    
+    while ((match = snippetPattern.exec(docText))) {
+        const startPos = match.index!;
+        const endPos = match.index! + match[0].length;
+        
+
+        for (let pos = startPos; pos <= endPos;) {
             const line = view.state.doc.lineAt(pos);
-            builder.add(line.from, line.from, background);
+            builder.add(line.from, line.from, Decoration.line({
+                attributes: { style: `background-color: #ead1dc` }
+            }));
             pos = line.to + 1;
         }
-     }
-    }
+        
 
+    }
     return builder.finish();
 }
 
 
 
-// Update cell background when the code changes
-
 const updateCellBackground = ViewPlugin.fromClass(
     class {
-        
         decorations: DecorationSet;
-        pasteFlag: boolean;
 
         constructor(view: EditorView) {
             this.decorations = getOrAssignColor(view);
-            this.pasteFlag = false;
-
             
-            //Will only activate when I click on a template? and every instance of that template will highlight
-            view.dom.addEventListener('keydown', (event) => {
-                if ((event.ctrlKey && event.key === 'v') ||( event.metaKey && event.key === 'v')) {
-                    this.pasteFlag = true;
-                    console.log("Ctrl V pressed");
-                }
+            view.dom.addEventListener("paste", (event: ClipboardEvent) => {
+                setTimeout(() =>{
+                    createSnippet(view);
+                }, 10);
+               
             });
-
-            //kepe track of where snippets are, search text for template start template end, 
-     }
-     //update will run and it will adjust depending if more code was added or removed so it will make template background bigger or smaller
+           
+        }
         update(update: ViewUpdate) {
-           
-           
-            if (this.pasteFlag) {
-        
-                const cellId = getCellId(update.view);
-                let color = getStoredColor(cellId);
-
-                //random color from the color list
-                if (!color) {
-                    color = colors[Math.floor(Math.random() * colors.length)];
-                    storeColor(cellId, color);
-                }
-
+            //fix this becasue it updates everytime and it adds a snippet everytime even though position might change
+            //snippet class template class and a manager for the two, snippet class should have the onject maybe no id, / color, line numbers tracking it by, 
+            //everytime the file changes a method updates the snippet start and end line numbers, adding or lessing, , a snippet manager for the last bulletin updating the chagning of line number
+            //snippet class refrence to template object
+            //template class will have a list of the snippets it has or maybe it doesnt need to know, instead the template manager does know
+            //instances do know what they are connected to
+            //code snippet class
+            //snippet manager -  create snipet method which is called whenever u drag and drop or copy and paste, update snippet line number, 
+            // 
+            if (update.docChanged) {
+                //because now instead of checking th entire doc and updating it would only need to check when Snippets update and upadte those
                 this.decorations = getOrAssignColor(update.view);
-                this.pasteFlag = false;
-                
-            } 
+                updateSnippetLineNumber(update.view)
+            }
+
+
         }
     },
     {
@@ -127,10 +149,12 @@ const updateCellBackground = ViewPlugin.fromClass(
     }
 );
 
+
 export function applyBackgroundToActiveCell(view: EditorView): Extension {
-    return [updateCellBackground];
+    return [
+        updateCellBackground];
+}
+export function combinedExtension(): Extension {
+    return [updateCellBackground,textBoxExtension()];
 }
 
-export function combinedExtension(): Extension {
-    return [updateCellBackground, textBoxExtension()];
-}

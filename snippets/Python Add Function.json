@@ -1,0 +1,12 @@
+{
+  "id": "1739474465772",
+  "name": "Python Add Function",
+  "content": "def add2(): \n  sum = 2 + 2\n  return sum",
+  "dateCreated": "2025-02-13T19:21:05.772Z",
+  "dateUpdated": "2025-02-13T21:30:24.456Z",
+  "tags": [],
+  "color": "#FFE694",
+  "connections": [
+    "def add2(): \n  sum = 2 + 2\n  return sum"
+  ]
+}
