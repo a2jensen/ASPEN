@@ -13,27 +13,22 @@ import {
 } from '@jupyterlab/application'
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
+import { TemplatesManager} from './TemplatesManager';
 //import { INotebookTracker } from "@jupyterlab/notebook";
 import { combinedExtension } from './cellBackground';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
-
-
-//THIS CAN ALL BE MOVED TO SEPERATE FILE LATER!
-
-
 import { levenshtein } from './stringMatch';
-//import { NotebookPanel, INotebookModel } from '@jupyterlab/notebook';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("ASPEN is activated with styling edits. loadFunction implemented....");
+  console.log("ASPEN is activated with styling edits. refactoring is done...!");
   console.log("styling added");
   const { commands } = app;
 
-
+  const templatesManager = new TemplatesManager();
   const libraryWidget = new LibraryWidget();
-  const templates = libraryWidget.returnTemplateArray();
-  libraryWidget.id = "jupyterlab-librarywidget-sidebarleft";
+  const templates = templatesManager.templates;
+  libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
 
@@ -93,9 +88,9 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
-      //** ORIGINAL IMPLEMENTATION */
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
+        console.log("SAVING THE SNIPPET");
         libraryWidget.createTemplate(snippet);
       }
     },
