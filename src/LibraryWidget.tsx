@@ -167,7 +167,7 @@ export class LibraryWidget extends ReactWidget {
   }
 
   renameTemplate = (id: string, newName: string) => {
-    this.renameTemplate(id, newName);
+    this.templateManager.renameTemplate(id, newName);
     this.update();
   }
 
@@ -183,9 +183,9 @@ export class LibraryWidget extends ReactWidget {
 
   render() {
     return <Library templates={this.templateManager.templates}
-      deleteTemplate={this.templateManager.deleteTemplate}
-      renameTemplate={this.templateManager.renameTemplate}
-      editTemplate={this.templateManager.editTemplate}
+      deleteTemplate={this.deleteTemplate}
+      renameTemplate={this.renameTemplate}
+      editTemplate={this.editTemplate}
       />;
   }
 }

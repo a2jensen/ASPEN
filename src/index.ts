@@ -21,7 +21,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 import { levenshtein } from './stringMatch';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("ASPEN is activated with styling edits. refactoring is done...!");
+  console.log("ASPEN is activated with styling edits. all fixed i think!");
   console.log("styling added");
   const { commands } = app;
 

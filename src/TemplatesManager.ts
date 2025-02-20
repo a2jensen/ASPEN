@@ -32,7 +32,7 @@ export class TemplatesManager {
         }
         this.templates.push(template);
         
-        this.jsonManager.save(`/snippets/${template.name}${template.id}.json`, {
+        this.jsonManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
@@ -54,7 +54,7 @@ export class TemplatesManager {
         // returns array of templates that dont equal the specified id
         this.templates = this.templates.filter(template => template.id !== id);
 
-        this.jsonManager.delete(`/snippets/${name}${id}.json`).then(() => {
+        this.jsonManager.delete(`/snippets/${name}.json`).then(() => {
             console.log(`Successfully deleted template ${name} ${id}`);
         }).catch(( error : unknown ) => {
             console.error(`Failed to delete template ${name} ${id}`, error);
