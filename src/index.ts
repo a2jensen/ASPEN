@@ -15,7 +15,7 @@ import {
 import { LibraryWidget } from './LibraryWidget';
 import { TemplatesManager} from './TemplatesManager';
 //import { INotebookTracker } from "@jupyterlab/notebook";
-import { combinedExtension } from './snippetManager';
+import { combinedExtension } from './SnippetManager';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 import { levenshtein } from './stringMatch';
