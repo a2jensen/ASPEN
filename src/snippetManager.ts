@@ -31,7 +31,7 @@ class SnippetsManager {
   private snippetTracker: ISnippet[] = [];
 
   //** */
-  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : string ) {
+  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : number ) {
     this.lastSnippetId++;
     this.snippetTracker.push({id: this.lastSnippetId,
         start_line: startLine,
