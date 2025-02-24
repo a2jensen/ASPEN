@@ -11,7 +11,6 @@ export class TemplatesManager {
     constructor(){
         this.templates = []
         this.jsonManager = new ContentsManager();
-        // this.loadTemplates();
     }
 
     /**
@@ -19,7 +18,6 @@ export class TemplatesManager {
      * @param codeSnippet 
      */
     createTemplate( codeSnippet : string ){
-        codeSnippet = "#template start\n" + codeSnippet + "\n#template end";
         const template : Template = {
             id: `${Date.now()}`,
             name: `Snippet ${this.templates.length + 1}`,
