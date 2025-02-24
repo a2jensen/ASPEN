@@ -10,7 +10,6 @@ import {
   ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
-import { textBoxExtension } from './textBox';
 
 /**TODO: Change file name!!! trackingManager
  * Find a way to store the snippets so that when I reload it wont disappear
@@ -157,5 +156,5 @@ const updateCellBackground = ViewPlugin.fromClass(
 
 //Makes sure that both features load together
 export function combinedExtension(): Extension {
-  return [updateCellBackground, textBoxExtension()]; //TextBoxExtension is in here but not needed for now will get rid of probably
+  return [updateCellBackground ]; 
 }
