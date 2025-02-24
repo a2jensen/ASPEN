@@ -14,7 +14,7 @@ import {
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
 //import { INotebookTracker } from "@jupyterlab/notebook";
-import { combinedExtension } from './cellBackground';
+import { combinedExtension } from './snippetManager';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 
