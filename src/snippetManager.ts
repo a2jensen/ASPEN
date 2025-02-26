@@ -23,7 +23,7 @@ interface ISnippet {
   id: number;
   start_line: number;
   end_line: number;
-  //template: number;//what template it is connected to
+  template_id: number;//what template it is connected to
 }
 
 class SnippetsManager {
@@ -31,9 +31,14 @@ class SnippetsManager {
   private lastSnippetId = 0;
   private snippetTracker: ISnippet[] = [];
 
-  createSnippet(view: EditorView,startLine: number,endLine: number ) {
+  //** */
+  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : string ) {
     this.lastSnippetId++;
-    this.snippetTracker.push({id: this.lastSnippetId,start_line: startLine,end_line: endLine });
+    this.snippetTracker.push({id: this.lastSnippetId,
+        start_line: startLine,
+        end_line: endLine, 
+        template_id : template_id
+      });
     console.log('Snippet added:', this.snippetTracker);
   }
 
@@ -238,5 +243,5 @@ const updateCellBackground = ViewPlugin.fromClass(
 
 //Makes sure that both features load together
 export function combinedExtension(): Extension {
-  return [updateCellBackground]; 
+  return [updateCellBackground ]; 
 }
