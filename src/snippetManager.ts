@@ -33,6 +33,7 @@ class SnippetsManager {
   private snippetTracker: ISnippet[] = [];
   private cellMap: Map<EditorView, number> = new Map()
 
+
   assignCellID(view: EditorView) {
     if (!this.cellMap.has(view)) {
       this.cellCounter++;
@@ -41,7 +42,7 @@ class SnippetsManager {
     return this.cellMap.get(view) ?? 0;
   }
 
-  //** */
+  
   createSnippet(view: EditorView,startLine: number,endLine: number ) {
     const cellID = this.assignCellID(view);
 
@@ -125,8 +126,11 @@ class SnippetsManager {
 
     const builder = new RangeSetBuilder<Decoration>();
 
-    const snippetsInCell = this.snippetTracker.filter(s => s.cell_id === cellID);
-    this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+    const snippetsInCell = this.snippetTracker
+    .filter(s => s.cell_id === cellID)
+    .sort((a, b) => a.start_line - b.start_line);
+
+    //this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
     //goes through the snippetTracker and checks startline/endline for each
     for (const snippet of snippetsInCell) {
       const startLine = view.state.doc.line(snippet.start_line);
