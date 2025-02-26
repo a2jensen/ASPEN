@@ -18,8 +18,17 @@ import {
 //if we copy and paste a snippet how  it know
 //Organize it better
 
+//TODO:
+// Rename functions to more appropriate names
+// Fix behavior with how lines update
+// Implement function(s) that will handle interactions between instances and their templates
+// ---> needs to detect when a snippet has changed in terms of content
+// ---> need to compare it agains the template, and then have a button that gives them opportunity to push to template
+// ---> Require edits to the TemplatesManagerClass , possible a function called 
+///-------> editTemplate(newContent) which will update the template accordingly....
 interface ISnippet {
   id: number;
+  content: string;
   start_line: number;
   end_line: number;
   template_id: number;//what template it is connected to
@@ -34,6 +43,7 @@ class SnippetsManager {
   createSnippet(startLine: number,endLine: number,content: string, template_id : number ) {
     this.lastSnippetId++;
     this.snippetTracker.push({id: this.lastSnippetId,
+        content: content, 
         start_line: startLine,
         end_line: endLine, 
         template_id : template_id
@@ -110,6 +120,11 @@ class SnippetsManager {
 
 const snippetsManager = new SnippetsManager();
 
+/**
+ * Initializing View Plugins
+ * This is useful for things like event handlers, adding and managing DOM elements, 
+ * and doing things that depend on the current viewport.
+ */
 const updateCellBackground = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -119,7 +134,6 @@ const updateCellBackground = ViewPlugin.fromClass(
       //if drop then it will collect the content from the template
       view.dom.addEventListener('drop', event => {
         event.preventDefault();
-
         const droppedText = event.dataTransfer?.getData('text/plain');
         if (!droppedText) {
           return;
@@ -150,8 +164,11 @@ const updateCellBackground = ViewPlugin.fromClass(
       //if any changes made to the doc it will update the snippet tracking and decor
       //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
+        //TODO: change function name to UpdateSnippet, need to keep track of the content
         snippetsManager.updateSnippetLineNumber(update.view);
         this.decorations = snippetsManager.getOrAssignColor(update.view);
+
+        //TODO: 
       }
     }
   },
