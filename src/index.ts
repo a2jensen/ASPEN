@@ -13,14 +13,14 @@ import {
 } from '@jupyterlab/application'
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
+//import { SnippetsManager } from './SnippetManager';
 //import { TemplatesManager} from './TemplatesManager';
 //import { INotebookTracker } from "@jupyterlab/notebook";
 import { combinedExtension } from './snippetManager';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("ASPEN is activated with styling edits. all fixed i think!");
-  console.log("styling added");
+  console.log("EDITS MADE!");
   const { commands } = app;
 
   //onst templatesManager = new TemplatesManager();
@@ -34,11 +34,13 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    * Tracks when a snippet is COPIED from the template, we will need to mark it with the template ID
    */
   document.addEventListener("copy", (event) => {
-    console.log("Copy detected, checking to see if its apart of the templates")
+    console.log("Copy detected, checking to see if its apart of the templates");
     // check
 
     // if it apart of the templates, mark it with the template ID on the copyboard system
   })
+
+
 
   /**
    * Tracks when a snippet is PASTED IN, if so we will make it an instance of its template
@@ -52,18 +54,55 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   }) 
 
   /**
-   * Tracks when a snippet is DRAGGED from the template, we will need to mark it with the template ID
+   * NOTE: THIS COULD BE MOVED INTO TEMPLATE MANAGER CLASS
+   * Tracks when a snippet is DRAGGED from the library
+   * Gets marked with the template id before getting saved to the clipboard
    */
+  document.addEventListener("dragstart", (event) => {
+    const dragInfo = event.target as HTMLElement;
+    console.log("What is getting dragged, ", dragInfo);
 
+    if (dragInfo.classList.contains("template-snippet")) {
+      console.log("Whats getting dragged is a template")
+      const templateID = dragInfo.getAttribute("data-template-id");
+      const templateData = {
+        marker: "aspen-template",
+        templateID,
+        content : dragInfo.innerText
+      }
+      console.log("Data before setting to DataTransfer:", templateData);
+      event.dataTransfer?.setData("application/json", JSON.stringify(templateData));
+    }
+  })
 
   /**
-   * Tracks when a snippet is DROPPED IN, so we will make it an instance of its template
-   */
+   * NOTE: THIS COULD BE MOVED INTO SNIPPET MANAGER CLASS
+   * Tracks when a snippet is DROPPED IN,
+   * detects if template marker is apart of what is getting dragged in
+   */ 
   /** 
   document.addEventListener("drop", (event) => {
-    event.preventDefault() // prevent default behavior (e.g. opening file in browser)
     console.log("Possible template/snippet dragged in");
-  }) */
+
+    const jsonData = event.dataTransfer?.getData("application/json");
+
+    if (jsonData){
+      try {
+        const parsedData = JSON.parse(jsonData);
+        console.log("parsedData", parsedData);
+
+        if(parsedData.marker === "aspen-template"){
+          console.log("Whats getting dropped in is a template!")
+
+          // TODO: create a snippet instance
+          
+        }
+
+      } catch (error : unknown ) {
+        console.error("Failed to parse the dropped data as JSON", error)
+      }
+    }
+  })  */
 
   // creating command for creating snippet/template
   commands.addCommand('templates:create', {

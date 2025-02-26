@@ -164,21 +164,33 @@ const updateCellBackground = ViewPlugin.fromClass(
     decorations: DecorationSet;
     constructor(view: EditorView) {
       //implements the decoration
-      this.decorations = snippetsManager.getOrAssignColor(view);
-      //if drop then it will collect the content from the template
+      this.decorations = snippetsManager.AssignColor(view);
+      
+      /**
+       * On drop, will detect if templates are being dropped in
+       */
       view.dom.addEventListener('drop', event => {
         event.preventDefault();
 
+        const clipboard = event.dataTransfer?.getData('application/json');
         const droppedText = event.dataTransfer?.getData('text/plain');
-        if (!droppedText) {
-          return;
-        }
+        console.log("dropped text app/json", clipboard);
+        console.log("dropped text text/plain", droppedText);
 
-        //finds where the text was dropped in the editor
+        if (!clipboard) return;
+        if (!droppedText) return;
+        
+        const parsedText = JSON.parse(clipboard);
+
+        if(!(parsedText.marker === "aspen-template")) return; 
+
         const selection = view.state.selection.main;
         const dropPos = selection.from;
         const startLine = view.state.doc.lineAt(dropPos).number;
+        console.log("Start line", startLine);
         const endLine = startLine + droppedText.split('\n').length - 1;
+        console.log("End line,", endLine);
+        const tempId = 0; // NEEDS TO GET FIXED;;;
 
         snippetsManager.createSnippet(view, startLine, endLine);
 
@@ -194,9 +206,14 @@ const updateCellBackground = ViewPlugin.fromClass(
        * Implement the ability to create a snippet when 'save code snippet' is selected over code
        */
     }
+
+    /**
+     * 
+     * @param update 
+     * if any changes made to the doc it will update the snippet tracking and decor
+     * it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
+     */
     update(update: ViewUpdate) {
-      //if any changes made to the doc it will update the snippet tracking and decor
-      //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
           snippetsManager.updateSnippetLineNumbers(update.view, update);
           this.decorations = snippetsManager.getOrAssignColor(update.view);
