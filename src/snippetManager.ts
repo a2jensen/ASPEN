@@ -11,10 +11,6 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 
-/**TODO: Change file name!!! trackingManager
- * Find a way to store the snippets so that when I reload it wont disappear
- * Delete snippets? How will that work? */
-
 //if we copy and paste a snippet how  it know
 //Organize it better
 
@@ -31,9 +27,10 @@ class SnippetsManager {
   private snippetTracker: ISnippet[] = [];
 
   //** */
-  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : number ) {
+  createSnippet(startLine: number,endLine: number, template_id : number ) {
     this.lastSnippetId++;
-    this.snippetTracker.push({id: this.lastSnippetId,
+    this.snippetTracker.push({
+        id: this.lastSnippetId,
         start_line: startLine,
         end_line: endLine, 
         template_id : template_id
@@ -81,7 +78,7 @@ class SnippetsManager {
    * Potential Addition: Different border colors depending on the template the snippets are connected to.
    * Colors for dark mode and light mode styling.
    */
-  getOrAssignColor(view: EditorView): DecorationSet {
+  AssignColor(view: EditorView): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     //goes through the snippetTracker and checks startline/endline for each
     for (const snippet of this.snippetTracker) {
@@ -115,27 +112,39 @@ const updateCellBackground = ViewPlugin.fromClass(
     decorations: DecorationSet;
     constructor(view: EditorView) {
       //implements the decoration
-      this.decorations = snippetsManager.getOrAssignColor(view);
-      //if drop then it will collect the content from the template
+      this.decorations = snippetsManager.AssignColor(view);
+      
+      /**
+       * On drop, will detect if templates are being dropped in
+       */
       view.dom.addEventListener('drop', event => {
         event.preventDefault();
 
+        const clipboard = event.dataTransfer?.getData('application/json');
         const droppedText = event.dataTransfer?.getData('text/plain');
-        if (!droppedText) {
-          return;
-        }
+        console.log("dropped text app/json", clipboard);
+        console.log("dropped text text/plain", droppedText);
 
-        //finds where the text was dropped in the editor
+        if (!clipboard) return;
+        if (!droppedText) return;
+        
+        const parsedText = JSON.parse(clipboard);
+
+        if(!(parsedText.marker === "aspen-template")) return; 
+
         const selection = view.state.selection.main;
         const dropPos = selection.from;
         const startLine = view.state.doc.lineAt(dropPos).number;
+        console.log("Start line", startLine);
         const endLine = startLine + droppedText.split('\n').length - 1;
+        console.log("End line,", endLine);
+        const tempId = 0; // NEEDS TO GET FIXED;;;
 
-        snippetsManager.createSnippet(view, startLine, endLine, droppedText);
+        snippetsManager.createSnippet(startLine, endLine, tempId);
 
         setTimeout(() => {
           snippetsManager.updateSnippetLineNumber(view);
-          this.decorations = snippetsManager.getOrAssignColor(view);
+          this.decorations = snippetsManager.AssignColor(view);
         }, 10); //a delay to ensure updates are applied after the text is dropped
       });
 
@@ -145,12 +154,17 @@ const updateCellBackground = ViewPlugin.fromClass(
        * Implement the ability to create a snippet when 'save code snippet' is selected over code
        */
     }
+
+    /**
+     * 
+     * @param update 
+     * if any changes made to the doc it will update the snippet tracking and decor
+     * it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
+     */
     update(update: ViewUpdate) {
-      //if any changes made to the doc it will update the snippet tracking and decor
-      //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
         snippetsManager.updateSnippetLineNumber(update.view);
-        this.decorations = snippetsManager.getOrAssignColor(update.view);
+        this.decorations = snippetsManager.AssignColor(update.view);
       }
     }
   },
