@@ -31,7 +31,7 @@ class SnippetsManager {
   private snippetTracker: ISnippet[] = [];
 
   //** */
-  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : number ) {
+  createSnippet(startLine: number,endLine: number,content: string, template_id : number ) {
     this.lastSnippetId++;
     this.snippetTracker.push({id: this.lastSnippetId,
         start_line: startLine,
@@ -130,8 +130,9 @@ const updateCellBackground = ViewPlugin.fromClass(
         const dropPos = selection.from;
         const startLine = view.state.doc.lineAt(dropPos).number;
         const endLine = startLine + droppedText.split('\n').length - 1;
+        const tempId = 0;
 
-        snippetsManager.createSnippet(view, startLine, endLine, droppedText);
+        snippetsManager.createSnippet(startLine, endLine, droppedText, tempId);
 
         setTimeout(() => {
           snippetsManager.updateSnippetLineNumber(view);
