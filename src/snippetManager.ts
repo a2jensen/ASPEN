@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -20,137 +21,95 @@ import {
 //Organize it better
 
 interface ISnippet {
-  id: number;
+  cell_id: number;
   start_line: number;
   end_line: number;
-  template_id: number;//what template it is connected to
+  //template_id: number;//what template it is connected to
 }
 
 class SnippetsManager {
   //need cell id, find a different way to get id
-  private lastSnippetId = 0;
+  private cellCounter = 0;
   private snippetTracker: ISnippet[] = [];
+  private cellMap: Map<EditorView, number> = new Map()
+
+  assignCellID(view: EditorView) {
+    if (!this.cellMap.has(view)) {
+      this.cellCounter++;
+      this.cellMap.set(view, this.cellCounter);
+    }
+    return this.cellMap.get(view) ?? 0;
+  }
 
   //** */
-  createSnippet(view: EditorView,startLine: number,endLine: number,content: string, template_id : string ) {
-    this.lastSnippetId++;
-    this.snippetTracker.push({id: this.lastSnippetId,
+  createSnippet(view: EditorView,startLine: number,endLine: number ) {
+    const cellID = this.assignCellID(view);
+
+    this.snippetTracker.push({
+        cell_id: cellID,
         start_line: startLine,
         end_line: endLine, 
-        template_id : template_id
+        //template_id : template_id
       });
     console.log('Snippet added:', this.snippetTracker);
   }
 
+
+
+
+
   /**
    * Purpose Update line number (tracking)
-   *
-   * #template start
-    #issue when i delete at bottom line i dont want it to move, the end line,
-    #Issue with delete if i delete above it moves the line do not want that,
-    #Get rid of the border and focus on line numbers for now
-
-    
-
+   *  
    * Issues: Relying on template Start and End (fix it: mentioned during meeting that the editor knows where something is deleted or added?)
    * Need to add a cell ID in order to update the correct line numbers b/c wont work if new cell is made
    */
 
-  updateSnippetLineNumber(view: EditorView, update?: ViewUpdate) {
-      const totalLines = view.state.doc.lines;
-      this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+
+  updateSnippetLineNumbers(view: EditorView, update?: ViewUpdate) {
+      if (!update) return;
+      const cellID = this.cellMap.get(view);
+      if (!cellID) return;
   
-      if (!update) {
-        //try t figure out what this does
-          for (const snippet of this.snippetTracker) {
-              if (snippet.start_line < 1 || snippet.start_line > totalLines || snippet.end_line > totalLines) {
-                  console.warn(`Skipping snippet ${snippet.id}: Invalid line range (${snippet.start_line}-${snippet.end_line})`);
-                  continue;
-              }
-              // Track current snippet positions
-              const startPos = view.state.doc.line(snippet.start_line).from;
-              const endPos = view.state.doc.line(snippet.end_line).to;
-  
-              snippet.start_line = view.state.doc.lineAt(startPos).number;
-              snippet.end_line = view.state.doc.lineAt(endPos).number;
+      const oldDoc = update.startState.doc; // Previous document state
+      const newDoc = update.state.doc;      // Updated document state
+      const oldTotalLines = oldDoc.lines;
+      const newTotalLines = newDoc.lines;
+      const lineDifference = newTotalLines - oldTotalLines; // Positive = lines added, Negative = lines removed
+    
+      console.log(`Line count changed: Old Total ${oldTotalLines}, New Total ${newTotalLines}, Line difference: ${lineDifference}`);
+    
+
+      update.changes.iterChanges((fromA, toA, fromB, toB, insertedText) => {
+        const insertedLines = insertedText.toString().split("\n").length - 1;
+        const removedLines = oldDoc.lineAt(toA).number - oldDoc.lineAt(fromA).number;
+    
+        for (const snippet of this.snippetTracker) {
+          let { start_line, end_line } = snippet;
+          if (snippet.cell_id !== cellID) continue; 
+          //  Case 1: Text inserted **before** the snippet → shift it down
+          if (fromA < oldDoc.line(start_line).from) {
+            start_line += insertedLines - removedLines;
+            end_line += insertedLines - removedLines;
           }
-  
-          console.log("Snippet tracker updated (Drop Event):", this.snippetTracker);
-  
-          setTimeout(() => {
-              this.getOrAssignColor(view);
-          }, 10);
-  
-          return;
-      }
-  
-      console.log("Checking for changes in the document...");
-  
-      update.changes.iterChanges((fromA, toA, fromB, toB) => {
-          const doc = view.state.doc;
-  
-          const removedText = doc.sliceString(fromA, toA);
-          const insertedText = doc.sliceString(fromB, toB);
-  
-          const removedLines = removedText.split("\n");
-          const insertedLines = insertedText.split("\n");
-  
-          // Correct how we count full line insertions and deletions
-          const removedFullLines = removedText.includes("\n") ? removedLines.length - 1 : 0;
-          const insertedFullLines = insertedText.includes("\n") ? insertedLines.length - 1 : 0;
-  
-          let netLineChange = insertedFullLines - removedFullLines;
-  
-          //not workingg
-          if (removedText.length > 0 && !removedText.includes("\n") && insertedText.length === 0) {
-            // If a single character or part of a line is deleted, do NOT change netLineChange
-            netLineChange = 0;
+          // Case 2: Text inserted **inside** the snippet → expand snippet range
+          else if (fromA >= oldDoc.line(start_line).from && toA <= oldDoc.line(end_line).to) {
+            end_line += insertedLines - removedLines;
+          }
+    
+          //  Prevent out-of-bounds issues
+          start_line = Math.max(1, Math.min(start_line, newTotalLines));
+          end_line = Math.max(start_line, Math.min(end_line, newTotalLines));
+    
+          snippet.start_line = start_line;
+          snippet.end_line = end_line;
         }
-          // Ensure we are not shifting lines unnecessarily for small text edits
-          //issue here if i do a new line inside the content it considers it this but i should be considered a new line so wrong
-          if (netLineChange === 0) {
-              console.log("Skipping minor text change (no full line change detected).");
-              return;
-          }
-  
-          const startLineB = doc.lineAt(fromB).number;
-          const endLineB = doc.lineAt(toB).number;
-  
-          console.log(`Change detected: Start ${startLineB}, End ${endLineB}, Net Line Change: ${netLineChange}`);
-  
-          this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
-  
-          for (const snippet of this.snippetTracker) {
-            //this is giving me issue i think if i delete a lot 
-              if (snippet.start_line > totalLines || snippet.end_line > totalLines) {
-                  console.warn(`Skipping snippet ${snippet.id}: Out of bounds after edit`);
-                  continue;
-              }
-  
-              // Adjust snippet if Enter was pressed inside
-              //not wokring because enter is being considered as 0 so wont do nothing
-              if (startLineB >= snippet.start_line && startLineB <= snippet.end_line) {
-                  snippet.end_line += netLineChange;
-              }
-  
-              // Adjust snippets positioned below the change
-              if (netLineChange > 0) {
-                  if (snippet.start_line > startLineB) {
-                      snippet.start_line += netLineChange;
-                      snippet.end_line += netLineChange;
-                  }
-                  //if things have been deleted, this  is wromg 
-              } else if (netLineChange < 0) {
-                  if (startLineB < snippet.start_line) {
-                      snippet.start_line = snippet.start_line + netLineChange;
-                      snippet.end_line = snippet.end_line + netLineChange;
-                  }
-              }
-          }
       });
-  
-      console.log("Snippet tracker updated:", this.snippetTracker);
-  }
+    
+      console.log("Updated snippet tracker:", this.snippetTracker);
+    }
+
+
 
 
   /**
@@ -161,11 +120,15 @@ class SnippetsManager {
    */
   
   getOrAssignColor(view: EditorView): DecorationSet {
-    this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+    const cellID = this.cellMap.get(view);
+    if (!cellID) return Decoration.none;
 
     const builder = new RangeSetBuilder<Decoration>();
+
+    const snippetsInCell = this.snippetTracker.filter(s => s.cell_id === cellID);
+    this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
     //goes through the snippetTracker and checks startline/endline for each
-    for (const snippet of this.snippetTracker) {
+    for (const snippet of snippetsInCell) {
       const startLine = view.state.doc.line(snippet.start_line);
       const endLine = view.state.doc.line(snippet.end_line);
 
@@ -216,7 +179,7 @@ const updateCellBackground = ViewPlugin.fromClass(
         snippetsManager.createSnippet(view, startLine, endLine);
 
         setTimeout(() => {
-          snippetsManager.updateSnippetLineNumber(view);
+          snippetsManager.updateSnippetLineNumbers(view);
           this.decorations = snippetsManager.getOrAssignColor(view);
         }, 10); //a delay to ensure updates are applied after the text is dropped
       });
@@ -231,8 +194,9 @@ const updateCellBackground = ViewPlugin.fromClass(
       //if any changes made to the doc it will update the snippet tracking and decor
       //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
-        snippetsManager.updateSnippetLineNumber(update.view, update);
-        this.decorations = snippetsManager.getOrAssignColor(update.view);
+          snippetsManager.updateSnippetLineNumbers(update.view, update);
+          this.decorations = snippetsManager.getOrAssignColor(update.view);
+    
       }
     }
   },

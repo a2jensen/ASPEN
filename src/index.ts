@@ -15,7 +15,7 @@ import {
 import { LibraryWidget } from './LibraryWidget';
 //import { TemplatesManager} from './TemplatesManager';
 //import { INotebookTracker } from "@jupyterlab/notebook";
-import { combinedExtension } from './SnippetManager';
+import { combinedExtension } from './snippetManager';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
 
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
