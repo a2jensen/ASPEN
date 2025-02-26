@@ -10,9 +10,9 @@ import {
   ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
-import { textBoxExtension } from './textBox';
 
-/**TODO: Change file name!!! trackingManager
+
+/**TODO: 
  * Find a way to store the snippets so that when I reload it wont disappear
  * Delete snippets? How will that work? */
 
@@ -31,7 +31,7 @@ class SnippetsManager {
   private lastSnippetId = 0;
   private snippetTracker: ISnippet[] = [];
 
-  createSnippet(view: EditorView,startLine: number,endLine: number,content: string ) {
+  createSnippet(view: EditorView,startLine: number,endLine: number ) {
     this.lastSnippetId++;
     this.snippetTracker.push({id: this.lastSnippetId,start_line: startLine,end_line: endLine });
     console.log('Snippet added:', this.snippetTracker);
@@ -40,36 +40,113 @@ class SnippetsManager {
   /**
    * Purpose Update line number (tracking)
    *
+   * #template start
+    #issue when i delete at bottom line i dont want it to move, the end line,
+    #Issue with delete if i delete above it moves the line do not want that,
+    #Get rid of the border and focus on line numbers for now
+
+    
+
    * Issues: Relying on template Start and End (fix it: mentioned during meeting that the editor knows where something is deleted or added?)
    * Need to add a cell ID in order to update the correct line numbers b/c wont work if new cell is made
    */
-  updateSnippetLineNumber(view: EditorView) {
-    //views the entire document and looks for start and end
-    const docText = view.state.doc.toString();
-    const snippetPattern = /#template start([\s\S]*?)#template end/g;
-    let match;
-    let snippetIndex = 0;
 
-    //looks for the template start and end and if in tracker
-    while ((match = snippetPattern.exec(docText)) !== null && snippetIndex < this.snippetTracker.length) {
-      const startPos = match.index;
-      const endPos = startPos + match[0].length;
-
-      const newStartLine = view.state.doc.lineAt(startPos).number;
-      const newEndLine = view.state.doc.lineAt(endPos).number;
-      //finds the new start and end by looking at where start and end template ^^
-
-      // Update only if line numbers have changed
-      if (this.snippetTracker[snippetIndex].start_line !== newStartLine || this.snippetTracker[snippetIndex].end_line !== newEndLine) {
-        this.snippetTracker[snippetIndex].start_line = newStartLine;
-        this.snippetTracker[snippetIndex].end_line = newEndLine;
-
-        console.log('Snippet update:', this.snippetTracker);
+  updateSnippetLineNumber(view: EditorView, update?: ViewUpdate) {
+      const totalLines = view.state.doc.lines;
+      this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+  
+      if (!update) {
+        //try t figure out what this does
+          for (const snippet of this.snippetTracker) {
+              if (snippet.start_line < 1 || snippet.start_line > totalLines || snippet.end_line > totalLines) {
+                  console.warn(`Skipping snippet ${snippet.id}: Invalid line range (${snippet.start_line}-${snippet.end_line})`);
+                  continue;
+              }
+              // Track current snippet positions
+              const startPos = view.state.doc.line(snippet.start_line).from;
+              const endPos = view.state.doc.line(snippet.end_line).to;
+  
+              snippet.start_line = view.state.doc.lineAt(startPos).number;
+              snippet.end_line = view.state.doc.lineAt(endPos).number;
+          }
+  
+          console.log("Snippet tracker updated (Drop Event):", this.snippetTracker);
+  
+          setTimeout(() => {
+              this.getOrAssignColor(view);
+          }, 10);
+  
+          return;
       }
-
-      snippetIndex++; // Move to next tracked snippet
-    }
+  
+      console.log("Checking for changes in the document...");
+  
+      update.changes.iterChanges((fromA, toA, fromB, toB) => {
+          const doc = view.state.doc;
+  
+          const removedText = doc.sliceString(fromA, toA);
+          const insertedText = doc.sliceString(fromB, toB);
+  
+          const removedLines = removedText.split("\n");
+          const insertedLines = insertedText.split("\n");
+  
+          // Correct how we count full line insertions and deletions
+          const removedFullLines = removedText.includes("\n") ? removedLines.length - 1 : 0;
+          const insertedFullLines = insertedText.includes("\n") ? insertedLines.length - 1 : 0;
+  
+          let netLineChange = insertedFullLines - removedFullLines;
+  
+          //not workingg
+          if (removedText.length > 0 && !removedText.includes("\n") && insertedText.length === 0) {
+            // If a single character or part of a line is deleted, do NOT change netLineChange
+            netLineChange = 0;
+        }
+          // Ensure we are not shifting lines unnecessarily for small text edits
+          //issue here if i do a new line inside the content it considers it this but i should be considered a new line so wrong
+          if (netLineChange === 0) {
+              console.log("Skipping minor text change (no full line change detected).");
+              return;
+          }
+  
+          const startLineB = doc.lineAt(fromB).number;
+          const endLineB = doc.lineAt(toB).number;
+  
+          console.log(`Change detected: Start ${startLineB}, End ${endLineB}, Net Line Change: ${netLineChange}`);
+  
+          this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+  
+          for (const snippet of this.snippetTracker) {
+            //this is giving me issue i think if i delete a lot 
+              if (snippet.start_line > totalLines || snippet.end_line > totalLines) {
+                  console.warn(`Skipping snippet ${snippet.id}: Out of bounds after edit`);
+                  continue;
+              }
+  
+              // Adjust snippet if Enter was pressed inside
+              //not wokring because enter is being considered as 0 so wont do nothing
+              if (startLineB >= snippet.start_line && startLineB <= snippet.end_line) {
+                  snippet.end_line += netLineChange;
+              }
+  
+              // Adjust snippets positioned below the change
+              if (netLineChange > 0) {
+                  if (snippet.start_line > startLineB) {
+                      snippet.start_line += netLineChange;
+                      snippet.end_line += netLineChange;
+                  }
+                  //if things have been deleted, this  is wromg 
+              } else if (netLineChange < 0) {
+                  if (startLineB < snippet.start_line) {
+                      snippet.start_line = snippet.start_line + netLineChange;
+                      snippet.end_line = snippet.end_line + netLineChange;
+                  }
+              }
+          }
+      });
+  
+      console.log("Snippet tracker updated:", this.snippetTracker);
   }
+
 
   /**
    * Purpose: Assigns the color to border based on start and end line
@@ -77,7 +154,10 @@ class SnippetsManager {
    * Potential Addition: Different border colors depending on the template the snippets are connected to.
    * Colors for dark mode and light mode styling.
    */
+  
   getOrAssignColor(view: EditorView): DecorationSet {
+    this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
+
     const builder = new RangeSetBuilder<Decoration>();
     //goes through the snippetTracker and checks startline/endline for each
     for (const snippet of this.snippetTracker) {
@@ -102,6 +182,7 @@ class SnippetsManager {
 
     return builder.finish();
   }
+
 }
 
 const snippetsManager = new SnippetsManager();
@@ -127,7 +208,7 @@ const updateCellBackground = ViewPlugin.fromClass(
         const startLine = view.state.doc.lineAt(dropPos).number;
         const endLine = startLine + droppedText.split('\n').length - 1;
 
-        snippetsManager.createSnippet(view, startLine, endLine, droppedText);
+        snippetsManager.createSnippet(view, startLine, endLine);
 
         setTimeout(() => {
           snippetsManager.updateSnippetLineNumber(view);
@@ -145,7 +226,7 @@ const updateCellBackground = ViewPlugin.fromClass(
       //if any changes made to the doc it will update the snippet tracking and decor
       //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
-        snippetsManager.updateSnippetLineNumber(update.view);
+        snippetsManager.updateSnippetLineNumber(update.view, update);
         this.decorations = snippetsManager.getOrAssignColor(update.view);
       }
     }
@@ -157,5 +238,5 @@ const updateCellBackground = ViewPlugin.fromClass(
 
 //Makes sure that both features load together
 export function combinedExtension(): Extension {
-  return [updateCellBackground, textBoxExtension()]; //TextBoxExtension is in here but not needed for now will get rid of probably
+  return [updateCellBackground]; 
 }
