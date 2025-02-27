@@ -39,6 +39,16 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     event.dataTransfer.effectAllowed = "copy";
   };
 
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      console.log("Template content copied to clipboard");
+    }
+    catch (err) {
+      console.error("Could not copy template: ", err);
+    }
+  }
+
   const handleRenameStart = (template: Template) => {
     setRenamingId(template.id); // enter renaming mode
     setNewName(template.name); // current name is prefilled
@@ -58,10 +68,24 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const handleEditStart = (template: Template) => {
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
+    console.log("editing mode"); //
+
+    // adjust height when edit starts to fit content
+    // not working!!!
+    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = "auto";
+      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
+      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
+    }
   }
 
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewContent(event.target.value);
+    const textarea = event.target;
+    setNewContent(textarea.value);
+    textarea.style.height = "auto";
+    console.log('scrollHeight:', textarea.scrollHeight); //
+    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically // not working !!!
   }
 
   const handleEditConfirm = (id: string) => {
@@ -81,15 +105,9 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "▼" : "▶"} {template.name} 
+                  {expandedTemplates[template.id] ? "v" : ">"}
                 </button>
-                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
-                  X
-                </button>
-              </div>
-              {/** Section corresponding to when the template is opened */}
-              {expandedTemplates[template.id] && (
-              <div className="template-content" draggable onDragStart={(event) => handleDragStart(event, template)}>
+                
                 {renamingId === template.id ? (
                   <input
                   className="rename-input"
@@ -101,10 +119,42 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   autoFocus // user can type in field without clicking first
                   />
                 ) : (
-                <h4 className="template-name" onClick={() => handleRenameStart(template)}>
+                <span className="template-name" onClick={() => handleRenameStart(template)}>
                   {template.name}
-                </h4>
+                </span>
                 )}
+
+                <div className="template-buttons">
+                  <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
+                    Copy
+                  </button>
+
+                  <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
+                    Rename
+                  </button>
+
+                  <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
+                    Edit
+                  </button>
+
+                  <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
+                    🗑
+                  </button>
+                </div>
+              </div>
+
+              {/** Section corresponding to when the template is opened */}
+              {expandedTemplates[template.id] && (
+              <div className="template-content"
+                    // cannot drag and drop the template currently being edited
+                    draggable={editingId !== template.id}
+                    onDragStart={(event) => {
+                        if (editingId !== template.id) {
+                          handleDragStart(event, template);
+                        }
+                      }}
+              >
+                
                 {editingId === template.id ? (
                   <textarea
                     className="edit-content-textarea"
@@ -112,7 +162,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                     onChange={handleEditChange}
                     onBlur={() => handleEditConfirm(template.id)}
                     onKeyDown={(e) => {
-                      if ( e.key === "Enter" && !e.shiftKey){
+                      if (e.key === "Enter" && !e.shiftKey){
                         e.preventDefault()
                         handleEditConfirm(template.id)
                       } else if (e.key === "Tab") {
@@ -146,10 +196,17 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   );
 }
 
+/**
+ * LibraryWidget extends ReactWidget, which in turn extends Widget.
+ * Widget is a core component of the Lumino library.
+ * 
+ * This class manages the template connection as well as renders the Library react component
+ */
 export class LibraryWidget extends ReactWidget {
   templateManager : TemplatesManager;
 
   constructor() {
+    // super calls the parent class (ReactWidget) constructor
     super();
     this.addClass('jp-LibraryWidget');
     this.templateManager = new TemplatesManager();
