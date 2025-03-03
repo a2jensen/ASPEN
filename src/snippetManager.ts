@@ -240,7 +240,10 @@ class SnippetsManager {
         })
       );
     }
-    /** 
+    
+    /** CODE THAT ADDS IN A PUSH BUTTON! */
+
+    /** ADDS IN A MARKER
     console.log("About to run set timeout....")
     setTimeout(() => {
       console.log("Trying to find the snippet lines...")
@@ -265,7 +268,7 @@ class SnippetsManager {
 
         line.appendChild(button);
       })
-    }, 1) */ // timeout to ensure DOM is ready
+    }, 2000) */ // timeout to ensure DOM is ready
     return builder.finish();
   }
 

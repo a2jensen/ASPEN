@@ -26,7 +26,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("added updates to content snippet");
+  console.log("added updates to content snippet!!! 2000");
   const { commands } = app;
 
   const libraryWidget = new LibraryWidget();
