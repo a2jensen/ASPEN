@@ -1,3 +1,7 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { Extension, RangeSetBuilder } from '@codemirror/state';
 //import { Button } from "./Button";
 import { TemplatesManager } from './TemplatesManager';
@@ -21,6 +25,7 @@ import {
  * Snippet Interface
  * 
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface Snippet {
   /** Unique identifier for the cell containing this snippet */
   cell_id: number;
@@ -352,9 +357,7 @@ const ViewPluginExtension = ViewPlugin.fromClass(
         const dropPos = selection.from;
         const startLine = view.state.doc.lineAt(dropPos).number;
         const endLine = startLine + droppedText.split('\n').length - 1;
-        console.log("Start line", startLine);
-        console.log("End line,", endLine);
-
+       
         const templateId = parsedText.templateID;
         console.log("The template id associated with the instance", templateId);
         snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
@@ -396,7 +399,7 @@ const ViewPluginExtension = ViewPlugin.fromClass(
         console.log("End line,", endLine);
         const templateID = parsedText.templateID;
 
-        snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
+        snippetsManager.createSnippetInstance(view, startLine -1, endLine + 1, templateID, droppedText);
 
         setTimeout(() => {
           snippetsManager.updateSnippetInstance(view);
