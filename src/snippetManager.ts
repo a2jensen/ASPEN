@@ -199,7 +199,6 @@ class SnippetsManager {
    * MAY BE USEFUL : https://codemirror.net/examples/gutter/
    */
   AssignDecorations(view: EditorView): DecorationSet {
-    console.log("INSIDE ASSIGN DECORATIONS FUNCTION!")
     const cellID = this.cellMap.get(view);
     if (!cellID) return Decoration.none;
 
@@ -399,7 +398,7 @@ const ViewPluginExtension = ViewPlugin.fromClass(
         console.log("End line,", endLine);
         const templateID = parsedText.templateID;
 
-        snippetsManager.createSnippetInstance(view, startLine -1, endLine + 1, templateID, droppedText);
+        snippetsManager.createSnippetInstance(view, startLine + 1 , endLine - 1, templateID, droppedText);
 
         setTimeout(() => {
           snippetsManager.updateSnippetInstance(view);
