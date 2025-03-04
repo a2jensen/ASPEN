@@ -5,31 +5,47 @@ import { ContentsManager } from "@jupyterlab/services";
 import Template from "./types";
 
 /**
- * Manages in memory array as well as storage of templates within JSON files.
+ * TemplatesManager Class
+ * 
+ * This class is responsible for managing templates within the application.
+ * It handles creation, storage, retrieval, updating, and deletion of templates.
+ * Templates are stored both in-memory as an array and persisted as JSON files.
  */
 export class TemplatesManager {
+    /** Array containing all loaded templates */
     templates : Template[];
+    
+    /** JupyterLab's ContentsManager to handle file operations */
     jsonManager : ContentsManager;
 
+    /**
+     * Initializes a new instance of the TemplatesManager
+     * Sets up an empty templates array and creates a ContentsManager instance
+     */
     constructor(){
         this.templates = []
         this.jsonManager = new ContentsManager();
     }
 
     /**
-     * Adds newly created template to array and JSON
-     * @param codeSnippet 
+     * Creates a new template from the provided code snippet
+     * 
+     * @param codeSnippet - The code content to be saved as a template
+     * 
+     * 1. Creates a new Template object with a unique timestamp ID
+     * 2. Adds the template to the in-memory array
+     * 3. Persists the template as a JSON file in the /snippets directory
      */
     
     createTemplate( codeSnippet : string ){
         const template : Template = {
-            id: `${Date.now()}`,
-            name: `Snippet ${this.templates.length + 1}`,
+            id: `${Date.now()}`,  // Use timestamp as unique ID
+            name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
             content: codeSnippet,
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: '#FFE694',
+            color: '#FFE694',  // Default color
             connections: []
         }
         this.templates.push(template);
@@ -44,18 +60,20 @@ export class TemplatesManager {
             console.error("Error saving file", error);
         });
 
-        // MAY NEED THIS.UPDATE... idk because thats responsible for updating state of the widget....
+        // TODO: May need to call this.update() to refresh the widget state
     }
 
     /**
-     * Deletes template from array and JSON.
-     * @param id 
-     * @param name 
+     * Deletes a template from both the in-memory array and filesystem
+     * 
+     * @param id - The unique identifier of the template to delete
+     * @param name - The name of the template (used for file path construction)
      */
     deleteTemplate( id : string, name: string){
-        // returns array of templates that dont equal the specified id
+        // Filter out the template with the specified ID
         this.templates = this.templates.filter(template => template.id !== id);
 
+        // Delete the corresponding JSON file
         this.jsonManager.delete(`/snippets/${name}.json`).then(() => {
             console.log(`Successfully deleted template ${name} ${id}`);
         }).catch(( error : unknown ) => {
@@ -63,9 +81,21 @@ export class TemplatesManager {
         })
     }
 
+    /**
+     * Renames a template and updates its file path
+     * 
+     * @param id - The unique identifier of the template to rename
+     * @param newName - The new name to assign to the template
+     * 
+     * The method:
+     * 1. Finds the template with the matching ID
+     * 2. Updates its name and dateUpdated properties
+     * 3. Saves the updated template to the original file path
+     * 4. Renames the file to match the new template name
+     */
     renameTemplate(id : string, newName : string) {
         const template = this.templates.find((t) => t.id === id);
-        if (!template) return;
+        if (!template) return;  // Exit if template not found
 
         const oldName = template.name;
         const oldPath = `/snippets/${oldName}.json`;
@@ -87,15 +117,20 @@ export class TemplatesManager {
     }
 
     /**
-     * Properly edits template within the array and JSON.
-     * @param id 
-     * @param newContent 
-     * @returns 
+     * Updates the content of an existing template
+     * 
+     * @param id - The unique identifier of the template to edit
+     * @param newContent - The new content to replace the existing template content
+     * 
+     * The method:
+     * 1. Finds the template with the matching ID
+     * 2. Updates its content and dateUpdated properties
+     * 3. Saves the updated template to its existing file path
      */
     editTemplate (id: string, newContent: string) {
         const template = this.templates.find((t) => t.id === id);
         if (!template)
-          return;
+          return;  // Exit if template not found
     
         template.content = newContent;
         template.dateUpdated = new Date();
@@ -114,10 +149,14 @@ export class TemplatesManager {
       }
 
       /**
-       * Loads in template data on refresh - for data persistence across reloads/sessions
+       * Loads all templates from the filesystem into memory
+       * 
+       * Used to initialize or refresh the templates array using the persisted JSON files.
+       * It provides data persistence across browser reloads and sessions.
+       * 
        */
       loadTemplates(){
-        // clear existing templates before loading
+        // Clear existing templates before loading
         this.templates = [];
         this.jsonManager.get('/snippets').then(model => {
             if (model.type === 'directory') {
@@ -126,13 +165,13 @@ export class TemplatesManager {
                   try {
                     const templateData = JSON.parse(fileModel.content as string);
                     const template: Template = {
-                      id: templateData.id || `${Date.now()}`,
-                      name: templateData.name || file.name,
-                      content: templateData.content || "",
+                      id: templateData.id || `${Date.now()}`,  // Use provided ID or generate new one
+                      name: templateData.name || file.name,    // Use provided name or filename
+                      content: templateData.content || "",     // Use provided content or empty string
                       dateCreated: new Date(templateData.dateCreated || Date.now()),
                       dateUpdated: new Date(templateData.dateUpdated || Date.now()),
-                      tags: templateData.tags || [],
-                      color: templateData.color || "#ffffff",
+                      tags: templateData.tags || [],           // Use provided tags or empty array
+                      color: templateData.color || "#ffffff",  // Use provided color or default white
                       connections : []
                     };
                     this.templates.push(template);
@@ -148,5 +187,30 @@ export class TemplatesManager {
           }).catch(error => {
             console.error("Error fetching snippets directory:", error);
           });
+      }
+
+      /**
+       * Updates a template with changes from its snippet instance
+       * 
+       * This method is intended to synchronize changes between template objects
+       * and their instances in the application.
+       * 
+       * @param snippet_instance - The content of the snippet
+       * @param template_id - The ID of the template to update
+       * 
+       * TODO: Implementation is incomplete - needs to:
+       * 1. Find the template with matching template_id
+       * 2. Update the template with the content from snippet_instance
+       */
+      propagateChanges( snippetContent : string, template_id : string){
+        /**
+         * TODO: Implement this method to:
+         * 1. Find the template using template_id in the templates array
+         * 2. Update the template content with the snippet_instance
+         * 3. Save the updated template to the filesystem
+         */
+        
+        const template = this.templates.filter( template => template.id === template_id);
+        template[0].content = snippetContent;
       }
 }

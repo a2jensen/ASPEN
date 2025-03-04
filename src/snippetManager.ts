@@ -1,9 +1,6 @@
-/* eslint-disable curly */
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { Extension, RangeSetBuilder } from '@codemirror/state';
+//import { Button } from "./Button";
+import { TemplatesManager } from './TemplatesManager';
 import {
   Decoration,
   DecorationSet,
@@ -20,25 +17,63 @@ import {
  * Should I let them know it will cause issues if they delete the line? or should I make it so ur unable to delete this line
  * */
 
-//if we copy and paste a snippet how  it know
-//Organize it better
-
-interface ISnippet {
+/**
+ * Snippet Interface
+ * 
+ */
+interface Snippet {
+  /** Unique identifier for the cell containing this snippet */
   cell_id: number;
+  
+  /** content of the snippet */
+  content : string;
+  
+  /** The starting line number in the editor */
   start_line: number;
+  
+  /** The ending line number in the editor */
   end_line: number;
-  //template_id: number;//what template it is connected to
+  
+  /** Reference to the associated template ID */
+  template_id: string;
 }
 
+/**
+ * SnippetsManager Class
+ * 
+ * Responsible for managing snippet instances within the editor.
+ * This class handles the creation, tracking, updating, and visualization of snippets.
+ * It maintains the connection between snippet/template instances in the editor and their templates.
+ */
 class SnippetsManager {
-  //need cell id, find a different way to get id
+  /** Counter for generating unique cell IDs */
   private cellCounter = 0;
-  private snippetTracker: ISnippet[] = [];
-  //this assigns the editor to a number
-  //this was suggested by GPT cause I couldnt figure out how to do it 
+  
+  /** Array to keep track of all active snippets */
+  private snippetTracker: Snippet[] = [];
+  
+  /** Map to associate editor views with their unique cell IDs */
   private cellMap: Map<EditorView, number> = new Map()
+  
+  private templatesManager : TemplatesManager;
+
+  /**
+   * Initializes a new instance of the SnippetsManager
+   */
+  constructor( templates : TemplatesManager ){
+    this.templatesManager = templates;
+  }
 
 
+  /**
+   * Assigns a unique cell ID to an editor view
+   * 
+   * @param view - The editor view to assign an ID to
+   * @returns The assigned cell ID
+   * 
+   * If the view already has an ID, returns the existing ID.
+   * Otherwise, increments the counter and assigns a new ID.
+   */
   assignCellID(view: EditorView) {
     if (!this.cellMap.has(view)) {
       this.cellCounter++;
@@ -47,30 +82,48 @@ class SnippetsManager {
     return this.cellMap.get(view) ?? 0;
   }
 
-  removeCell(view: EditorView) {
-    if (this.cellMap.has(view)) {
-      this.cellMap.delete(view);  // Remove the view from tracking
-    }
-  }
-  
-  
-  createSnippet(view: EditorView,startLine: number,endLine: number ) {
+  /**
+   * Creates a new snippet instance in the editor
+   * 
+   * @param view - The editor view where the snippet is being created
+   * @param startLine - The starting line number of the snippet
+   * @param endLine - The ending line number of the snippet
+   * @param templateID - The ID of the template this snippet is based on
+   * @param content - The code content of the snippet
+   * 
+   * Method is called when a template is dropped or pasted into the editor.
+   * It creates a new Snippet object and adds it to the snippetTracker.
+   */
+  createSnippetInstance(view: EditorView, startLine: number, endLine: number, templateID: string, content: string) {
     const cellID = this.assignCellID(view);
-
-    this.snippetTracker.push({
-        cell_id: cellID,
-        start_line: startLine,
-        end_line: endLine, 
-        //template_id : template_id
-      });
-    console.log('Snippet added:', this.snippetTracker);
+    const snippet = {
+      cell_id: cellID, 
+      content: content,
+      start_line: startLine,
+      end_line: endLine,
+      template_id: templateID
+    }
+    console.log("Snippet object being created: ", snippet);
+    this.snippetTracker.push(snippet);
   }
-
 
   /**
-   * Purpose Update line number (tracking)
+   * Updates snippet line positions after editor changes
+   * 
+   * @param view - The editor view being updated
+   * @param update - The ViewUpdate object containing information about the changes
+   * 
+   * This method adjusts the start and end line numbers of snippets when:
+   * - Text is inserted or deleted before a snippet (shifts the snippet)
+   * - Text is inserted or deleted within a snippet (expands or contracts the snippet)
+   * 
+   * Known issues:
+   * - Relies on template start and end positions which may not be accurate
+   * - Requires cell ID to update the correct line numbers when multiple cells exist
+   * 
+   * TODO: Update the content of the snippets as well, not just their positions
    */
-  updateSnippetLineNumbers(view: EditorView, update?: ViewUpdate) {
+  updateSnippetInstance(view: EditorView, update?: ViewUpdate) {
       if (!update) return;
       const cellID = this.cellMap.get(view);
       if (!cellID) return;
@@ -104,27 +157,52 @@ class SnippetsManager {
     
           snippet.start_line = start_line;
           snippet.end_line = end_line;
+
+          //TODO: Update contents of the snippets as well, not just their position
+          const startPos = newDoc.line(start_line).from;
+          const endPos = newDoc.line(end_line).to;
+          const updatedSnippet = newDoc.sliceString(startPos, endPos);
+          console.log("Snippet OLD", snippet.content);
+          console.log("Snippet NEW", updatedSnippet);
+          snippet.content = updatedSnippet;
+
+          console.log("Updated Snippet content", {
+            snippet_id : snippet.template_id,
+            start_line,
+            end_line,
+            contentLength : updatedSnippet.length
+          })
         }
       });
-    
       console.log("Updated snippet tracker:", this.snippetTracker);
     }
 
-
-
-
   /**
-   * Purpose: Assigns the color to border based on start and end line
-   *
-   * Potential Addition: Different border colors depending on the template the snippets are connected to.
-   * Colors for dark mode and light mode styling.
+   * Creates decorations to visually highlight snippets in the editor
+   * 
+   * @param view - The editor view to apply decorations to
+   * @returns A DecorationSet containing all the visual decorations for snippets
+   * 
+   * This method creates border decorations around snippets to visually distinguish them
+   * in the editor. It applies borders to the start and end lines of each snippet.
+   * It also applies a button to the 
+   * 
+   * Potential enhancements:
+   * - Use different border colors based on the template type
+   * - Implement different color schemes for dark and light editor modes
+   * 
+   * MAY BE USEFUL : https://codemirror.net/examples/gutter/
    */
-  
-  getOrAssignColor(view: EditorView): DecorationSet {
+  AssignDecorations(view: EditorView): DecorationSet {
+    console.log("INSIDE ASSIGN DECORATIONS FUNCTION!")
     const cellID = this.cellMap.get(view);
     if (!cellID) return Decoration.none;
 
     const builder = new RangeSetBuilder<Decoration>();
+    const button = document.createElement("button");
+    button.innerHTML = `BUTTON`;
+    button.className = "snippet-instance-button";
+    button.title = "Propagate changes"
 
     //organizes it in order otherwise program will crash
     const snippetsInCell = this.snippetTracker
@@ -136,92 +214,227 @@ class SnippetsManager {
     for (const snippet of snippetsInCell) {
       const startLine = view.state.doc.line(snippet.start_line);
       const endLine = view.state.doc.line(snippet.end_line);
+      
+      /** Reposition the button */
+      button.style.position = "absolute";
+      button.style.right = "5px";
+      button.style.right = "2px";
 
-      // Apply borders to snippet start & end, currently at pink can change later
+      // Remove empty snippets (where start line equals end line)
+      if (startLine == endLine) {
+        continue;
+      }
+
+      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
       builder.add(startLine.from, startLine.from, Decoration.line({
-          attributes: {
-            style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`
-          }
+          attributes: { 
+            style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class: 'snippet-start-line'
+           },
         })
       );
-
+    
       builder.add(endLine.from, endLine.from, Decoration.line({
-          attributes: {
-            style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`
-          }
+          attributes: { 
+            style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class : 'snippet-end-line'
+          },
         })
       );
     }
+    
+    /** CODE THAT ADDS IN A PUSH BUTTON! */
 
+    /** ADDS IN A MARKER
+    console.log("About to run set timeout....")
+    setTimeout(() => {
+      console.log("Trying to find the snippet lines...")
+      const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
+      console.log("Start lines found : ", startLines)
+
+      startLines.forEach(line => {
+        if (line.querySelector('.snippet-button')) return;
+
+        const button = document.createElement('button');
+        button.className = 'snippet-button';
+        button.innerHTML = '↑';
+        button.title = 'Update template';
+        button.style.position = 'absolute';
+        button.style.right = '10px';
+        button.style.top = '2px';
+
+        button.addEventListener('click', () => {
+          console.log("Button clicked");
+          // logic for pushing up ot template
+        })
+
+        line.appendChild(button);
+      })
+    }, 2000) */ // timeout to ensure DOM is ready
     return builder.finish();
   }
 
+  /**
+   * Loads snippets from persistent storage
+   * 
+   * This method is intended to restore snippets when the editor is reopened.
+   * 
+   * TODO: Implement this method to load saved snippets from storage
+   */
+  loadSnippets() {
+    // TODO: Implementation needed
+    // 1. Load snippets from JSON files 
+    // 2. Recreate snippet objects
+    // 3. Update snippet tracker array
+  }
+
+  /**
+   * Propagates changes from snippet instances to their templates
+   */
+  pushSnippetInstanceChanges(snippet : Snippet ) {
+    // 1. Get the content of the specific snippet as well as the snippet ID
+    const snippetContent = snippet.content;
+    const templateId = snippet.template_id;
+    
+    this.templatesManager.propagateChanges(snippetContent, templateId);
+  }
 }
 
-const snippetsManager = new SnippetsManager();
-/**Goal is to add blanks on bottom and top but dont count them as a line so subtract and add 1 to start and end line
- * Add the blank lines to template managers, for drop, and only need to fix it here because that is the initalizer
- *   Should I let them know it will cause issues if they delete the line? or should I make it so ur unable to delete this line
+// Create an instance of the SnippetsManager
+const snippetsManager = new SnippetsManager(new TemplatesManager());
+
+/**
+ * CodeMirror ViewPlugin for Snippet Management
+ * 
+ * This plugin integrates the SnippetsManager Class with CodeMirror's view system.
+ * It is in charge of handling editor events, and applying/updating decorations when the view updates.
  */
-const updateCellBackground = ViewPlugin.fromClass(
+const ViewPluginExtension = ViewPlugin.fromClass(
   class {
+    /** The current set of decorations in the editor */
     decorations: DecorationSet;
+    
+    /**
+     * Initializes the plugin for a specific editor view
+     * 
+     * @param view - The editor view this plugin instance is attached to
+     * 
+     * Sets up the initial decorations and event listeners for:
+     * - Paste events: Handle pasting templates into the editor
+     * - Drop events: Handle drag-and-drop of templates into the editor
+     */
     constructor(view: EditorView) {
-      //implements the decoration
-      this.decorations = snippetsManager.getOrAssignColor(view);
-      //if drop then it will collect the content from the template
+      // Initialize decorations
+      this.decorations = snippetsManager.AssignDecorations(view);
+      
+      /**
+       * Event listener for paste events
+       * 
+       * Handles when a template is pasted into the editor from the clipboard.
+       * Parses the clipboard data and creates a new snippet instance if it contains
+       * a valid template.
+       */
+      view.dom.addEventListener("paste", event => {
+        event.preventDefault();
+
+        const clipboardContent = event.clipboardData?.getData('application/json');
+        const droppedText = event.clipboardData?.getData('text/plain');
+        console.log("dropped text app/json", clipboardContent);
+        console.log("dropped text text/plain", droppedText);
+
+        if (!clipboardContent) return;
+        if(!droppedText) return;
+
+        const parsedText = JSON.parse(clipboardContent);
+        if(!(parsedText.marker === "aspen-template")) return; 
+        
+        const selection = view.state.selection.main;
+        const dropPos = selection.from;
+        const startLine = view.state.doc.lineAt(dropPos).number;
+        const endLine = startLine + droppedText.split('\n').length - 1;
+        console.log("Start line", startLine);
+        console.log("End line,", endLine);
+
+        const templateId = parsedText.templateID;
+        console.log("The template id associated with the instance", templateId);
+        snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
+
+        setTimeout(() => {
+          snippetsManager.updateSnippetInstance(view);
+          this.decorations = snippetsManager.AssignDecorations(view);
+        }, 10); // A small delay to ensure updates are applied after the text is pasted
+      })
+
+      /**
+       * Event listener for drop events
+       * 
+       * Handles when a template is dragged and dropped into the editor.
+       * Parses the drop data and creates a new snippet instance if it contains
+       * a valid template.
+       */
       view.dom.addEventListener('drop', event => {
         event.preventDefault();
 
+        const dragContent = event.dataTransfer?.getData('application/json');
         const droppedText = event.dataTransfer?.getData('text/plain');
-        if (!droppedText) {
-          return;
-        }
-        //finds where the text was dropped in the editor
-        //the drop text will consist of two empty lines
+        console.log("dropped text app/json", dragContent);
+        console.log("dropped text text/plain", droppedText);
+
+        if (!dragContent) return;
+        if (!droppedText) return;
+        
+        const parsedText = JSON.parse(dragContent);
+
+        if(!(parsedText.marker === "aspen-template")) return; 
+
         const selection = view.state.selection.main;
         const dropPos = selection.from;
         //added a minus 1
         const startLine = view.state.doc.lineAt(dropPos).number;
         
         const endLine = startLine + droppedText.split('\n').length - 1;
-      //added two blank lines after and before snippet idk if we wanna make it so u cant delete it?
-        snippetsManager.createSnippet(view, startLine + 1, endLine - 1);
+        console.log("End line,", endLine);
+        const templateID = parsedText.templateID;
+
+        snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
 
         setTimeout(() => {
-          snippetsManager.updateSnippetLineNumbers(view);
-          this.decorations = snippetsManager.getOrAssignColor(view);
-        }, 10); //a delay to ensure updates are applied after the text is dropped
+          snippetsManager.updateSnippetInstance(view);
+          this.decorations = snippetsManager.AssignDecorations(view);
+        }, 10); // A small delay to ensure updates are applied after the text is dropped
       });
-
-      /**Do:
-       * Implement the ability to create a snippet using paste (restrictions on what is supposed to be made a snippet when pasted,
-       * such as length what is minimum? Is Paste an option we are having for snippets?)
-       * Implement the ability to create a snippet when 'save code snippet' is selected over code
-       */
-      /*
-      view.dom.addEventListener('paste', event =>{
-        //add the start line and end line once passted
-        snippetsManager.createSnippet(view, startLine, endLine);
-      })
-      */
     }
+
+    /**
+     * Updates the plugin state when changes occur in the editor
+     * 
+     * @param update - The ViewUpdate object containing information about the changes
+     * 
+     * This method is called whenever the document changes. It:
+     * 1. Updates the positions of snippet instances via snippetsManager
+     * 2. Refreshes the decorations to reflect the current state
+     */
     update(update: ViewUpdate) {
-      //if any changes made to the doc it will update the snippet tracking and decor
-      //it knows when things are being typed so therefore it knows the editor just find out in which line it is being typed and increment or add it!
       if (update.docChanged) {
-          snippetsManager.updateSnippetLineNumbers(update.view, update);
-          this.decorations = snippetsManager.getOrAssignColor(update.view);
-    
+          snippetsManager.updateSnippetInstance(update.view, update);
+          this.decorations = snippetsManager.AssignDecorations(update.view);
       }
     }
   },
   {
+    // Provide the decorations from this plugin to CodeMirror
     decorations: v => v.decorations
   }
 );
 
-//Makes sure that both features load together
-export function combinedExtension(): Extension {
-  return [updateCellBackground ]; 
+/**
+ * Exports the CodeMirror extension
+ * 
+ * @returns An Extension array that can be added to a CodeMirror editor
+ * 
+ * This is the main entry point for integrating this functionality
+ * with a CodeMirror editor instance.
+ */
+export function CodeMirrorExtension(): Extension {
+  return [ViewPluginExtension]; 
 }
