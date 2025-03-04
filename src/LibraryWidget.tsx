@@ -33,8 +33,10 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     }));
   }; 
 
+  
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
-    event.dataTransfer.setData("text/plain", template.content);
+    //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
+    event.dataTransfer.setData("text/plain", "\n"+template.content + "\n");
     event.dataTransfer.setData("application/json", JSON.stringify(template)); // Store full template info
     event.dataTransfer.effectAllowed = "copy";
   };

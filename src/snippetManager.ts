@@ -15,7 +15,10 @@ import {
 
 /**TODO: 
  * Find a way to store the snippets so that when I reload it wont disappear
- * Delete snippets? How will that work? */
+ * Delete snippets? How will that work? 
+ * Add a space each time i drop something and only track the before and after of that line.
+ * Should I let them know it will cause issues if they delete the line? or should I make it so ur unable to delete this line
+ * */
 
 //if we copy and paste a snippet how  it know
 //Organize it better
@@ -31,6 +34,8 @@ class SnippetsManager {
   //need cell id, find a different way to get id
   private cellCounter = 0;
   private snippetTracker: ISnippet[] = [];
+  //this assigns the editor to a number
+  //this was suggested by GPT cause I couldnt figure out how to do it 
   private cellMap: Map<EditorView, number> = new Map()
 
 
@@ -42,6 +47,12 @@ class SnippetsManager {
     return this.cellMap.get(view) ?? 0;
   }
 
+  removeCell(view: EditorView) {
+    if (this.cellMap.has(view)) {
+      this.cellMap.delete(view);  // Remove the view from tracking
+    }
+  }
+  
   
   createSnippet(view: EditorView,startLine: number,endLine: number ) {
     const cellID = this.assignCellID(view);
@@ -56,17 +67,9 @@ class SnippetsManager {
   }
 
 
-
-
-
   /**
    * Purpose Update line number (tracking)
-   *  
-   * Issues: Relying on template Start and End (fix it: mentioned during meeting that the editor knows where something is deleted or added?)
-   * Need to add a cell ID in order to update the correct line numbers b/c wont work if new cell is made
    */
-
-
   updateSnippetLineNumbers(view: EditorView, update?: ViewUpdate) {
       if (!update) return;
       const cellID = this.cellMap.get(view);
@@ -74,31 +77,28 @@ class SnippetsManager {
   
       const oldDoc = update.startState.doc; // Previous document state
       const newDoc = update.state.doc;      // Updated document state
-      const oldTotalLines = oldDoc.lines;
-      const newTotalLines = newDoc.lines;
-      const lineDifference = newTotalLines - oldTotalLines; // Positive = lines added, Negative = lines removed
-    
-      console.log(`Line count changed: Old Total ${oldTotalLines}, New Total ${newTotalLines}, Line difference: ${lineDifference}`);
-    
+      const newTotalLines = newDoc.lines; //total of line after changes
+      
 
+      //from A and to A are the new things that were added, so we checking it with old doc to see what was inserted and what was not
       update.changes.iterChanges((fromA, toA, fromB, toB, insertedText) => {
-        const insertedLines = insertedText.toString().split("\n").length - 1;
-        const removedLines = oldDoc.lineAt(toA).number - oldDoc.lineAt(fromA).number;
+        const insertedLines = insertedText.toString().split("\n").length - 1; //how many new line inerted
+        const removedLines = oldDoc.lineAt(toA).number - oldDoc.lineAt(fromA).number; //how many liines removed
     
         for (const snippet of this.snippetTracker) {
           let { start_line, end_line } = snippet;
           if (snippet.cell_id !== cellID) continue; 
-          //  Case 1: Text inserted **before** the snippet → shift it down
+          //  Text inserted
           if (fromA < oldDoc.line(start_line).from) {
             start_line += insertedLines - removedLines;
             end_line += insertedLines - removedLines;
           }
-          // Case 2: Text inserted **inside** the snippet → expand snippet range
+          //Text inserted inside the snippet → expand snippet range
           else if (fromA >= oldDoc.line(start_line).from && toA <= oldDoc.line(end_line).to) {
             end_line += insertedLines - removedLines;
           }
     
-          //  Prevent out-of-bounds issues
+          //Prevent out-of-bounds issues
           start_line = Math.max(1, Math.min(start_line, newTotalLines));
           end_line = Math.max(start_line, Math.min(end_line, newTotalLines));
     
@@ -126,6 +126,7 @@ class SnippetsManager {
 
     const builder = new RangeSetBuilder<Decoration>();
 
+    //organizes it in order otherwise program will crash
     const snippetsInCell = this.snippetTracker
     .filter(s => s.cell_id === cellID)
     .sort((a, b) => a.start_line - b.start_line);
@@ -158,7 +159,10 @@ class SnippetsManager {
 }
 
 const snippetsManager = new SnippetsManager();
-
+/**Goal is to add blanks on bottom and top but dont count them as a line so subtract and add 1 to start and end line
+ * Add the blank lines to template managers, for drop, and only need to fix it here because that is the initalizer
+ *   Should I let them know it will cause issues if they delete the line? or should I make it so ur unable to delete this line
+ */
 const updateCellBackground = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -173,14 +177,16 @@ const updateCellBackground = ViewPlugin.fromClass(
         if (!droppedText) {
           return;
         }
-
         //finds where the text was dropped in the editor
+        //the drop text will consist of two empty lines
         const selection = view.state.selection.main;
         const dropPos = selection.from;
+        //added a minus 1
         const startLine = view.state.doc.lineAt(dropPos).number;
+        
         const endLine = startLine + droppedText.split('\n').length - 1;
-
-        snippetsManager.createSnippet(view, startLine, endLine);
+      //added two blank lines after and before snippet idk if we wanna make it so u cant delete it?
+        snippetsManager.createSnippet(view, startLine + 1, endLine - 1);
 
         setTimeout(() => {
           snippetsManager.updateSnippetLineNumbers(view);
@@ -193,6 +199,12 @@ const updateCellBackground = ViewPlugin.fromClass(
        * such as length what is minimum? Is Paste an option we are having for snippets?)
        * Implement the ability to create a snippet when 'save code snippet' is selected over code
        */
+      /*
+      view.dom.addEventListener('paste', event =>{
+        //add the start line and end line once passted
+        snippetsManager.createSnippet(view, startLine, endLine);
+      })
+      */
     }
     update(update: ViewUpdate) {
       //if any changes made to the doc it will update the snippet tracking and decor

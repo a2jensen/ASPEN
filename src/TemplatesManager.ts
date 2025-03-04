@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/quotes */
 import { ContentsManager } from "@jupyterlab/services";
 import Template from "./types";
 
@@ -17,6 +20,7 @@ export class TemplatesManager {
      * Adds newly created template to array and JSON
      * @param codeSnippet 
      */
+    
     createTemplate( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,
