@@ -7,7 +7,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import Template from "./types";
+import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
 /**
@@ -156,10 +156,10 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 export class LibraryWidget extends ReactWidget {
   templateManager : TemplatesManager;
 
-  constructor() {
+  constructor( templatesManager : TemplatesManager ) {
     super();
     this.addClass('jp-LibraryWidget');
-    this.templateManager = new TemplatesManager();
+    this.templateManager = templatesManager;
     this.loadTemplates();
   }
 
