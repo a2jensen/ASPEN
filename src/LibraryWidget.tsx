@@ -107,7 +107,13 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
                   {expandedTemplates[template.id] ? "v" : ">"}
                 </button>
-                
+                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
+                  X
+                </button>
+              </div>
+              {/** Section corresponding to when the template is opened */}
+              {expandedTemplates[template.id] && (
+              <div className="template-content">
                 {renamingId === template.id ? (
                   <input
                   className="rename-input"
@@ -181,7 +187,12 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                     autoFocus
                   />
                 ) : (
-                  <p className="template-snippet" onClick={() => handleEditStart(template)}>
+                  <p className="template-snippet" 
+                    onClick={() => handleEditStart(template)}
+                    data-template-id={template.id}  
+                    draggable 
+                    onDragStart={(event) => handleDragStart(event, template)}
+                  >
                     {template.content}
                   </p>
                 )}

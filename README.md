@@ -21,14 +21,7 @@ Personal Branches: Our own branches where we will handle development of our assi
     - Once you are satisfied with the current version of your branch after merging with development, create a pull request to push it into development
 
 
-
-##  File Setup
-
--Sidebar Component
--CodeSnippet Component
--Heatmap Component
-
-## Developer Setup (written by us)
+## Developer Setup
 These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.
 
 - Run this command to create a named conda environment
@@ -40,8 +33,7 @@ activate the environment
 ```bash
 conda activate aspen
 ```
-
-install project dependencies
+The repo has enough code in it to see it working in your JupyterLab. Run the following command to install the initial project dependencies and install the extension into the JupyterLab environment.
 ```bash
 pip install -ve .
 ```
@@ -66,6 +58,9 @@ jupyter lab
 ```
 
 Afterwords, navigate to the dev console and look for a message along the lines of "JupyterLab extension jupyterlab_apod is activated!" You should be setup now.
+
+Instead of having to run `jlpm run build` and `jlpm run watch`, we have a make file setup.
+Running `make build` will automatically run these commands for you.
 
 ## Github Commands
 

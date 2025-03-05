@@ -3,81 +3,103 @@
 //index add cellbackground
 
 /**
- * This file acts as the main entry point, where you import and export all your plugins or extensions.
+ * This file acts as the main entry point of the extension, where you import and export all your plugins or extensions.
+ * It registers the UI components as well as the commands. 
  */
 
 import {
-  ILayoutRestorer, // restore widgets layout and state on refresh
-  JupyterFrontEnd, 
-  JupyterFrontEndPlugin,
+  ILayoutRestorer, // Restore widgets layout and state on refresh
+  JupyterFrontEnd, // Main JupyterLab application interface
+  JupyterFrontEndPlugin, // Interface for JupyterLab plugins
 } from '@jupyterlab/application'
 // https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
 import { LibraryWidget } from './LibraryWidget';
-//import { TemplatesManager} from './TemplatesManager';
-//import { INotebookTracker } from "@jupyterlab/notebook";
-import { combinedExtension } from './SnippetManager';
-import { IEditorExtensionRegistry } from '@jupyterlab/codemirror';
+import { CodeMirrorExtension } from './snippetManager';
+import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface for registering CodeMirror Extensions
 
+/**
+ * Activation function for our extension. Function is called
+ * when the extension is activated by Jupyter Lab.
+ * 
+ * @param app app - The JupyterFrontEnd application instance
+ * @param restorer restorer - The layout restorer service for preserving widget state
+ * @param extensions extensions - The registry for CodeMirror editor extensions
+ */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("ASPEN is activated with styling edits. all fixed i think!");
-  console.log("styling added");
+  console.log("added updates to content snippet!!! 2000");
   const { commands } = app;
 
-  //onst templatesManager = new TemplatesManager();
   const libraryWidget = new LibraryWidget();
-  //const templates = templatesManager.templates;
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
 
   /**
-   * Tracks when a snippet is COPIED from the template, we will need to mark it with the template ID
+   * Event Listener for when a template is copied from the library.
+   * Before getting saved to the clipboard, we want to attach a marker as well as its ID onto it in JSON format.
+   * @param event - The ClipboardEvent object containing information about the copy action
+   * @property {DataTransfer} event.clipboardData - The DataTransfer object that provides access to data on the clipboard
+   *   Methods include:
+   *     - setData(format, data): Sets data of the specified format onto the clipboard
+   *     - getData(format): Retrieves data of the specified format from the clipboard
+   *     - clearData([format]): Removes data of the specified format or all formats
    */
   document.addEventListener("copy", (event) => {
-    console.log("Copy detected, checking to see if its apart of the templates")
-    // check
+    const dragInfo = event.target as HTMLElement;
+    console.log("What is getting copied, ", dragInfo);
 
-    // if it apart of the templates, mark it with the template ID on the copyboard system
+    if (dragInfo.classList.contains("template-snippet")) {
+      console.log("Whats getting dragged is a template")
+
+      const templateData = {
+        marker: "aspen-template",
+        templateID : dragInfo.getAttribute("data-template-id"),
+        content : dragInfo.innerText
+      }
+
+      console.log("Data that will be set onto the clipboard: ", templateData);
+      event.clipboardData?.setData("application/json", JSON.stringify(templateData));
+    }
   })
 
   /**
-   * Tracks when a snippet is PASTED IN, if so we will make it an instance of its template
-   */
-  
-  document.addEventListener("paste", (event) => {
-    console.log("Paste happened");
-    // check the copyboard system if there is an ID attached with it
-    // if so, we need to call method from snippet instance class to create an instance of the template
-    // attach the id 
-  }) 
+ * Event Listener for when a template is dragged from the library.
+ * 
+ * Before getting saved to dataTransfer, we want to attach a marker as well as its ID onto it in JSON format.
+ * 
+ */
+  document.addEventListener("dragstart", (event) => {
+    const dragInfo = event.target as HTMLElement;
+    console.log("What is getting dragged, ", dragInfo);
+
+    if (dragInfo.classList.contains("template-snippet")) {
+      console.log("Whats getting dragged is a template")
+
+      const templateData = {
+        marker: "aspen-template",
+        templateID : dragInfo.getAttribute("data-template-id"),
+        content : dragInfo.innerText
+      }
+      console.log("Data that will be set onto the dataTransfer", templateData);
+      event.dataTransfer?.setData("application/json", JSON.stringify(templateData));
+    }
+  })
 
   /**
-   * Tracks when a snippet is DRAGGED from the template, we will need to mark it with the template ID
+   * Adding command that allows their highlighted code to be saved as a template.
    */
-
-
-  /**
-   * Tracks when a snippet is DROPPED IN, so we will make it an instance of its template
-   */
-  /** 
-  document.addEventListener("drop", (event) => {
-    event.preventDefault() // prevent default behavior (e.g. opening file in browser)
-    console.log("Possible template/snippet dragged in");
-  }) */
-
-  // creating command for creating snippet/template
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
-        console.log("SAVING THE SNIPPET");
+        console.log("Saving the snippet");
         libraryWidget.createTemplate(snippet);
       }
     },
   }); 
 
-  // adding "create template/save snippet" commands to their respective context menus
+  /** Adding the templates:create command to their respective context menus */
   app.contextMenu.addItem({
     command: 'templates:create',
     selector: '.jp-FileEditor',
@@ -89,29 +111,19 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     rank: 1
   });
 
-
-  // Adding the library widget to both left and right sidebars
+  /** Registers Library Widget to the right sidebar. */
   app.shell.add(libraryWidget, 'right', { rank : 300});
 
-  // Restore state if the application restarts
+  /** Registers the library widget with the layout restorer to
+   * preserve its state across page reloads and sessions. */
   restorer.add(libraryWidget, 'custom-sidebar-widget');
 
-
-  document.addEventListener("copy", (event: ClipboardEvent) => {
-    const selectedText = window.getSelection()?.toString();
-    if (!selectedText) {return;}
-   
-    const copiedText = "#template start\n" + selectedText + "\n#template end";
-    event.clipboardData?.setData("text/plain", copiedText);
-    event.preventDefault();
-  });
-
-
+  /** Registers the CodeMirror Extension for snippet instance visualization and management. */
   extensions.addExtension({
     name: '@aspen/codemirror:cell-background',
     factory: () => ({
-      extension: combinedExtension(),
-      instance: () => combinedExtension(),
+      extension: CodeMirrorExtension(),
+      instance: () => CodeMirrorExtension(),
       reconfigure: () => null
     })
   });
@@ -119,35 +131,16 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 }
 
 /**
-* Inialize code snippet extension
-*/
+ * JupyterLab Plugin Definition
+ * 
+ * Defines the entry point for the JupyterLab extension.
+ * This object tells JupyterLab how to find and initialize the extension.
+ */
 const aspen: JupyterFrontEndPlugin<void> = {
   id : 'input-widget', // subject to change
   autoStart: true,
   optional: [ILayoutRestorer, IEditorExtensionRegistry],
   activate: activate
 };
-
-/**
- * HELPER FUNCTIONS
- */
-
-
-// Function to get metadata from the currently active notebook
-// reference https://stackoverflow.com/questions/71736749/accessing-notebook-cell-metadata-and-html-class-attributes-in-jupyterlab-extensi
-// NOTE: links to relevant documentation are dead 
-/** 
-function getNotebookMetadata(app: JupyterFrontEnd) {
-  const notebookPanel = app.shell.currentWidget as NotebookPanel;
-
-  if (notebookPanel && notebookPanel.model) {
-      const model: INotebookModel = notebookPanel.model;
-      // NOTE, getMetaData returns a copy of the metadata
-      console.log('Notebook Metadata:', model.getMetadata);
-  } else {
-      console.warn('No active notebook found');
-  }
-}
-*/
 
 export default aspen;
