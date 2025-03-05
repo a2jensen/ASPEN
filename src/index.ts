@@ -44,7 +44,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    *     - getData(format): Retrieves data of the specified format from the clipboard
    *     - clearData([format]): Removes data of the specified format or all formats
    */
-  document.addEventListener("copy", (event) => {
+  
+  /** document.addEventListener("copy", (event) => {
     const dragInfo = event.target as HTMLElement;
     console.log("What is getting copied, ", dragInfo);
 
@@ -61,6 +62,31 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       event.clipboardData?.setData("application/json", JSON.stringify(templateData));
     }
   })
+  
+  */
+
+  document.addEventListener("click", async (event) => {
+    const target  = event.target as HTMLElement;
+    if (target.classList.contains("template-copy")) {
+      console.log("Copy button clicked, checking clipboard data");
+      try {
+        const clipboardText = await navigator.clipboard.readText();
+        console.log("Clipboard content:", clipboardText);
+  
+        const clipboardData = JSON.parse(clipboardText);
+  
+        if(clipboardData.marker === "aspen-template") {
+          console.log("Template was copied:", clipboardData.id);
+        }
+        else{
+          console.warn("Clipboard does not contain a valid template.");
+        }
+      }
+      catch(err){
+        console.error("Error reading clipboard:", err);
+      }
+    }
+  });
 
   /**
  * Event Listener for when a template is dragged from the library.
