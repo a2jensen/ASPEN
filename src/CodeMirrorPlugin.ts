@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { Extension } from '@codemirror/state';
 import {
   DecorationSet,
@@ -98,18 +101,39 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
             const selection = view.state.selection.main;
             const dropPos = selection.from;
             const startLine = view.state.doc.lineAt(dropPos).number;
-            console.log("Start line", startLine);
+            //console.log("Start line", startLine);
             const endLine = startLine + droppedText.split('\n').length - 1;
-            console.log("End line,", endLine);
+            //console.log("End line,", endLine);
             const templateID = parsedText.templateID;
     
-            snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
+            snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
     
             setTimeout(() => {
               snippetsManager.updateSnippetInstance(view);
               this.decorations = snippetsManager.AssignDecorations(view);
             }, 10); // A small delay to ensure updates are applied after the text is dropped
           });
+
+          /*Have an eveny listener for the custom command we created iin index in order for when we click create Snippet it will ad the decoration and track the line
+          numbers start and end*/
+          document.addEventListener('Save Code Snippet', () => {
+
+            console.log("Event listener for createSnippet!!!!!");
+            const selection = view.state.selection.main;
+            const startLine = view.state.doc.lineAt(selection.from).number;
+
+            const endLine = view.state.doc.lineAt(selection.to).number;
+
+            const templateID = 'custom';
+            const droppedText = view.state.sliceDoc(selection.from, selection.to);
+            snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
+    
+            snippetsManager.updateSnippetInstance(view);
+            this.decorations = snippetsManager.AssignDecorations(view);
+             // A small delay to ensure updates are applied after the text is dropped
+          });
+
+
         }
     
         /**

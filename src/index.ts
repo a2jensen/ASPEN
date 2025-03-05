@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 /**
  * This file acts as the main entry point of the extension, where you import and export all your plugins or extensions.
  * It registers the UI components, commands and CodeMirror extension.
@@ -89,6 +91,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   /**
    * Adding command that allows their highlighted code to be saved as a template.
    */
+  
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
@@ -96,6 +99,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       if (snippet){
         console.log("Saving the snippet");
         libraryWidget.createTemplate(snippet);
+
+        document.dispatchEvent(new CustomEvent('Save Code Snippet'));
       }
     },
   }); 
