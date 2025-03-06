@@ -1,11 +1,11 @@
-import { Extension, RangeSetBuilder } from '@codemirror/state';
-//import { Button } from "./Button";
+import { RangeSetBuilder } from '@codemirror/state';
+import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
+import { Snippet } from "./types";
 import {
   Decoration,
   DecorationSet,
   EditorView,
-  ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
 
@@ -16,34 +16,13 @@ import {
  */
 
 /**
- * Snippet Interface
- * 
- */
-interface Snippet {
-  /** Unique identifier for the cell containing this snippet */
-  cell_id: number;
-  
-  /** content of the snippet */
-  content : string;
-  
-  /** The starting line number in the editor */
-  start_line: number;
-  
-  /** The ending line number in the editor */
-  end_line: number;
-  
-  /** Reference to the associated template ID */
-  template_id: string;
-}
-
-/**
  * SnippetsManager Class
  * 
  * Responsible for managing snippet instances within the editor.
  * This class handles the creation, tracking, updating, and visualization of snippets.
  * It maintains the connection between snippet/template instances in the editor and their templates.
  */
-class SnippetsManager {
+export class SnippetsManager {
   /** Counter for generating unique cell IDs */
   private cellCounter = 0;
   
@@ -55,11 +34,14 @@ class SnippetsManager {
   
   private templatesManager : TemplatesManager;
 
+  //private contentsManager : ContentsManager;
+
   /**
    * Initializes a new instance of the SnippetsManager
    */
-  constructor( templates : TemplatesManager ){
+  constructor( contentsManager : ContentsManager , templates : TemplatesManager){
     this.templatesManager = templates;
+    //this.contentsManager = contentsManager;
   }
 
 
@@ -296,142 +278,4 @@ class SnippetsManager {
     
     this.templatesManager.propagateChanges(snippetContent, templateId);
   }
-}
-
-// Create an instance of the SnippetsManager
-const snippetsManager = new SnippetsManager(new TemplatesManager());
-
-/**
- * CodeMirror ViewPlugin for Snippet Management
- * 
- * This plugin integrates the SnippetsManager Class with CodeMirror's view system.
- * It is in charge of handling editor events, and applying/updating decorations when the view updates.
- */
-const ViewPluginExtension = ViewPlugin.fromClass(
-  class {
-    /** The current set of decorations in the editor */
-    decorations: DecorationSet;
-    
-    /**
-     * Initializes the plugin for a specific editor view
-     * 
-     * @param view - The editor view this plugin instance is attached to
-     * 
-     * Sets up the initial decorations and event listeners for:
-     * - Paste events: Handle pasting templates into the editor
-     * - Drop events: Handle drag-and-drop of templates into the editor
-     */
-    constructor(view: EditorView) {
-      // Initialize decorations
-      this.decorations = snippetsManager.AssignDecorations(view);
-      
-      /**
-       * Event listener for paste events
-       * 
-       * Handles when a template is pasted into the editor from the clipboard.
-       * Parses the clipboard data and creates a new snippet instance if it contains
-       * a valid template.
-       */
-      view.dom.addEventListener("paste", event => {
-        event.preventDefault();
-
-        const clipboardContent = event.clipboardData?.getData('application/json');
-        const droppedText = event.clipboardData?.getData('text/plain');
-        console.log("dropped text app/json", clipboardContent);
-        console.log("dropped text text/plain", droppedText);
-
-        if (!clipboardContent) return;
-        if(!droppedText) return;
-
-        const parsedText = JSON.parse(clipboardContent);
-        if(!(parsedText.marker === "aspen-template")) return; 
-        
-        const selection = view.state.selection.main;
-        const dropPos = selection.from;
-        const startLine = view.state.doc.lineAt(dropPos).number;
-        const endLine = startLine + droppedText.split('\n').length - 1;
-        console.log("Start line", startLine);
-        console.log("End line,", endLine);
-
-        const templateId = parsedText.templateID;
-        console.log("The template id associated with the instance", templateId);
-        snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
-
-        setTimeout(() => {
-          snippetsManager.updateSnippetInstance(view);
-          this.decorations = snippetsManager.AssignDecorations(view);
-        }, 10); // A small delay to ensure updates are applied after the text is pasted
-      })
-
-      /**
-       * Event listener for drop events
-       * 
-       * Handles when a template is dragged and dropped into the editor.
-       * Parses the drop data and creates a new snippet instance if it contains
-       * a valid template.
-       */
-      view.dom.addEventListener('drop', event => {
-        event.preventDefault();
-
-        const dragContent = event.dataTransfer?.getData('application/json');
-        const droppedText = event.dataTransfer?.getData('text/plain');
-        console.log("dropped text app/json", dragContent);
-        console.log("dropped text text/plain", droppedText);
-
-        if (!dragContent) return;
-        if (!droppedText) return;
-        
-        const parsedText = JSON.parse(dragContent);
-
-        if(!(parsedText.marker === "aspen-template")) return; 
-
-        const selection = view.state.selection.main;
-        const dropPos = selection.from;
-        const startLine = view.state.doc.lineAt(dropPos).number;
-        console.log("Start line", startLine);
-        const endLine = startLine + droppedText.split('\n').length - 1;
-        console.log("End line,", endLine);
-        const templateID = parsedText.templateID;
-
-        snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
-
-        setTimeout(() => {
-          snippetsManager.updateSnippetInstance(view);
-          this.decorations = snippetsManager.AssignDecorations(view);
-        }, 10); // A small delay to ensure updates are applied after the text is dropped
-      });
-    }
-
-    /**
-     * Updates the plugin state when changes occur in the editor
-     * 
-     * @param update - The ViewUpdate object containing information about the changes
-     * 
-     * This method is called whenever the document changes. It:
-     * 1. Updates the positions of snippet instances via snippetsManager
-     * 2. Refreshes the decorations to reflect the current state
-     */
-    update(update: ViewUpdate) {
-      if (update.docChanged) {
-          snippetsManager.updateSnippetInstance(update.view, update);
-          this.decorations = snippetsManager.AssignDecorations(update.view);
-      }
-    }
-  },
-  {
-    // Provide the decorations from this plugin to CodeMirror
-    decorations: v => v.decorations
-  }
-);
-
-/**
- * Exports the CodeMirror extension
- * 
- * @returns An Extension array that can be added to a CodeMirror editor
- * 
- * This is the main entry point for integrating this functionality
- * with a CodeMirror editor instance.
- */
-export function CodeMirrorExtension(): Extension {
-  return [ViewPluginExtension]; 
 }

@@ -8,17 +8,8 @@ import { useState } from 'react';
 import {ContentsManager} from '@jupyterlab/services';
 import "../style/index.css";
 import "../style/base.css";
-
-interface Template {
-  id: string;
-  name: string;
-  content: string;
-  dateCreated: Date;
-  dateUpdated: Date;
-  tags: string[];
-  color: string;
-  connections: string[];
-}
+import { Template } from "./types";
+import { TemplatesManager } from './TemplatesManager';
 
 /**
  * React Library Component.
@@ -223,11 +214,10 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 export class LibraryWidget extends ReactWidget {
   private templates: Template[];
 
-  constructor() {
-    // super calls the parent class (ReactWidget) constructor
+  constructor( templatesManager : TemplatesManager ) {
     super();
-    this.addClass('jp-TemplatesManager');
-    this.templates = [];
+    this.addClass('jp-LibraryWidget');
+    this.templateManager = templatesManager;
     this.loadTemplates();
   }
 

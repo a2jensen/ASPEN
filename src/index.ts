@@ -1,21 +1,19 @@
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
-//index add cellbackground
-
 /**
  * This file acts as the main entry point of the extension, where you import and export all your plugins or extensions.
- * It registers the UI components as well as the commands. 
+ * It registers the UI components, commands and CodeMirror extension.
  */
-
 import {
   ILayoutRestorer, // Restore widgets layout and state on refresh
   JupyterFrontEnd, // Main JupyterLab application interface
   JupyterFrontEndPlugin, // Interface for JupyterLab plugins
 } from '@jupyterlab/application'
-// https://jupyterlab.readthedocs.io/en/stable/api/interfaces/notebook.INotebookTracker.html
+import { TemplatesManager } from './TemplatesManager';
+import { ContentsManager } from "@jupyterlab/services";
 import { LibraryWidget } from './LibraryWidget';
-import { CodeMirrorExtension } from './snippetManager';
+import { SnippetsManager } from './snippetManager';
+import { CodeMirrorExtension } from './CodeMirrorPlugin';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface for registering CodeMirror Extensions
+
 
 /**
  * Activation function for our extension. Function is called
@@ -26,10 +24,13 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("added updates to content snippet!!! 2000");
+  console.log("refactors made");
   const { commands } = app;
 
-  const libraryWidget = new LibraryWidget();
+  const contentsManager = new ContentsManager();
+  const templatesManager = new TemplatesManager(contentsManager);
+  const snippetsManager = new SnippetsManager(contentsManager, templatesManager);
+  const libraryWidget = new LibraryWidget(templatesManager);
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
@@ -146,10 +147,10 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 
   /** Registers the CodeMirror Extension for snippet instance visualization and management. */
   extensions.addExtension({
-    name: '@aspen/codemirror:cell-background',
+    name: '@aspen/codemirror_plugin',
     factory: () => ({
-      extension: CodeMirrorExtension(),
-      instance: () => CodeMirrorExtension(),
+      extension: CodeMirrorExtension(snippetsManager),
+      instance: () => CodeMirrorExtension(snippetsManager),
       reconfigure: () => null
     })
   });
@@ -163,9 +164,9 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
  * This object tells JupyterLab how to find and initialize the extension.
  */
 const aspen: JupyterFrontEndPlugin<void> = {
-  id : 'input-widget', // subject to change
+  id : 'aspen-extension', 
   autoStart: true,
-  optional: [ILayoutRestorer, IEditorExtensionRegistry],
+  requires : [ ILayoutRestorer, IEditorExtensionRegistry],
   activate: activate
 };
 

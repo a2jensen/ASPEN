@@ -1,5 +1,5 @@
 import { ContentsManager } from "@jupyterlab/services";
-import Template from "./types";
+import { Template } from "./types";
 
 /**
  * TemplatesManager Class
@@ -19,9 +19,9 @@ export class TemplatesManager {
      * Initializes a new instance of the TemplatesManager
      * Sets up an empty templates array and creates a ContentsManager instance
      */
-    constructor(){
+    constructor( contentManager : ContentsManager ){
         this.templates = []
-        this.jsonManager = new ContentsManager();
+        this.jsonManager = contentManager;
     }
 
     /**
