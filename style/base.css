@@ -33,7 +33,7 @@
 }
 
 .template-toggle {
-  background-color: #ffffff;
+  background-color: transparent;
   border: none;
   font-size: 1rem;
   font-family: monospace;
@@ -42,7 +42,7 @@
 
 .template-buttons {
   display: flex;
-  background-color: #ffffff;
+  background-color: transparent;
   gap: 2px;
   padding: 3px;
 }
