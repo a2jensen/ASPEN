@@ -97,6 +97,7 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
     
             const selection = view.state.selection.main;
             const dropPos = selection.from;
+            const endPos = dropPos + droppedText.length;
             const startLine = view.state.doc.lineAt(dropPos).number;
             console.log("Start line", startLine);
             const endLine = startLine + droppedText.split('\n').length - 1;
@@ -105,6 +106,11 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
     
             snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
     
+            // Clear the selection (so template text is added unselected)
+            view.dispatch({
+              selection: { anchor: endPos, head: endPos} // set to end of inserted text
+            });
+
             setTimeout(() => {
               snippetsManager.updateSnippetInstance(view);
               this.decorations = snippetsManager.AssignDecorations(view);
