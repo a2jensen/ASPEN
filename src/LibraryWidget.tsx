@@ -39,15 +39,23 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     event.dataTransfer.effectAllowed = "copy";
   };
 
-  const handleCopy = async (content: string) => {
+  const handleCopy = async (template: Template) => {
+    const jsonData = JSON.stringify(template);
+    const parsedData = JSON.parse(jsonData);
+    
     try {
-      await navigator.clipboard.writeText(content);
-      console.log("Template content copied to clipboard");
+      await navigator.clipboard.writeText(JSON.stringify({
+      "marker": "aspen-template",
+      "id": parsedData.id,
+      "content": parsedData.content
+    }, null, 2));
+    console.log("Copied to clipboard successfully!");
     }
-    catch (err) {
-      console.error("Could not copy template: ", err);
+    catch (err){
+    console.error("Error copying to clipboard:", err);
     }
   }
+
 
   const handleRenameStart = (template: Template) => {
     setRenamingId(template.id); // enter renaming mode
@@ -96,71 +104,69 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   }
 
   return (
-    <div className="library-container">
-      <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort</div>
-      {templates.length > 0 ? (
-        templates.map((template ) => ( //
-            <div className="template-item" key={template.id}>
-              {/** Section corresponding to when the template is not opened */}
-              <div className="template-header">
-                <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "v" : ">"}
-                </button>
-                <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
-                  X
-                </button>
-              </div>
-              {/** Section corresponding to when the template is opened */}
-              {expandedTemplates[template.id] && (
-              <div className="template-content">
-                {renamingId === template.id ? (
-                  <input
+  <div className="library-container">
+    <h3 className="library-title">Your Templates</h3>
+    <div className="library-sort">Sort</div>
+    {templates.length > 0 ? (
+      templates.map((template) => (
+        <div className="template-item" key={template.id}>
+          {/* Section for template header */}
+          <div className="template-header">
+            <button className="template-toggle" onClick={() => toggleTemplate(template.id)}>
+              {expandedTemplates[template.id] ? "v" : ">"}
+            </button>
+            <button className="template-delete" onClick={() => deleteTemplate(template.id, template.name)}>
+              X
+            </button>
+          </div>
+
+          {/* Section for expanded template content */}
+          {expandedTemplates[template.id] && (
+            <div className="template-content">
+              {renamingId === template.id ? (
+                <input
                   className="rename-input"
                   type="text"
                   value={newName}
                   onChange={handleRenameChange}
-                  onBlur={() => handleRenameConfirm(template.id)} // when user clicks outside, confirms rename
-                  onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)} // when user presses enter, confirms rename
-                  autoFocus // user can type in field without clicking first
-                  />
-                ) : (
+                  onBlur={() => handleRenameConfirm(template.id)}
+                  onKeyDown={(e) => e.key === "Enter" && handleRenameConfirm(template.id)}
+                  autoFocus
+                />
+              ) : (
                 <span className="template-name" onClick={() => handleRenameStart(template)}>
                   {template.name}
                 </span>
-                )}
+              )}
 
-                <div className="template-buttons">
-                  <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
-                    Copy
-                  </button>
+              <div className="template-buttons">
+                <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
+                  Copy
+                </button>
 
-                  <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
-                    Rename
-                  </button>
+                <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
+                  Rename
+                </button>
 
-                  <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    Edit
-                  </button>
+                <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
+                  Edit
+                </button>
 
-                  <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    🗑
-                  </button>
-                </div>
+                <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
+                  🗑
+                </button>
               </div>
 
-              {/** Section corresponding to when the template is opened */}
-              {expandedTemplates[template.id] && (
-              <div className="template-content"
-                    // cannot drag and drop the template currently being edited
-                    draggable={editingId !== template.id}
-                    onDragStart={(event) => {
-                        if (editingId !== template.id) {
-                          handleDragStart(event, template);
-                        }
-                      }}
+              {/* Editing or displaying template content */}
+              <div
+                className="template-content"
+                draggable={editingId !== template.id}
+                onDragStart={(event) => {
+                  if (editingId !== template.id) {
+                    handleDragStart(event, template);
+                  }
+                }}
               >
-                
                 {editingId === template.id ? (
                   <textarea
                     className="edit-content-textarea"
@@ -168,9 +174,9 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                     onChange={handleEditChange}
                     onBlur={() => handleEditConfirm(template.id)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey){
-                        e.preventDefault()
-                        handleEditConfirm(template.id)
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleEditConfirm(template.id);
                       } else if (e.key === "Tab") {
                         e.preventDefault();
                         const start = e.currentTarget.selectionStart;
@@ -182,28 +188,29 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                           e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 2; // Move cursor
                         }, 0);
                       }
-                    }
-                    }
+                    }}
                     autoFocus
                   />
                 ) : (
-                  <p className="template-snippet" 
+                  <p
+                    className="template-snippet"
                     onClick={() => handleEditStart(template)}
-                    data-template-id={template.id}  
-                    draggable 
+                    data-template-id={template.id}
+                    draggable
                     onDragStart={(event) => handleDragStart(event, template)}
                   >
                     {template.content}
                   </p>
                 )}
               </div>
-              )}
             </div>
-        ))
-      ) : (
-        <p>No templates available</p>
-      )}
-    </div>
+          )}
+        </div>
+      ))
+    ) : (
+      <p>No templates available</p>
+    )}
+  </div>
   );
 }
 
@@ -213,6 +220,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
  * 
  * This class manages the template connection as well as renders the Library react component
  */
+
 export class LibraryWidget extends ReactWidget {
   templateManager : TemplatesManager;
 

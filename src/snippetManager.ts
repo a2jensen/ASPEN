@@ -332,7 +332,19 @@ const ViewPluginExtension = ViewPlugin.fromClass(
        * Parses the clipboard data and creates a new snippet instance if it contains
        * a valid template.
        */
-      view.dom.addEventListener("paste", event => {
+
+      view.dom.addEventListener("paste", async (event) =>{
+        event.preventDefault();
+        try{
+          
+        }
+        catch(err){
+          console.error("Error with paste: ", err);
+        }
+      })
+
+
+      /** view.dom.addEventListener("paste", event => {
         event.preventDefault();
 
         const clipboardContent = event.clipboardData?.getData('application/json');
@@ -362,6 +374,7 @@ const ViewPluginExtension = ViewPlugin.fromClass(
           this.decorations = snippetsManager.AssignDecorations(view);
         }, 10); // A small delay to ensure updates are applied after the text is pasted
       })
+      */
 
       /**
        * Event listener for drop events
