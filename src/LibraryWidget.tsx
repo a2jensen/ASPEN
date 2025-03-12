@@ -7,6 +7,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
+import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
@@ -26,12 +27,39 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
+  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
+  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
+
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
     }));
-  }; 
+  };
+
+  const handleSortChange = (option: string) => {
+    setSortOption(option);
+    let sorted = [...templates]; // prevents original array from being modified during sorting
+
+    switch (option) {
+      case 'created-desc':
+        sorted = sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+        case 'created-asc':
+          sorted = sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+          break;
+        case 'updated-desc':
+          sorted = sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
+          break;
+        case 'updated-asc':
+          sorted = sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
+          break;
+        default:
+          break;
+    }
+    
+    setSortedTemplates(sorted);
+  }
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     event.dataTransfer.setData("text/plain", template.content);
@@ -98,9 +126,17 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   return (
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
-      <div className="library-sort">Sort</div>
-      {templates.length > 0 ? (
-        templates.map((template ) => ( //
+      <div className="library-sort">
+        <select value={sortOption} onChange={(e) => handleSortChange(e.target.value)}>
+          <option value="created-desc">Most Recently Created</option>
+          <option value="created-asc">Least Recently Created</option>
+          <option value="updated-desc">Most Recently Updated</option>
+          <option value="updated-asc">Least Recently Updated</option>
+        </select>
+      </div>
+
+      {sortedTemplates.length > 0 ? (
+        sortedTemplates.map((template ) => (
             <div className="template-item" key={template.id}>
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
@@ -126,19 +162,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 
                 <div className="template-buttons">
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
-                    Copy
-                  </button>
-
-                  <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
-                    Rename
+                    <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    Edit
+                    <editIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    🗑
+                    <deleteIcon.react tag="span" height="16px" width="16px" />
                   </button>
                 </div>
               </div>
