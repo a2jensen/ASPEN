@@ -49,10 +49,11 @@
 
 .template-buttons button {
   border-radius: 4px;
+  border-width: 1.5px;
 }
 
 .template-buttons button:hover {
-  background-color: #cacaca; /* Optional: Hover effect */
+  background-color: #cacaca;
 }
 
 .template-content {
