@@ -7,6 +7,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
+import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
@@ -161,19 +162,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 
                 <div className="template-buttons">
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
-                    Copy
-                  </button>
-
-                  <button className="template-rename" title="Rename template" onClick={() => handleRenameStart(template)}>
-                    Rename
+                    <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    Edit
+                    <editIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    🗑
+                    <deleteIcon.react tag="span" height="16px" width="16px" />
                   </button>
                 </div>
               </div>
