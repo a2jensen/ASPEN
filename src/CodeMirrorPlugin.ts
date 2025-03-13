@@ -1,11 +1,9 @@
-import { Extension, StateField, EditorState } from '@codemirror/state';
+import { Extension } from '@codemirror/state';
 import {
   DecorationSet,
   EditorView,
   ViewPlugin,
   ViewUpdate,
-  Tooltip,
-  showTooltip
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
 
@@ -19,57 +17,6 @@ import { SnippetsManager } from './snippetManager';
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
 export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extension {
-
-  const cursorTooltipField = StateField.define<readonly Tooltip[]>({
-    create: getCursorTooltips,
-  
-    update(tooltips, tr) {
-      if (!tr.docChanged && !tr.selection) return tooltips
-      return getCursorTooltips(tr.state)
-    },
-  
-    provide: f => showTooltip.computeN([f], state => state.field(f))
-  })
-
-  function getCursorTooltips(state: EditorState): readonly Tooltip[] {
-    console.log("State ranges: ", state.selection.ranges);
-    return state.selection.ranges
-      .filter(range => range.empty)
-      .map(range => {
-        return {
-          pos: range.head,
-          above: true,
-          strictSide: true,
-          arrow: true,
-          create: () => {
-            let dom = document.createElement("div")
-            dom.className = "cm-tooltip-cursor"
-            //dom.textContent = text
-
-            dom.appendChild(document.createTextNode(" "));
-
-            let button = document.createElement("button");
-            button.textContent = "Push Changes";
-            button.className = "cm-tool-tip-button"
-            //button.style.marginLeft = "8px"
-            //button.style.padding = "2px 5px"
-            button.style.fontSize = "12px"
-            button.style.cursor = "pointer"
-            
-            // Add click event handler
-            button.addEventListener("click", () => {
-              console.log("Update template clicked at position", range.head)
-              // Your update template logic here
-            })
-
-            dom.appendChild(button);
-
-            return {dom}
-          }
-        }
-      })
-  }
-
     const viewPlugin = ViewPlugin.fromClass(
       class {
         /** The current set of decorations in the editor */
@@ -157,27 +104,17 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
             const templateID = parsedText.templateID;
     
             snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
-    
+            //this.decorations = snippetsManager.AssignDecorations(view);
+
             setTimeout(() => {
               snippetsManager.updateSnippetInstance(view);
               this.decorations = snippetsManager.AssignDecorations(view);
             }, 10); // A small delay to ensure updates are applied after the text is dropped
           });
 
-          /** 
-          view.dom.addEventListener("mouseover", event => {
-            const target = event.target as HTMLElement;
-            console.log("target: ", target);
-            if (target.classList.contains("snippet-start-line")){
-              const tooltip = createToolTip(view, )
-            }
-          })*/
-
-
           /*Have an event listener for the custom command we created in index in order for when we click create Snippet it will ad the decoration and track the line
           numbers start and end*/
           document.addEventListener('Save Code Snippet', () => {
-
             console.log("Event listener for createSnippet!!!!!");
             const selection = view.state.selection.main;
             const startLine = view.state.doc.lineAt(selection.from).number;
@@ -218,5 +155,5 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
       }
     );
     
-    return [viewPlugin, cursorTooltipField];
+    return [viewPlugin];
   }

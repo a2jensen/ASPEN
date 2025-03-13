@@ -210,7 +210,10 @@ export class TemplatesManager {
          * 3. Save the updated template to the filesystem
          */
         
-        const template = this.templates.filter( template => template.id === template_id);
-        template[0].content = snippetContent;
+        const template = this.templates.find( template => template.id === template_id);
+        if (template){
+          this.editTemplate(template_id, snippetContent)
+          console.log("Updated template content!")
+        }
       }
 }
