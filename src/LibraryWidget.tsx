@@ -33,6 +33,28 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     }));
   }; 
 
+  React.useEffect(() => {
+    setRenamingId(null);
+    setEditingId(null);
+
+    const validIds = new Set(templates.map(t => t.id));
+    setExpandedTemplates(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      
+      // Remove any expanded state for templates that no longer exist
+      Object.keys(updated).forEach(id => {
+        if (!validIds.has(id)) {
+          delete updated[id];
+          changed = true;
+        }
+      });
+      
+      // Only return a new object if something changed
+      return changed ? updated : prev;
+    });
+    
+  }, [templates])
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work

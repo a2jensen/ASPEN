@@ -9,14 +9,6 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 
-
-/**TODO: 
- * Find a way to store the snippets so that when I reload it wont disappear
- * Delete snippets? How will that work? 
- * Add a space each time i drop something and only track the before and after of that line.
- * Should I let them know it will cause issues if they delete the line? or should I make it so ur unable to delete this line
- * */
-
 /**
  * SnippetsManager Class
  * 
@@ -160,100 +152,107 @@ export class SnippetsManager {
     }
 
   /**
-   * Creates decorations to visually highlight snippets in the editor
-   * 
-   * @param view - The editor view to apply decorations to
-   * @returns A DecorationSet containing all the visual decorations for snippets
-   * 
-   * This method creates border decorations around snippets to visually distinguish them
-   * in the editor. It applies borders to the start and end lines of each snippet.
-   * It also applies a button to the 
-   * 
-   * Potential enhancements:
-   * - Use different border colors based on the template type
-   * - Implement different color schemes for dark and light editor modes
-   * 
-   * MAY BE USEFUL : https://codemirror.net/examples/gutter/
-   */
-  AssignDecorations(view: EditorView): DecorationSet {
-    const cellID = this.cellMap.get(view);
-    if (!cellID) return Decoration.none;
+ * Creates decorations to visually highlight snippets in the editor
+ * 
+ * @param view - The editor view to apply decorations to
+ * @returns A DecorationSet containing all the visual decorations for snippets
 
-    const builder = new RangeSetBuilder<Decoration>();
-    const button = document.createElement("button");
-    button.innerHTML = `BUTTON`;
-    button.className = "snippet-instance-button";
-    button.title = "Propagate changes"
+* This method creates border decorations around snippets to visually distinguish them
+* in the editor. It applies borders to the start and end lines of each snippet.
+* It also applies a button to the 
+* 
+* Potential enhancements:
+* - Use different border colors based on the template type
+* - Implement different color schemes for dark and light editor modes
+* 
+* MAY BE USEFUL : https://codemirror.net/examples/gutter/
+ */
+AssignDecorations(view: EditorView): DecorationSet {
+  const cellID = this.cellMap.get(view);
+  if (!cellID) return Decoration.none;
 
-    //organizes it in order otherwise program will crash
-    const snippetsInCell = this.snippetTracker
-    .filter(s => s.cell_id === cellID)
-    .sort((a, b) => a.start_line - b.start_line);
+  const builder = new RangeSetBuilder<Decoration>();
+  
+  //organizes it in order otherwise program will crash
+  const snippetsInCell = this.snippetTracker
+  .filter(s => s.cell_id === cellID)
+  .sort((a, b) => a.start_line - b.start_line);
 
-    //this.snippetTracker.sort((a, b) => a.start_line - b.start_line);
-    //goes through the snippetTracker and checks startline/endline for each
-    for (const snippet of snippetsInCell) {
-      const startLine = view.state.doc.line(snippet.start_line);
-      const endLine = view.state.doc.line(snippet.end_line);
-      
-      /** Reposition the button */
-      button.style.position = "absolute";
-      button.style.right = "5px";
-      button.style.right = "2px";
-
-      // Remove empty snippets (where start line equals end line)
-      if (startLine == endLine) {
-        continue;
-      }
-
-      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-      builder.add(startLine.from, startLine.from, Decoration.line({
-          attributes: { 
-            style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-            class: 'snippet-start-line'
-           },
-        })
-      );
+  //goes through the snippetTracker and checks startline/endline for each
+  for (const snippet of snippetsInCell) {
+    const startLine = view.state.doc.line(snippet.start_line);
+    const endLine = view.state.doc.line(snippet.end_line);
     
-      builder.add(endLine.from, endLine.from, Decoration.line({
-          attributes: { 
-            style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-            class : 'snippet-end-line'
-          },
-        })
-      );
+    // Remove empty snippets (where start line equals end line)
+    if (startLine == endLine) {
+      continue;
     }
-    
-    /** CODE THAT ADDS IN A PUSH BUTTON! */
 
-    /** ADDS IN A MARKER
-    console.log("About to run set timeout....")
-    setTimeout(() => {
-      console.log("Trying to find the snippet lines...")
-      const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
-      console.log("Start lines found : ", startLines)
-
-      startLines.forEach(line => {
-        if (line.querySelector('.snippet-button')) return;
-
-        const button = document.createElement('button');
-        button.className = 'snippet-button';
-        button.innerHTML = '↑';
-        button.title = 'Update template';
-        button.style.position = 'absolute';
-        button.style.right = '10px';
-        button.style.top = '2px';
-
-        button.addEventListener('click', () => {
-          console.log("Button clicked");
-          // logic for pushing up ot template
-        })
-
-        line.appendChild(button);
+    // Apply borders to snippet start & end, currently using pink (#FFC0CB)
+    builder.add(startLine.from, startLine.from, Decoration.line({
+        attributes: { 
+          style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+          class: 'snippet-start-line',
+          'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
+          'data-start-line': snippet.start_line.toString(),
+          'data-end-line': snippet.end_line.toString()
+         },
       })
-    }, 2000) */ // timeout to ensure DOM is ready
-    return builder.finish();
+    );
+  
+    builder.add(endLine.from, endLine.from, Decoration.line({
+        attributes: { 
+          style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+          class: 'snippet-end-line',
+          'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
+        },
+      })
+    );
   }
+  
+  console.log("Trying to find the snippet lines...");
+  const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
+  console.log("Start lines found : ", startLines);
+
+  startLines.forEach(line => {
+    //if (line.querySelector('.snippet-button')) return;
+
+    // Get the snippet metadata from data attributes
+    const snippetId = line.getAttribute('data-snippet-id');
+    const startLineNum = parseInt(line.getAttribute('data-start-line') || '0');
+    const endLineNum = parseInt(line.getAttribute('data-end-line') || '0');
+
+    const button = document.createElement('button');
+    button.className = 'snippet-button';
+    button.innerHTML = 'PUSH';
+    button.title = 'Update template';
+    button.style.position = 'absolute';
+    button.style.right = '10px';
+    button.style.top = '2px';
+    button.style.margin = '20px';
+
+    button.addEventListener('click', () => {
+      const snippet = this.snippetTracker.find(snippet => snippet.cell_id === Number(snippetId));
+
+      if (snippet) {
+        console.log("Button clicked for snippet ID:", snippetId);
+        console.log("Valid snippet found after clicking push button: ", snippet)
+
+        // Extract the content of the snippet from the document
+        if (startLineNum > 0 && endLineNum > 0) {
+          console.log("Going to push the snippet instance changes up to the template!")
+          this.pushSnippetInstanceChanges( snippet );
+        }
+      }
+    });
+
+    
+    line.appendChild(button);
+    console.log("Push button added!")
+  });
+  
+  return builder.finish();
+}
 
   /**
    * Loads snippets from persistent storage
@@ -273,10 +272,10 @@ export class SnippetsManager {
    * Propagates changes from snippet instances to their templates
    */
   pushSnippetInstanceChanges(snippet : Snippet ) {
-    // 1. Get the content of the specific snippet as well as the snippet ID
     const snippetContent = snippet.content;
     const templateId = snippet.template_id;
     
+    console.log("Calling propagate changes in templates manager");
     this.templatesManager.propagateChanges(snippetContent, templateId);
   }
 }
