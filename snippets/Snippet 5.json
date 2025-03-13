@@ -1,9 +1,9 @@
 {
   "id": "1739962141986",
   "name": "Snippet 5",
-  "content": "#template start\ndef add2(): \n  sum = 2 + 2\n  return sum\n#template end",
+  "content": "def add2(): \n  sum = 2 + 2\n  return sum",
   "dateCreated": "2025-02-19T10:49:01.986Z",
-  "dateUpdated": "2025-02-19T10:49:01.986Z",
+  "dateUpdated": "2025-03-11T23:50:37.793Z",
   "tags": [],
   "color": "#FFE694",
   "connections": []
