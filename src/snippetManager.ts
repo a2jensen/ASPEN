@@ -333,10 +333,34 @@ const ViewPluginExtension = ViewPlugin.fromClass(
        * a valid template.
        */
 
-      view.dom.addEventListener("paste", async (event) =>{
+      view.dom.addEventListener("paste", (event) =>{
         event.preventDefault();
         try{
-          
+          const text = event.clipboardData?.getData("text") || "";
+          const copiedId = localStorage.getItem("templateId")
+
+          if(copiedId){
+            console.log("Pasted content is a template:", copiedId)
+
+            const selection = view.state.selection.main;
+            const cursorPos = selection.from;
+            const pastedLines = text.split('\n').length
+            const startLine = view.state.doc.lineAt(cursorPos).number - pastedLines + 1;
+            console.log("Start line", startLine);
+            const endLine = startLine + pastedLines - 1;
+            console.log("Number of new lines in pasted text:", text.split("\n").length);
+            console.log("End line,", endLine);
+
+            snippetsManager.createSnippetInstance(view, startLine, endLine, copiedId, text);
+            
+            setTimeout(() => {
+              snippetsManager.updateSnippetInstance(view);
+              this.decorations = snippetsManager.AssignDecorations(view);
+            }, 10);
+          }
+          else{
+            console.log("No template found")
+          }
         }
         catch(err){
           console.error("Error with paste: ", err);

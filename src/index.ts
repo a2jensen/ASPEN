@@ -45,7 +45,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    *     - clearData([format]): Removes data of the specified format or all formats
    */
 
-  
+/**
   document.addEventListener("click", async (event) => {
     const target  = event.target as HTMLElement;
     if (target.classList.contains("template-copy")) {
@@ -69,6 +69,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       }
     }
   });
+*/
 
   /**
  * Event Listener for when a template is dragged from the library.

@@ -39,21 +39,14 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     event.dataTransfer.effectAllowed = "copy";
   };
 
-  const handleCopy = async (template: Template) => {
+  const handleCopy = (template: Template) => {
     const jsonData = JSON.stringify(template);
     const parsedData = JSON.parse(jsonData);
     
-    try {
-      await navigator.clipboard.writeText(JSON.stringify({
-      "marker": "aspen-template",
-      "id": parsedData.id,
-      "content": parsedData.content
-    }, null, 2));
-    console.log("Copied to clipboard successfully!");
-    }
-    catch (err){
-    console.error("Error copying to clipboard:", err);
-    }
+    navigator.clipboard.writeText(parsedData.content).then(() => {
+      localStorage.setItem("templateId", parsedData.id);
+      console.log("Copied to clipboard successfully!");
+    });
   }
 
 
