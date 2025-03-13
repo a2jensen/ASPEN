@@ -9,6 +9,10 @@ import {
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
 
+
+//Issues when I merge it dont work when i move cell down or up it dont work
+//its becuase cell id changes?
+
 /**
  * 
  * This serves as the main entry point for integrating CodeMirror into ASPEN.
@@ -185,15 +189,19 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
             const endLine = view.state.doc.lineAt(selection.to).number;
 
             const templateID = 'custom';
-            const droppedText = view.state.sliceDoc(selection.from, selection.to);
+            const droppedText = view.state.sliceDoc(selection.from, selection.to).trim();
+
+            if (!droppedText) {
+              console.warn("Skipping empty snippet");
+              return; // Do not create an empty snippet
+            }
+
             snippetsManager.createSnippetInstance(view, startLine, endLine, templateID, droppedText);
     
             snippetsManager.updateSnippetInstance(view);
             this.decorations = snippetsManager.AssignDecorations(view);
              // A small delay to ensure updates are applied after the text is dropped
           });
-
-
         }
     
         /**
