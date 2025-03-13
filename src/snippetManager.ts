@@ -1,11 +1,11 @@
-import { Extension, RangeSetBuilder } from '@codemirror/state';
-//import { Button } from "./Button";
+import { RangeSetBuilder } from '@codemirror/state';
+import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
+import { Snippet } from "./types";
 import {
   Decoration,
   DecorationSet,
   EditorView,
-  ViewPlugin,
   ViewUpdate
 } from '@codemirror/view';
 
@@ -16,34 +16,13 @@ import {
  */
 
 /**
- * Snippet Interface
- * 
- */
-interface Snippet {
-  /** Unique identifier for the cell containing this snippet */
-  cell_id: number;
-  
-  /** content of the snippet */
-  content : string;
-  
-  /** The starting line number in the editor */
-  start_line: number;
-  
-  /** The ending line number in the editor */
-  end_line: number;
-  
-  /** Reference to the associated template ID */
-  template_id: string;
-}
-
-/**
  * SnippetsManager Class
  * 
  * Responsible for managing snippet instances within the editor.
  * This class handles the creation, tracking, updating, and visualization of snippets.
  * It maintains the connection between snippet/template instances in the editor and their templates.
  */
-class SnippetsManager {
+export class SnippetsManager {
   /** Counter for generating unique cell IDs */
   private cellCounter = 0;
   
@@ -55,11 +34,14 @@ class SnippetsManager {
   
   private templatesManager : TemplatesManager;
 
+  //private contentsManager : ContentsManager;
+
   /**
    * Initializes a new instance of the SnippetsManager
    */
-  constructor( templates : TemplatesManager ){
+  constructor( contentsManager : ContentsManager , templates : TemplatesManager){
     this.templatesManager = templates;
+    //this.contentsManager = contentsManager;
   }
 
 
