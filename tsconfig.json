@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "composite": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "incremental": true,
+    "jsx": "react",
+    "lib": ["DOM", "ES2018", "ES2020.Intl"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "preserveWatchOutput": true,
+    "resolveJsonModule": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ES2018"
+  },
+  "include": ["src/*", 
+    "src/components/Sidebar.tsx", 
+    "src/components/Template.tsx",
+    "src/components/Searchbar.tsx"
+, "src/library/Hooks.ts", "src/library/types.ts", "src/library/TemplateWidget.tsx", "src/library/Dialog.ts"  ]
+}
