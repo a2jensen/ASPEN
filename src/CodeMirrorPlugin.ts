@@ -75,7 +75,13 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
               console.error("Error with paste: ", err);
             }
           })
-    
+          
+          // add copy event listener to make sure default copy doesn't interfere with template creation
+          view.dom.addEventListener("copy", event =>{
+            console.log("event listener listened");
+            localStorage.removeItem("templateId");
+          })
+
           /**
            * Event listener for drop events
            * 
