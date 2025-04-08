@@ -13,14 +13,15 @@ import { SnippetsManager } from './snippetManager';
 
 /**
  * 
- * This serves as the main entry point for integrating CodeMirror into ASPEN.
- * This plugin integrates the SnippetsManager Class with CodeMirror's view system.
+ * This serves as the main entry point for integrating CodeMirror into the ASPEN extension.
+ * This plugin integrates the SnippetsManager Class with CodeMirror's view system, evidenced by the function taking in a SnippetsManager prop.
  * It is in charge of handling editor events, and applying/updating decorations to snippet instances when the view updates appropriately.
  * 
  * @param snippetsManager 
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
-export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extension {
+export function CodeMirrorExtension( snippetsManager : SnippetsManager ) : Extension {
+  
     const viewPlugin = ViewPlugin.fromClass(
       class {
         /** The current set of decorations in the editor */
@@ -35,10 +36,17 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
          * - Paste events: Handle pasting templates into the editor
          * - Drop events: Handle drag-and-drop of templates into the editor
          */
-        constructor(view: EditorView ) {
+        constructor( view : EditorView ) {
           // Initialize decorations
           this.decorations = snippetsManager.AssignDecorations(view);
           
+          /** ATTEMPTS SO FAR FOR SNIPPET INSTANCE PERSISTENCE: added event listener for load here, also tried without, and also attempted adding load listeners in index
+           * we may possibly need to use the event
+           * refer to documentation of view update and changes and transaction section here https://codemirror.net/docs/ref/#view.EditorView.update^transactions
+            */
+          //console.log("RIGHT ABOVE WINDOW EVENT LISTENER")
+          //snippetsManager.PersistDecorations(view);
+
           /**
            * Event listener for paste events
            * 
@@ -108,12 +116,13 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
             const templateID = parsedText.templateID;
     
             snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
+            //snippetsManager.updateSnippetInstance(view);
             //this.decorations = snippetsManager.AssignDecorations(view);
 
             setTimeout(() => {
               snippetsManager.updateSnippetInstance(view);
               this.decorations = snippetsManager.AssignDecorations(view);
-            }, 10); // A small delay to ensure updates are applied after the text is dropped
+            }, 50); // A small delay to ensure updates are applied after the text is dropped
           });
 
           /*Have an event listener for the custom command we created in index in order for when we click create Snippet it will ad the decoration and track the line
@@ -154,6 +163,13 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
           if (update.docChanged) {
               snippetsManager.updateSnippetInstance(update.view, update);
               this.decorations = snippetsManager.AssignDecorations(update.view);
+              console.log("----- UPDATES BEING MADE, CHECK VIA VIEWUPDATE ---- ")
+              //console.log("startState : previous Editor State, ", update.startState);
+              console.log("changes : ChangeSet : ", update.changes)
+              console.log("view:editor view that the update is ass with, ", update.view);
+              console.log("transactions , ", update.transactions);
+              //console.log("VIEW variable : ",  view.dom);
+              console.log("----- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ")
           }
         }
       },

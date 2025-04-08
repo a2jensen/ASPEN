@@ -26,7 +26,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("testing addeddddddddddddd");
+  console.log("added line breaks.....");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -105,6 +105,51 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     },
   }); 
 
+  commands.addCommand('templates:push', {
+    label: "Push Changes To Template",
+    execute: () => {
+      const content = window.getSelection();
+      if (content?.rangeCount === 0 || !content) {
+        return;
+      }
+
+      const range = content.getRangeAt(0); // returns the DOM that the user highlighted
+      console.log("range ", range);
+      // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
+      const fragment = range.cloneContents(); // DOM fragment of the selection, making a copy
+      console.log("range cloned contented : ", fragment)
+
+      // Create a temporary wrapper to check for class names
+      const tempDiv = document.createElement('div');
+      console.log("tempDiv init ", tempDiv)
+      tempDiv.appendChild(fragment);
+      console.log("tempDiv after appending : ", fragment)
+
+      const startCheck = tempDiv.querySelector('.snippet-start-line');
+      const endCheck = tempDiv.querySelector('.snippet-end-line');
+      console.log(`Start and end check ${startCheck} AND ${endCheck}`)
+      
+      
+      if (startCheck && endCheck ) {
+        const templateId = startCheck?.getAttribute("data-associated-template")
+        console.log("templateId var: ", templateId);
+
+        // Get all lines inside the tempDiv / highlighted snippet
+        const codeLines = Array.from(tempDiv.querySelectorAll('.cm-line'))
+        .map(lineEl => (lineEl as HTMLElement).innerText.trimEnd());
+        const innerText = codeLines.join('\n'); // Explicitly join lines with \n
+
+        console.log("templateId var: ", templateId);
+        console.log("Reconstructed inner text with newlines:\n", innerText);
+
+        if (templateId) 
+        snippetsManager.pushSnippetInstanceChanges(innerText, templateId); 
+      }
+      
+      return;
+    }
+  })
+
   /** Adding the templates:create command to their respective context menus */
   app.contextMenu.addItem({
     command: 'templates:create',
@@ -116,6 +161,18 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     selector: '.jp-Notebook',
     rank: 1
   });
+
+  app.contextMenu.addItem({
+    command : `templates:push`,
+    selector : `.jp-FileEditor`,
+    rank: 2
+  })
+
+  app.contextMenu.addItem({
+    command : `templates:push`,
+    selector : `.jp-Notebook`,
+    rank: 2
+  })
 
   /** Registers Library Widget to the right sidebar. */
   app.shell.add(libraryWidget, 'right', { rank : 300});

@@ -9,6 +9,7 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 
+
 /**
  * SnippetsManager Class
  * 
@@ -192,10 +193,12 @@ AssignDecorations(view: EditorView): DecorationSet {
     builder.add(startLine.from, startLine.from, Decoration.line({
         attributes: { 
           style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 'snippet-start-line',
+          class: 
+          'snippet-start-line',
           'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
           'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString()
+          'data-end-line': snippet.end_line.toString(),
+          'data-associated-template': snippet.template_id.toString()
          },
       })
     );
@@ -203,78 +206,102 @@ AssignDecorations(view: EditorView): DecorationSet {
     builder.add(endLine.from, endLine.from, Decoration.line({
         attributes: { 
           style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 'snippet-end-line',
+          class: 
+          'snippet-end-line',
           'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
         },
       })
     );
   }
-  
-  console.log("Trying to find the snippet lines...");
-  const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
-  console.log("Start lines found : ", startLines);
-
-  startLines.forEach(line => {
-    //if (line.querySelector('.snippet-button')) return;
-
-    // Get the snippet metadata from data attributes
-    const snippetId = line.getAttribute('data-snippet-id');
-    const startLineNum = parseInt(line.getAttribute('data-start-line') || '0');
-    const endLineNum = parseInt(line.getAttribute('data-end-line') || '0');
-
-    const button = document.createElement('button');
-    button.className = 'snippet-button';
-    button.innerHTML = 'PUSH';
-    button.title = 'Update template';
-    button.style.position = 'absolute';
-    button.style.right = '10px';
-    button.style.top = '2px';
-    button.style.margin = '20px';
-
-    button.addEventListener('click', () => {
-      const snippet = this.snippetTracker.find(snippet => snippet.cell_id === Number(snippetId));
-
-      if (snippet) {
-        console.log("Button clicked for snippet ID:", snippetId);
-        console.log("Valid snippet found after clicking push button: ", snippet)
-
-        // Extract the content of the snippet from the document
-        if (startLineNum > 0 && endLineNum > 0) {
-          console.log("Going to push the snippet instance changes up to the template!")
-          this.pushSnippetInstanceChanges( snippet );
-        }
-      }
-    });
-
-    
-    line.appendChild(button);
-    console.log("Push button added!")
-  });
-  
+   
   return builder.finish();
 }
+
+// THIS FUNCTION WILL GET CUT AFTER I REFACTOR THE PUSH BUTTON
+/**
+AssignPushButton( view : EditorView ) {
+    console.log("Trying to find the snippet lines...");
+    const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
+    console.log("Start lines found : ", startLines);
+
+    startLines.forEach(line => {
+      //if (line.querySelector('.snippet-button')) return;
+  
+      // Get the snippet metadata from data attributes
+      const snippetId = line.getAttribute('data-snippet-id');
+      const startLineNum = parseInt(line.getAttribute('data-start-line') || '0');
+      const endLineNum = parseInt(line.getAttribute('data-end-line') || '0');
+  
+      const button = document.createElement('button');
+      button.className = 'snippet-button';
+      button.innerHTML = 'PUSH';
+      button.title = 'Update template';
+      button.style.position = 'relative';
+      button.style.right = '-20px';
+      button.style.top = '2px';
+      button.style.margin = '20px';
+  
+      button.addEventListener('click', () => {
+        const snippet = this.snippetTracker.find(snippet => snippet.cell_id === Number(snippetId));
+  
+        if (snippet) {
+          console.log("Button clicked for snippet ID:", snippetId);
+          console.log("Valid snippet found after clicking push button: ", snippet)
+  
+          // Extract the content of the snippet from the document
+          if (startLineNum > 0 && endLineNum > 0) {
+            console.log("Going to push the snippet instance changes up to the template!")
+            this.pushSnippetInstanceChanges( snippet );
+          }
+        }
+      });
+      
+      line.appendChild(button); // ADDS PUSH BUTTON ELEMENT as a child TO THE LINE!, uncomment to make it work
+      console.log("Push button added!")
+    }); 
+
+}  */
+
+//THIS FUNCTION WILL GET CUT AFTER I REFACTOR THE PUSH BUTTON 
+  /** This function was used in attempt to make snippet instances persist,it currently adds no functionality
+   * The problem with this is i am querying for attributes that do no exist, as they dissapear on reload
+   */
+  /** 
+  PersistDecorations( view : EditorView ) {
+    const startLines = view.dom.querySelectorAll(`.snippet-start-line`)
+    const endLines = view.dom.querySelectorAll(`.snippet-end-line`);
+
+    console.log("start lines: ", startLines);
+    console.log("end lines: ", endLines);
+
+    startLines.forEach(line => {
+      // Apply just the border styling to match AssignDecorations
+      console.log("Applying decorations within persist!")
+      line.setAttribute('style', `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`);
+    });
+  
+    endLines.forEach(line => {
+      // Apply just the border styling to match AssignDecorations
+      console.log("Applying decorations within persist")
+      line.setAttribute('style', `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`);
+    });
+  }*/
 
   /**
    * Loads snippets from persistent storage
    * 
    * This method is intended to restore snippets when the editor is reopened.
    * 
-   * TODO: Implement this method to load saved snippets from storage
+   * TODO: Implement this method to load saved snippets 
    */
   loadSnippets() {
     // TODO: Implementation needed
-    // 1. Load snippets from JSON files 
-    // 2. Recreate snippet objects
-    // 3. Update snippet tracker array
   }
 
   /**
    * Propagates changes from snippet instances to their templates
    */
-  pushSnippetInstanceChanges(snippet : Snippet ) {
-    const snippetContent = snippet.content;
-    const templateId = snippet.template_id;
-    
+  pushSnippetInstanceChanges(snippetContent : string, templateId : string ) {
     console.log("Calling propagate changes in templates manager");
     this.templatesManager.propagateChanges(snippetContent, templateId);
   }
