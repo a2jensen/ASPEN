@@ -67,14 +67,14 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     event.dataTransfer.effectAllowed = "copy";
   };
 
-  const handleCopy = async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      console.log("Template content copied to clipboard");
-    }
-    catch (err) {
-      console.error("Could not copy template: ", err);
-    }
+  const handleCopy = (template: Template) => {
+    const jsonData = JSON.stringify(template);
+    const parsedData = JSON.parse(jsonData);
+    
+    navigator.clipboard.writeText(parsedData.content).then(() => {
+      localStorage.setItem("templateId", parsedData.id);
+      console.log("Copied to clipboard successfully!");
+    });
   }
 
   const handleRenameStart = (template: Template) => {
@@ -161,7 +161,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                 )}
 
                 <div className="template-buttons">
-                  <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template.content)}>
+                  <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
                     <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
