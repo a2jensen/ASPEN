@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';

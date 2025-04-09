@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
 /**
  * This file acts as the main entry point of the extension, where you import and export all your plugins or extensions.
  * It registers the UI components, commands and CodeMirror extension.
@@ -12,7 +10,7 @@ import {
 import { TemplatesManager } from './TemplatesManager';
 import { ContentsManager } from "@jupyterlab/services";
 import { LibraryWidget } from './LibraryWidget';
-import { SnippetsManager } from './snippetManager';
+import { SnippetsManager } from './SnippetManager';
 import { CodeMirrorExtension } from './CodeMirrorPlugin';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface for registering CodeMirror Extensions
 

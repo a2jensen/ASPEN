@@ -1,7 +1,3 @@
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable curly */
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
 import { Extension } from '@codemirror/state';
 import {
   DecorationSet,
@@ -9,7 +5,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-import { SnippetsManager } from './snippetManager';
+import { SnippetsManager } from './SnippetManager';
 
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;

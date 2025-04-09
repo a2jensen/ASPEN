@@ -1,7 +1,3 @@
-/* eslint-disable eqeqeq */
-/* eslint-disable curly */
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
@@ -217,59 +213,7 @@ AssignDecorations(view: EditorView): DecorationSet {
       })
     );
   }
-  /**
-  console.log("Trying to find the snippet lines...");
-  const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
-  console.log("Start lines found : ", startLines);
-   
-  return builder.finish();
-}
-
-// THIS FUNCTION WILL GET CUT AFTER I REFACTOR THE PUSH BUTTON
-/**
-AssignPushButton( view : EditorView ) {
-    console.log("Trying to find the snippet lines...");
-    const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
-    console.log("Start lines found : ", startLines);
-
-  startLines.forEach(line => {
-    //if (line.querySelector('.snippet-button')) return;
-
-    // Get the snippet metadata from data attributes
-    const snippetId = line.getAttribute('data-snippet-id');
-    const startLineNum = parseInt(line.getAttribute('data-start-line') || '0');
-    const endLineNum = parseInt(line.getAttribute('data-end-line') || '0');
-
-    /**
-    const button = document.createElement('button');
-    button.className = 'snippet-button';
-    button.innerHTML = 'PUSH';
-    button.title = 'Update template';
-    button.style.position = 'absolute';
-    button.style.right = '10px';
-    button.style.top = '2px';
-    button.style.margin = '20px';
-
-    button.addEventListener('click', () => {
-      const snippet = this.snippetTracker.find(snippet => snippet.cell_id === Number(snippetId));
-
-      if (snippet) {
-        console.log("Button clicked for snippet ID:", snippetId);
-        console.log("Valid snippet found after clicking push button: ", snippet)
-
-        // Extract the content of the snippet from the document
-        if (startLineNum > 0 && endLineNum > 0) {
-          console.log("Going to push the snippet instance changes up to the template!")
-          this.pushSnippetInstanceChanges( snippet );
-        }
-      }
-    });
-
-    
-    line.appendChild(button);
-    console.log("Push button added!")
-  });
-  */
+  
   return builder.finish();
 }
 
