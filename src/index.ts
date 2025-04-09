@@ -118,10 +118,10 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       const range = content.getRangeAt(0); // returns the DOM that the user highlighted
       console.log("range ", range);
       // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
-      const fragment = range.cloneContents(); // DOM fragment of the selection, making a copy
+      const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM
       console.log("range cloned contented : ", fragment)
 
-      // Create a temporary wrapper to check for class names
+      // Create a temporary wrapper to check for class names, acts as a temporary "mini-DOM" where we can make edits
       const tempDiv = document.createElement('div');
       console.log("tempDiv init ", tempDiv)
       tempDiv.appendChild(fragment);
