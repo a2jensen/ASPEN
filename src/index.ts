@@ -26,7 +26,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("testing addeddddddddddddd");
+  console.log("grey styling bg color added!!! border added everywhere solid");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
