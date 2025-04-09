@@ -111,6 +111,51 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     },
   }); 
 
+  commands.addCommand('templates:push', {
+    label: "Push Changes To Template",
+    execute: () => {
+      const content = window.getSelection();
+      if (content?.rangeCount === 0 || !content) {
+        return;
+      }
+
+      const range = content.getRangeAt(0); // returns the DOM that the user highlighted
+      console.log("range ", range);
+      // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
+      const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM
+      console.log("range cloned contented : ", fragment)
+
+      // Create a temporary wrapper to check for class names, acts as a temporary "mini-DOM" where we can make edits
+      const tempDiv = document.createElement('div');
+      console.log("tempDiv init ", tempDiv)
+      tempDiv.appendChild(fragment);
+      console.log("tempDiv after appending : ", fragment)
+
+      const startCheck = tempDiv.querySelector('.snippet-start-line');
+      const endCheck = tempDiv.querySelector('.snippet-end-line');
+      console.log(`Start and end check ${startCheck} AND ${endCheck}`)
+      
+      
+      if (startCheck && endCheck ) {
+        const templateId = startCheck?.getAttribute("data-associated-template")
+        console.log("templateId var: ", templateId);
+
+        // Get all lines inside the tempDiv / highlighted snippet
+        const codeLines = Array.from(tempDiv.querySelectorAll('.cm-line'))
+        .map(lineEl => (lineEl as HTMLElement).innerText.trimEnd());
+        const innerText = codeLines.join('\n'); // Explicitly join lines with \n
+
+        console.log("templateId var: ", templateId);
+        console.log("Reconstructed inner text with newlines:\n", innerText);
+
+        if (templateId) 
+        snippetsManager.pushSnippetInstanceChanges(innerText, templateId); 
+      }
+      
+      return;
+    }
+  })
+
   /** Adding the templates:create command to their respective context menus */
   app.contextMenu.addItem({
     command: 'templates:create',

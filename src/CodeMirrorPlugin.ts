@@ -120,7 +120,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
   
           setTimeout(() => {
-            snippetsManager.updateSnippetInstance(view);
+            //snippetsManager.updateSnippetInstance(view);
             this.decorations = snippetsManager.AssignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is pasted
         });
