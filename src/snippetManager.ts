@@ -13,6 +13,7 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 
+
 /**
  * SnippetsManager Class
  * 
@@ -196,10 +197,12 @@ AssignDecorations(view: EditorView): DecorationSet {
     builder.add(startLine.from, startLine.from, Decoration.line({
         attributes: { 
           style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 'snippet-start-line',
+          class: 
+          'snippet-start-line',
           'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
           'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString()
+          'data-end-line': snippet.end_line.toString(),
+          'data-associated-template': snippet.template_id.toString()
          },
       })
     );
@@ -207,7 +210,8 @@ AssignDecorations(view: EditorView): DecorationSet {
     builder.add(endLine.from, endLine.from, Decoration.line({
         attributes: { 
           style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 'snippet-end-line',
+          class: 
+          'snippet-end-line',
           'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
         },
       })
@@ -217,6 +221,16 @@ AssignDecorations(view: EditorView): DecorationSet {
   console.log("Trying to find the snippet lines...");
   const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
   console.log("Start lines found : ", startLines);
+   
+  return builder.finish();
+}
+
+// THIS FUNCTION WILL GET CUT AFTER I REFACTOR THE PUSH BUTTON
+/**
+AssignPushButton( view : EditorView ) {
+    console.log("Trying to find the snippet lines...");
+    const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
+    console.log("Start lines found : ", startLines);
 
   startLines.forEach(line => {
     //if (line.querySelector('.snippet-button')) return;
@@ -264,22 +278,16 @@ AssignDecorations(view: EditorView): DecorationSet {
    * 
    * This method is intended to restore snippets when the editor is reopened.
    * 
-   * TODO: Implement this method to load saved snippets from storage
+   * TODO: Implement this method to load saved snippets 
    */
   loadSnippets() {
     // TODO: Implementation needed
-    // 1. Load snippets from JSON files 
-    // 2. Recreate snippet objects
-    // 3. Update snippet tracker array
   }
 
   /**
    * Propagates changes from snippet instances to their templates
    */
-  pushSnippetInstanceChanges(snippet : Snippet ) {
-    const snippetContent = snippet.content;
-    const templateId = snippet.template_id;
-    
+  pushSnippetInstanceChanges(snippetContent : string, templateId : string ) {
     console.log("Calling propagate changes in templates manager");
     this.templatesManager.propagateChanges(snippetContent, templateId);
   }

@@ -17,8 +17,8 @@ let currentView: EditorView | null = null;
 
 /**
  * 
- * This serves as the main entry point for integrating CodeMirror into ASPEN.
- * This plugin integrates the SnippetsManager Class with CodeMirror's view system.
+ * This serves as the main entry point for integrating CodeMirror into the ASPEN extension.
+ * This plugin integrates the SnippetsManager Class with CodeMirror's view system, evidenced by the function taking in a SnippetsManager prop.
  * It is in charge of handling editor events, and applying/updating decorations to snippet instances when the view updates appropriately.
  * 
  * @param snippetsManager 
