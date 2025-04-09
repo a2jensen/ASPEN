@@ -33,6 +33,7 @@ export class TemplatesManager {
      * 2. Adds the template to the in-memory array
      * 3. Persists the template as a JSON file in the /snippets directory
      */
+    
     createTemplate( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
@@ -199,14 +200,10 @@ export class TemplatesManager {
        * 2. Update the template with the content from snippet_instance
        */
       propagateChanges( snippetContent : string, template_id : string){
-        /**
-         * TODO: Implement this method to:
-         * 1. Find the template using template_id in the templates array
-         * 2. Update the template content with the snippet_instance
-         * 3. Save the updated template to the filesystem
-         */
-        
-        const template = this.templates.filter( template => template.id === template_id);
-        template[0].content = snippetContent;
+        const template = this.templates.find( template => template.id === template_id);
+        if (template){
+          this.editTemplate(template_id, snippetContent)
+          console.log("Updated template content!")
+        }
       }
 }

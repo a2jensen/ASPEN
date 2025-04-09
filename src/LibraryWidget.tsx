@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -61,8 +57,32 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     setSortedTemplates(sorted);
   }
 
+  React.useEffect(() => {
+    setRenamingId(null);
+    setEditingId(null);
+
+    const validIds = new Set(templates.map(t => t.id));
+    setExpandedTemplates(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      
+      // Remove any expanded state for templates that no longer exist
+      Object.keys(updated).forEach(id => {
+        if (!validIds.has(id)) {
+          delete updated[id];
+          changed = true;
+        }
+      });
+      
+      // Only return a new object if something changed
+      return changed ? updated : prev;
+    });
+    
+  }, [templates])
+  
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
-    event.dataTransfer.setData("text/plain", template.content);
+    //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
+    event.dataTransfer.setData("text/plain", "\n"+template.content + "\n");
     event.dataTransfer.setData("application/json", JSON.stringify(template)); // Store full template info
     event.dataTransfer.effectAllowed = "copy";
   };

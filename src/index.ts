@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 /**
  * This file acts as the main entry point of the extension, where you import and export all your plugins or extensions.
  * It registers the UI components, commands and CodeMirror extension.
@@ -24,7 +26,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("refactors made");
+  console.log("testing addeddddddddddddd");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -98,6 +100,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   /**
    * Adding command that allows their highlighted code to be saved as a template.
    */
+ 
+
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
@@ -105,9 +109,61 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       if (snippet){
         console.log("Saving the snippet");
         libraryWidget.createTemplate(snippet);
+        //give me the template ID and export it too
+        document.dispatchEvent(new CustomEvent('Save Code Snippet', {
+          detail: { snippetText: snippet,
+            templateID: `${Date.now()}` // Use timestamp as unique ID
+          }
+        }));
+        console.log("Event Listener Dispatched!!!");
       }
     },
   }); 
+
+  commands.addCommand('templates:push', {
+    label: "Push Changes To Template",
+    execute: () => {
+      const content = window.getSelection();
+      if (content?.rangeCount === 0 || !content) {
+        return;
+      }
+
+      const range = content.getRangeAt(0); // returns the DOM that the user highlighted
+      console.log("range ", range);
+      // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
+      const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM
+      console.log("range cloned contented : ", fragment)
+
+      // Create a temporary wrapper to check for class names, acts as a temporary "mini-DOM" where we can make edits
+      const tempDiv = document.createElement('div');
+      console.log("tempDiv init ", tempDiv)
+      tempDiv.appendChild(fragment);
+      console.log("tempDiv after appending : ", fragment)
+
+      const startCheck = tempDiv.querySelector('.snippet-start-line');
+      const endCheck = tempDiv.querySelector('.snippet-end-line');
+      console.log(`Start and end check ${startCheck} AND ${endCheck}`)
+      
+      
+      if (startCheck && endCheck ) {
+        const templateId = startCheck?.getAttribute("data-associated-template")
+        console.log("templateId var: ", templateId);
+
+        // Get all lines inside the tempDiv / highlighted snippet
+        const codeLines = Array.from(tempDiv.querySelectorAll('.cm-line'))
+        .map(lineEl => (lineEl as HTMLElement).innerText.trimEnd());
+        const innerText = codeLines.join('\n'); // Explicitly join lines with \n
+
+        console.log("templateId var: ", templateId);
+        console.log("Reconstructed inner text with newlines:\n", innerText);
+
+        if (templateId) 
+        snippetsManager.pushSnippetInstanceChanges(innerText, templateId); 
+      }
+      
+      return;
+    }
+  })
 
   /** Adding the templates:create command to their respective context menus */
   app.contextMenu.addItem({
@@ -120,6 +176,19 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     selector: '.jp-Notebook',
     rank: 1
   });
+
+  app.contextMenu.addItem({
+    command: 'templates:push',
+    selector: '.jp-FileEditor',
+    rank : 2
+  });
+  app.contextMenu.addItem({
+    command: 'templates:push',
+    selector: '.jp-Notebook',
+    rank: 2
+  });
+
+
 
   /** Registers Library Widget to the right sidebar. */
   app.shell.add(libraryWidget, 'right', { rank : 300});
