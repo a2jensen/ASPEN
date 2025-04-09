@@ -177,6 +177,19 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     rank: 1
   });
 
+  app.contextMenu.addItem({
+    command: 'templates:push',
+    selector: '.jp-FileEditor',
+    rank : 2
+  });
+  app.contextMenu.addItem({
+    command: 'templates:push',
+    selector: '.jp-Notebook',
+    rank: 2
+  });
+
+
+
   /** Registers Library Widget to the right sidebar. */
   app.shell.add(libraryWidget, 'right', { rank : 300});
 
