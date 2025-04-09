@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
+import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon} from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
@@ -116,7 +116,12 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const handleEditStart = (template: Template) => {
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
-    console.log("editing mode"); //
+    if (!expandedTemplates[template.id]) {
+      toggleTemplate(template.id);
+    }
+    console.log("editing mode");
+
+    
 
     // adjust height when edit starts to fit content
     // not working!!!
@@ -161,7 +166,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "v" : ">"}
+                  {expandedTemplates[template.id] ? <caretDownIcon.react tag="span" height="16px" width="16px" /> : <caretRightIcon.react tag="span" height="16px" width="16px" />}
                 </button>
                 
                 {renamingId === template.id ? (
@@ -271,11 +276,13 @@ export class LibraryWidget extends ReactWidget {
 
   createTemplate(codeSnippet: string) {
     this.templateManager.createTemplate(codeSnippet);
+    //this.loadTemplates();
     this.update();
   }
 
   deleteTemplate = (id: string, name: string) => {
     this.templateManager.deleteTemplate(id,name);
+    //this.loadTemplates();
     this.update();
   }
 
