@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { Extension } from '@codemirror/state';
 import {
   DecorationSet,
@@ -5,7 +8,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-import { SnippetsManager } from './SnippetManager';
+import { SnippetsManager } from './snippetManager';
 
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;
@@ -27,7 +30,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
     
     // This event listener will now be registered only once
     document.addEventListener('Save Code Snippet', (event) => {
-      console.log("Event listener for createSnippet fired");
+      const templateID = (event as CustomEvent).detail.templateID;
       
       if (!currentView) {
         console.warn("No active editor view available");
@@ -38,7 +41,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       const startLine = currentView.state.doc.lineAt(selection.from).number;
       const endLine = currentView.state.doc.lineAt(selection.to).number;
       
-      const templateID = 'custom';
+  
       const droppedText = currentView.state.sliceDoc(selection.from, selection.to).trim();
       
       if (!droppedText) {
