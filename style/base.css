@@ -3,10 +3,13 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
-.library-container{
+.library-container {
+  max-height: 100vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
-.library-title{
+.library-title {
   font-size: large;
   font-weight: bolder;
   border-bottom: 2px solid black;
@@ -15,63 +18,86 @@
   padding: 10px;
 }
 
-.library-sort{
+.library-sort {
     
 }
 
-.template-item{
+.template-item {
 }
 
 .template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px;
 }
 
 .template-toggle {
-  background-color: gray;
-  width: 80%;
+  background-color: transparent;
+  border: none;
+  font-size: 1rem;
+  font-family: monospace;
+  padding: 3px;
 }
 
-.template-delete {
-  background-color: gray;
+.template-buttons {
+  display: flex;
+  background-color: transparent;
+  gap: 2px;
+  padding: 3px;
+}
+
+.template-buttons button {
+  border-radius: 4px;
+  border-width: 1.5px;
+}
+
+.template-buttons button:hover {
+  background-color: #cacaca;
 }
 
 .template-content {
   padding: 3px;
-  border-color: black;
 }
 
-.template-name {
-
+.template-name,
+.rename-input {
+  font-size: 1rem;
+  width: 100%;
+  padding: 3px;
+  min-width: 100px;
+  border: 1px solid transparent;
+  display: inline-block;
 }
 
-.template-snippet {
+.rename-input {
+  box-sizing: border-box;
+}
+
+.template-snippet,
+.edit-content-textarea {
+  font-size: medium;
   white-space: pre-wrap; /* Preserve spaces and line breaks */
   font-family: monospace; /* Maintain code styling */
   margin: 10px;
-  border-color: white;
-  font-size: smaller;
+  padding: 10px;
+  min-height: 15px;
+  resize: none;
+  border: 1px solid #b6b6b6;
+  border-radius: 8px;
+  background-color: transparent;
+}
+
+.template-snippet {
+  cursor: grab;
+}
+
+/* style and layout stays the same when editing, only colors border */
+.edit-content-textarea {
+  width: 95%;
+  box-sizing: border-box;
 }
 
 .template-date {
 
 }
-
-.rename-input, .edit-content-textarea {
-    width: 80%;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    padding: 5px;
-    align-items: center;
-  }
-  
-  .edit-content-textarea {
-    min-height: 50px;
-  }
-
-
-
-
-
-
-
-
-
