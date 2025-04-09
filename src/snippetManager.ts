@@ -1,3 +1,7 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
@@ -209,7 +213,7 @@ AssignDecorations(view: EditorView): DecorationSet {
       })
     );
   }
-  
+  /**
   console.log("Trying to find the snippet lines...");
   const startLines = view.dom.querySelectorAll(`.snippet-start-line`);
   console.log("Start lines found : ", startLines);
@@ -222,6 +226,7 @@ AssignDecorations(view: EditorView): DecorationSet {
     const startLineNum = parseInt(line.getAttribute('data-start-line') || '0');
     const endLineNum = parseInt(line.getAttribute('data-end-line') || '0');
 
+    /**
     const button = document.createElement('button');
     button.className = 'snippet-button';
     button.innerHTML = 'PUSH';
@@ -250,7 +255,7 @@ AssignDecorations(view: EditorView): DecorationSet {
     line.appendChild(button);
     console.log("Push button added!")
   });
-  
+  */
   return builder.finish();
 }
 
