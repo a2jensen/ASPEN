@@ -26,36 +26,53 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
   const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
 
+  // Persist last sorting option
+  React.useEffect(() => {
+    const savedSortOption = localStorage.getItem("sortOption");
+    if (savedSortOption) {
+      setSortOption(savedSortOption);
+    }
+  }, []);
+
+  // When either templates or sortOption changes, reapply sorting
+  React.useEffect(() => {
+    const sorted = [...templates]; // prevents original array from being modified during sorting
+    
+    switch (sortOption) {
+      case 'created-desc':
+        sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+      case 'created-asc':
+        sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+        break;
+      case 'updated-desc':
+        sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
+        break;
+      case 'updated-asc':
+        sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
+        break;
+      default:
+        break;
+    }
+    setSortedTemplates(sorted);
+  }, [templates, sortOption]);
+  
+  // Whenever sortOption changes, store it in localStorage
+  React.useEffect(() => {
+    localStorage.setItem('sortOption', sortOption);
+    console.log(sortOption + " sort option saved to local storage");
+  }, [sortOption]);
+
+  const handleSortChange = React.useCallback((option: string) => {
+    setSortOption(option);
+  }, []);
+
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
     }));
   };
-
-  const handleSortChange = (option: string) => {
-    setSortOption(option);
-    let sorted = [...templates]; // prevents original array from being modified during sorting
-
-    switch (option) {
-      case 'created-desc':
-        sorted = sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-        break;
-        case 'created-asc':
-          sorted = sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
-          break;
-        case 'updated-desc':
-          sorted = sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
-          break;
-        case 'updated-asc':
-          sorted = sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
-          break;
-        default:
-          break;
-    }
-    
-    setSortedTemplates(sorted);
-  }
 
   React.useEffect(() => {
     setRenamingId(null);
@@ -78,7 +95,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       return changed ? updated : prev;
     });
     
-  }, [templates])
+  }, [templates]);
+
+  React.useEffect(() => {
+    // Store sort option in localStorage
+    localStorage.setItem("sortOption", sortOption);
+  }, [sortOption]);
+  
+ 
+  
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -276,13 +301,11 @@ export class LibraryWidget extends ReactWidget {
 
   createTemplate(codeSnippet: string) {
     this.templateManager.createTemplate(codeSnippet);
-    //this.loadTemplates();
     this.update();
   }
 
   deleteTemplate = (id: string, name: string) => {
     this.templateManager.deleteTemplate(id,name);
-    //this.loadTemplates();
     this.update();
   }
 
