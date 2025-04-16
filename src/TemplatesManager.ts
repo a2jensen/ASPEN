@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 
@@ -15,6 +18,7 @@ export class TemplatesManager {
     /** JupyterLab's ContentsManager to handle file operations */
     jsonManager : ContentsManager;
 
+
     /**
      * Initializes a new instance of the TemplatesManager
      * Sets up an empty templates array and creates a ContentsManager instance
@@ -23,6 +27,7 @@ export class TemplatesManager {
         this.templates = []
         this.jsonManager = contentManager;
     }
+
 
     /**
      * Creates a new template from the provided code snippet
@@ -34,7 +39,7 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    createTemplate( codeSnippet : string ){
+    createTemplate( codeSnippet : string ): Template{
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -42,7 +47,7 @@ export class TemplatesManager {
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: '#FFE694',  // Default color
+            color: '#FFC0CB',  
             connections: []
         }
         this.templates.push(template);
@@ -56,8 +61,12 @@ export class TemplatesManager {
         }).catch(error => {
             console.error("Error saving file", error);
         });
-
         // TODO: May need to call this.update() to refresh the widget state
+        return template;  // Return the created template
+    }
+
+    getTemplateById(id: string): Template | undefined {
+      return this.templates.find(template => template.id === id);
     }
 
     /**

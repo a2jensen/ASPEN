@@ -12,6 +12,7 @@ import { SnippetsManager } from './snippetManager';
 
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;
+//Allows me to access the current view
 let currentView: EditorView | null = null;
 
 /**
@@ -24,7 +25,7 @@ let currentView: EditorView | null = null;
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
 export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension {
-  // Register the global event listener only once
+  // Checks that listner inly added once
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     

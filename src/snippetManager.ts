@@ -1,3 +1,7 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/quotes */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
@@ -152,6 +156,9 @@ export class SnippetsManager {
       console.log("Updated snippet tracker:", this.snippetTracker);
     }
 
+
+    //MAKE IT TOGGLE INSTEAD OPTION
+    //So when we click on the arrow in You Templates/ opening the template to edit the code snippets corresponding to that template will show the border colors
   /**
  * Creates decorations to visually highlight snippets in the editor
  * 
@@ -168,54 +175,62 @@ export class SnippetsManager {
 * 
 * MAY BE USEFUL : https://codemirror.net/examples/gutter/
  */
-AssignDecorations(view: EditorView): DecorationSet {
-  const cellID = this.cellMap.get(view);
-  if (!cellID) return Decoration.none;
+  //What I can do is once toggled so opened v, I can then do assign decorations and then remove the decorations when closed
+  //Also want to do when we are working on a snipet the corresponding ones attached to it will also highlight
+  //and when we are not working on it, it will remove the highlight
+  AssignDecorations(view: EditorView): DecorationSet {
+    const cellID = this.cellMap.get(view);
+    if (!cellID) return Decoration.none;
 
-  const builder = new RangeSetBuilder<Decoration>();
-  
-  //organizes it in order otherwise program will crash
-  const snippetsInCell = this.snippetTracker
-  .filter(s => s.cell_id === cellID)
-  .sort((a, b) => a.start_line - b.start_line);
-
-  //goes through the snippetTracker and checks startline/endline for each
-  for (const snippet of snippetsInCell) {
-    const startLine = view.state.doc.line(snippet.start_line);
-    const endLine = view.state.doc.line(snippet.end_line);
+    const builder = new RangeSetBuilder<Decoration>();
     
-    // Remove empty snippets (where start line equals end line)
-    if (startLine == endLine) {
-      continue;
-    }
+    //organizes it in order otherwise program will crash
+    const snippetsInCell = this.snippetTracker
+    .filter(s => s.cell_id === cellID)
+    .sort((a, b) => a.start_line - b.start_line);
 
-    // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-    builder.add(startLine.from, startLine.from, Decoration.line({
-        attributes: { 
-          style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-start-line',
-          'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
-          'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString(),
-          'data-associated-template': snippet.template_id.toString()
-         },
-      })
-    );
-  
-    builder.add(endLine.from, endLine.from, Decoration.line({
-        attributes: { 
-          style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-end-line',
-          'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
-        },
-      })
-    );
+    //goes through the snippetTracker and checks startline/endline for each
+    for (const snippet of snippetsInCell) {
+      const startLine = view.state.doc.line(snippet.start_line);
+      const endLine = view.state.doc.line(snippet.end_line);
+      
+      // Remove empty snippets (where start line equals end line)
+      if (startLine == endLine) {
+        continue;
+      }
+
+      //template id acces the id of the template same as snippet.template_id and get its color
+      //I am getting the id of that speciifc template that this snippet is connected to and looking at its color
+      const template = this.templatesManager.getTemplateById(snippet.template_id);
+      const borderColor = template ? template.color : '#FFC0CB'; 
+
+      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
+      builder.add(startLine.from, startLine.from, Decoration.line({
+          attributes: { 
+            style: `border-top: 2px solid ${borderColor}; border-left: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};`,
+            class: 
+            'snippet-start-line',
+            'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
+            'data-start-line': snippet.start_line.toString(),
+            'data-end-line': snippet.end_line.toString(),
+            'data-associated-template': snippet.template_id.toString()
+          },
+        })
+      );
+    
+      builder.add(endLine.from, endLine.from, Decoration.line({
+          attributes: { 
+            style: `border-bottom: 2px solid ${borderColor}; border-left: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};`,
+            class: 
+            'snippet-end-line',
+            'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
+          },
+        })
+      );
+    }
+    
+    return builder.finish();
   }
-  
-  return builder.finish();
-}
 
   /**
    * Loads snippets from persistent storage

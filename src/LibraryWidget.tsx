@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -56,29 +58,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     
     setSortedTemplates(sorted);
   }
-
-  React.useEffect(() => {
-    setRenamingId(null);
-    setEditingId(null);
-
-    const validIds = new Set(templates.map(t => t.id));
-    setExpandedTemplates(prev => {
-      const updated = { ...prev };
-      let changed = false;
-      
-      // Remove any expanded state for templates that no longer exist
-      Object.keys(updated).forEach(id => {
-        if (!validIds.has(id)) {
-          delete updated[id];
-          changed = true;
-        }
-      });
-      
-      // Only return a new object if something changed
-      return changed ? updated : prev;
-    });
-    
-  }, [templates])
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -269,9 +248,12 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  createTemplate(codeSnippet: string) {
+  createTemplate(codeSnippet: string): Template {
+    //idk if this line needed
     this.templateManager.createTemplate(codeSnippet);
     this.update();
+    return this.templateManager.createTemplate(codeSnippet);
+
   }
 
   deleteTemplate = (id: string, name: string) => {
