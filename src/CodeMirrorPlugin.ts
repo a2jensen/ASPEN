@@ -94,36 +94,46 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
          * Parses the clipboard data and creates a new snippet instance if it contains
          * a valid template.
          */
-        view.dom.addEventListener("paste", event => {
+        view.dom.addEventListener("paste", (event) =>{
           event.preventDefault();
+          try{
+            const text = event.clipboardData?.getData("text") || "";
+            const copiedId = localStorage.getItem("templateId")
   
-          const clipboardContent = event.clipboardData?.getData('application/json');
-          const droppedText = event.clipboardData?.getData('text/plain');
-          console.log("dropped text app/json", clipboardContent);
-          console.log("dropped text text/plain", droppedText);
+            if(copiedId){
+              console.log("Pasted content is a template:", copiedId)
   
-          if (!clipboardContent) return;
-          if(!droppedText) return;
+              const selection = view.state.selection.main;
+              const cursorPos = selection.from;
+              const pastedLines = text.split('\n').length
+              const startLine = view.state.doc.lineAt(cursorPos).number - pastedLines + 1;
+              console.log("Start line", startLine);
+              const endLine = startLine + pastedLines - 1;
+              console.log("Number of new lines in pasted text:", text.split("\n").length);
+              console.log("End line,", endLine);
   
-          const parsedText = JSON.parse(clipboardContent);
-          if(!(parsedText.marker === "aspen-template")) return; 
-          
-          const selection = view.state.selection.main;
-          const dropPos = selection.from;
-          const startLine = view.state.doc.lineAt(dropPos).number;
-          const endLine = startLine + droppedText.split('\n').length - 1;
-          console.log("Start line", startLine);
-          console.log("End line,", endLine);
-  
-          const templateId = parsedText.templateID;
-          console.log("The template id associated with the instance", templateId);
-          snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
-  
-          setTimeout(() => {
-            //snippetsManager.updateSnippetInstance(view);
-            this.decorations = snippetsManager.AssignDecorations(view);
-          }, 10); // A small delay to ensure updates are applied after the text is pasted
-        });
+              snippetsManager.createSnippetInstance(view, startLine, endLine, copiedId, text);
+              
+              setTimeout(() => {
+                snippetsManager.updateSnippetInstance(view);
+                this.decorations = snippetsManager.AssignDecorations(view);
+              }, 10);
+            }
+            else{
+              console.log("No template found")
+            }
+          }
+          catch(err){
+            console.error("Error with paste: ", err);
+          }
+        })
+
+        // add copy event listener to make sure default copy doesn't interfere with template creation
+        view.dom.addEventListener("copy", event =>{
+          console.log("event listener listened");
+          localStorage.removeItem("templateId");
+        })
+
   
         /**
          * Event listener for drop events
