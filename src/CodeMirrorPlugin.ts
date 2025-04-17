@@ -10,6 +10,8 @@ import {
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
 
+//Issue when i do save snippet it doesnt add the spaces before and after the snippet
+
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;
 //Allows me to access the current view
@@ -29,6 +31,21 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
+    document.addEventListener('Toggle Template Highlight', (event) => {
+      const customEvent = event as CustomEvent;
+      const templateID = customEvent.detail.templateID;
+      const isExpanded = customEvent.detail.isExpanded;
+    
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+    
+      // Pass both templateID and expanded state to update decorations
+     
+      snippetsManager.highlightTemplateSnippets(currentView, templateID, isExpanded);
+    });
+
     // This event listener will now be registered only once
     document.addEventListener('Save Code Snippet', (event) => {
       const templateID = (event as CustomEvent).detail.templateID;
@@ -50,12 +67,13 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         return; // Do not create an empty snippet
       }
      
+      console.log("Adding snippet");
       //Issue here because of design its not being applied 
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.updateSnippetInstance(currentView!);
         snippetsManager.createSnippetInstance(currentView!, startLine, endLine, templateID, droppedText);
-        currentView!.dispatch({ effects: [] });
+        //currentView!.dispatch({ effects: [] });
       }, 10);
       // Update decorations through the plugin instance rather than directly here
       // The ViewPlugin's update method will handle that
@@ -122,7 +140,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   
           setTimeout(() => {
             //snippetsManager.updateSnippetInstance(view);
-            this.decorations = snippetsManager.AssignDecorations(view);
+            //this.decorations = snippetsManager.AssignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is pasted
         });
   
@@ -151,9 +169,9 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           const selection = view.state.selection.main;
           const dropPos = selection.from;
           const startLine = view.state.doc.lineAt(dropPos).number;
-          //console.log("Start line", startLine);
+          
           const endLine = startLine + droppedText.split('\n').length - 1;
-          //console.log("End line,", endLine);
+         
           const templateID = parsedText.templateID;
   
           snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
@@ -161,7 +179,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
 
           setTimeout(() => {
             snippetsManager.updateSnippetInstance(view);
-            this.decorations = snippetsManager.AssignDecorations(view);
+            //this.decorations = snippetsManager.AssignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is dropped
         });
       }
@@ -194,6 +212,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         
         if (update.docChanged || update.transactions.length > 0) {
           snippetsManager.updateSnippetInstance(update.view, update);
+          console.log("Update the snippet instance decoratin");
           this.decorations = snippetsManager.AssignDecorations(update.view);
           
         }

@@ -35,6 +35,10 @@ export class SnippetsManager {
 
   //private contentsManager : ContentsManager;
 
+  expandedTemplateIds: Set<string> = new Set();
+  
+  private activeTemplateID: string | null = null;
+
   /**
    * Initializes a new instance of the SnippetsManager
    */
@@ -157,8 +161,7 @@ export class SnippetsManager {
     }
 
 
-    //MAKE IT TOGGLE INSTEAD OPTION
-    //So when we click on the arrow in You Templates/ opening the template to edit the code snippets corresponding to that template will show the border colors
+
   /**
  * Creates decorations to visually highlight snippets in the editor
  * 
@@ -175,9 +178,8 @@ export class SnippetsManager {
 * 
 * MAY BE USEFUL : https://codemirror.net/examples/gutter/
  */
-  //What I can do is once toggled so opened v, I can then do assign decorations and then remove the decorations when closed
-  //Also want to do when we are working on a snipet the corresponding ones attached to it will also highlight
-  //and when we are not working on it, it will remove the highlight
+
+  //Issue? Maybe? it only works with the cell that is currently active I think it should be fine
   AssignDecorations(view: EditorView): DecorationSet {
     const cellID = this.cellMap.get(view);
     if (!cellID) return Decoration.none;
@@ -187,6 +189,8 @@ export class SnippetsManager {
     //organizes it in order otherwise program will crash
     const snippetsInCell = this.snippetTracker
     .filter(s => s.cell_id === cellID)
+    //What this is doing is basically filtering the snippets that are in the cell and also checking if the template is expanded or not
+    .filter(s => this.expandedTemplateIds.has(s.template_id) || this.activeTemplateID === s.template_id)
     .sort((a, b) => a.start_line - b.start_line);
 
     //goes through the snippetTracker and checks startline/endline for each
@@ -199,12 +203,10 @@ export class SnippetsManager {
         continue;
       }
 
-      //template id acces the id of the template same as snippet.template_id and get its color
-      //I am getting the id of that speciifc template that this snippet is connected to and looking at its color
+     //Dont need now because its not giving me random colors might implement later 
       const template = this.templatesManager.getTemplateById(snippet.template_id);
-      const borderColor = template ? template.color : '#FFC0CB'; 
-
-      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
+      const borderColor = template ? template.color : '#FFC0CB';
+   
       builder.add(startLine.from, startLine.from, Decoration.line({
           attributes: { 
             style: `border-top: 2px solid ${borderColor}; border-left: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};`,
@@ -231,6 +233,24 @@ export class SnippetsManager {
     
     return builder.finish();
   }
+
+  //So what this is doing is basically adding the templateID of expanded templates and getting rid of the ones that are not expanded anymore
+  //
+  highlightTemplateSnippets(view: EditorView, templateID: string, isExpanded: boolean) {
+    if (isExpanded) {
+      // Add this template to the expanded set
+      this.expandedTemplateIds.add(templateID);
+    } else {
+      // Remove this template from the expanded set
+      this.expandedTemplateIds.delete(templateID);
+    }
+    
+    // Force a decoration refresh by triggering a view update
+    if (view) {
+      view.dispatch({ effects: [] }); // triggers CodeMirror to call `update()`
+    }
+  }
+
 
   /**
    * Loads snippets from persistent storage

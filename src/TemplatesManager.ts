@@ -47,7 +47,7 @@ export class TemplatesManager {
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: '#FFC0CB',  
+            color: this.RandomColor(),  // Assign a random color for visual distinction
             connections: []
         }
         this.templates.push(template);
@@ -65,9 +65,21 @@ export class TemplatesManager {
         return template;  // Return the created template
     }
 
+    RandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+    
+ 
     getTemplateById(id: string): Template | undefined {
       return this.templates.find(template => template.id === id);
     }
+
+    //give different color for each template
 
     /**
      * Deletes a template from both the in-memory array and filesystem

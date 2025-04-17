@@ -8,7 +8,6 @@ import "../style/base.css";
 import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
-
 /**
  * React Library Component.
  */
@@ -32,7 +31,20 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
+      
     }));
+    const isExpanding = !expandedTemplates[id];
+  
+    // Dispatch event with both template ID and expanded state
+    const event = new CustomEvent('Toggle Template Highlight', {
+      detail: {
+        templateID: id,
+        isExpanded: isExpanding
+      }
+    });
+    document.dispatchEvent(event);
+    //Can i not just have a event listner here and once this is clicked activate the decoration to the corresponding? snippet
+    //Call the decoration?
   };
 
   const handleSortChange = (option: string) => {
@@ -249,8 +261,6 @@ export class LibraryWidget extends ReactWidget {
   }
 
   createTemplate(codeSnippet: string): Template {
-    //idk if this line needed
-    this.templateManager.createTemplate(codeSnippet);
     this.update();
     return this.templateManager.createTemplate(codeSnippet);
 
