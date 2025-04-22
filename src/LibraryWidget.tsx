@@ -3,23 +3,26 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
-import { Template } from "./types";
+import { copyIcon, editIcon, deleteIcon, numberingIcon } from '@jupyterlab/ui-components';
+import { Template, Snippet } from "./types";
 import { TemplatesManager } from './TemplatesManager';
+import { SnippetsManager } from './snippetManager';
 
 /**
  * React Library Component.
  */
-function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
+function Library({ templates, snippets, pushChanges, deleteTemplate, renameTemplate, editTemplate }: {
     templates: Template[],
+    snippets: Snippet[],
+    pushChanges : (snippetId: string, templateContent: string ) => void,
     deleteTemplate : (id : string, name : string) => void,
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
   const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
+  const [snippetVisibility, setSnippetVisibility] = useState<{ [key: string]: boolean }>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
@@ -128,6 +131,23 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     }
   }
 
+  const handleOpenInstances = (templateId: string, templateContent : string) => {
+    console.log("ID of template that just opened instances ", templateId)
+    console.log("ID of the template content that just opened instances", templateContent);
+    setSnippetVisibility(prev => ({
+      ...prev,
+      [templateId]: !prev[templateId]  // toggle snippet list for the clicked template
+    }));
+  };
+
+  const handlePushChanges = (snippetId: string, templateContent : string) => {
+    console.log("snippet ID :", snippetId);
+    console.log("template content that will be pushed down", templateContent);
+    pushChanges(snippetId, templateContent);
+    console.log("pushed changes successfully")
+  }
+  
+
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
     setNewContent(textarea.value);
@@ -184,6 +204,9 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
                     <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
+                  <button className="template-push" title="Copy to clipboard" onClick={() => handleOpenInstances(template.id, template.content)}>
+                    <numberingIcon.react tag="span" height="16px" width="16px" />
+                  </button>
 
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
                     <editIcon.react tag="span" height="16px" width="16px" />
@@ -194,6 +217,31 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   </button>
                 </div>
               </div>
+              
+              {snippetVisibility[template.id] && (
+                <div>
+                  <p>Snippets:</p>
+                  {snippets.filter(snippet => snippet.template_id === template.id).length === 0 ? (
+                    <p>No associated snippets.</p>
+                  ) : (
+                    <ul>
+                      {snippets
+                        .filter(snippet => snippet.template_id === template.id)
+                        .map(snippet => (
+                          <div>
+                              <li key={snippet.id}>
+                                {snippet.id}
+                              </li>
+                              <button onClick={() => handlePushChanges(snippet.id, template.content) }>
+                                Push changes
+                              </button>
+                          </div>
+                          
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {/** Section corresponding to when the template is opened */}
               {expandedTemplates[template.id] && (
@@ -261,11 +309,13 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
  */
 export class LibraryWidget extends ReactWidget {
   templateManager : TemplatesManager;
+  snippetsManager : SnippetsManager;
 
-  constructor( templatesManager : TemplatesManager ) {
+  constructor( templatesManager : TemplatesManager, snippetsManager : SnippetsManager ) {
     super();
     this.addClass('jp-LibraryWidget');
     this.templateManager = templatesManager;
+    this.snippetsManager = snippetsManager;
     this.loadTemplates();
   }
 
@@ -295,7 +345,10 @@ export class LibraryWidget extends ReactWidget {
   }
 
   render() {
-    return <Library templates={this.templateManager.templates}
+    return <Library 
+      templates={this.templateManager.templates}
+      snippets={this.snippetsManager.snippetTracker}
+      pushChanges={this.snippetsManager.recieveChanges}
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}

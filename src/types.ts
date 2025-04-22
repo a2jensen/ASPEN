@@ -17,7 +17,6 @@ export interface Template {
     dateUpdated: Date;
     tags: string[];
     color: string;
-    connections: string[];
 }
 
 /**
@@ -28,6 +27,7 @@ export interface Template {
  * @type template_id : string - reference to associated templateID
  */
 export interface Snippet {
+  id: string,
   cell_id: number;
   content : string;
   start_line: number;

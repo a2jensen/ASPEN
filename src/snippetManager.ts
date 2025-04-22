@@ -19,15 +19,15 @@ import {
  */
 export class SnippetsManager {
   /** Counter for generating unique cell IDs */
-  private cellCounter = 0;
+  public cellCounter;
   
   /** Array to keep track of all active snippets */
-  private snippetTracker: Snippet[] = [];
+  public snippetTracker: Snippet[];
   
   /** Map to associate editor views with their unique cell IDs */
-  private cellMap: Map<EditorView, number> = new Map()
+  public cellMap: Map<EditorView, number>;
   
-  private templatesManager : TemplatesManager;
+  public templatesManager : TemplatesManager;
 
   //private contentsManager : ContentsManager;
 
@@ -36,6 +36,9 @@ export class SnippetsManager {
    */
   constructor( contentsManager : ContentsManager , templates : TemplatesManager){
     this.templatesManager = templates;
+    this.snippetTracker = [];
+    this.cellMap = new Map();
+    this.cellCounter = 0;
     //this.contentsManager = contentsManager;
   }
 
@@ -72,6 +75,7 @@ export class SnippetsManager {
   createSnippetInstance(view: EditorView, startLine: number, endLine: number, templateID: string, content: string) {
     const cellID = this.assignCellID(view);
     const snippet = {
+      id: `${Date.now()}`,
       cell_id: cellID, 
       content: content,
       start_line: startLine,
@@ -226,6 +230,55 @@ AssignDecorations(view: EditorView): DecorationSet {
    */
   loadSnippets() {
     // TODO: Implementation needed
+  }
+
+
+  /**
+   * 
+   * @param snippetId - id of snippet to update
+   * @param templateContent - content to be applied from the template
+   * @returns 
+   */
+  // Arrow functions automatically bind this to the instance where they were defined.
+  recieveChanges = ( snippetId : string , templateContent : string ) => {
+    // use the cell id and start / end lines to apply changes in the DOM.
+    let snippet = this.snippetTracker.find(snippet => snippet.id === snippetId) // ERROR HERE
+
+    if (!snippet) {
+      console.log(`Failed to find snippet with ID ${snippetId}.`)
+      return
+    }
+
+    // find the editor view for the cell
+    let targetView : EditorView | undefined;
+    for (const [view, cellId] of this.cellMap.entries()) {
+      if (cellId === snippet.cell_id) {
+        targetView = view;
+        break;
+      }
+    }
+
+    if (!targetView) {
+      console.log(`Editor view for cell ID ${snippet} not found`)
+      return;
+    }
+    
+    const doc = targetView.state.doc;
+    const startPos = doc.line(snippet.start_line).from;
+    const endPos = doc.line(snippet.end_line).to;
+
+    // create transaction to replace the content
+    targetView.dispatch({
+      changes : {
+        from : startPos,
+        to: endPos,
+        insert : templateContent
+      }
+    })
+
+    snippet.content = templateContent
+    console.log(`Updated snippet ${snippetId} with the new template content!`)
+
   }
 
   /**

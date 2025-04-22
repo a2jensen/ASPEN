@@ -37,13 +37,12 @@ export class TemplatesManager {
     createTemplate( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
-            name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
+            name: `Template ${this.templates.length + 1}`,  // Auto-generate name based on count
             content: codeSnippet,
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
             color: '#FFE694',  // Default color
-            connections: []
         }
         this.templates.push(template);
         
@@ -169,7 +168,6 @@ export class TemplatesManager {
                       dateUpdated: new Date(templateData.dateUpdated || Date.now()),
                       tags: templateData.tags || [],           // Use provided tags or empty array
                       color: templateData.color || "#ffffff",  // Use provided color or default white
-                      connections : []
                     };
                     this.templates.push(template);
                     console.log(`Loaded template: ${template.name}`, template);

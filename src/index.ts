@@ -26,13 +26,13 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("testing addeddddddddddddd");
+  console.log("Added this fix");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
   const templatesManager = new TemplatesManager(contentsManager);
   const snippetsManager = new SnippetsManager(contentsManager, templatesManager);
-  const libraryWidget = new LibraryWidget(templatesManager);
+  const libraryWidget = new LibraryWidget(templatesManager, snippetsManager);
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
