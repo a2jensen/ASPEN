@@ -14,7 +14,6 @@ import { SnippetsManager } from './snippetManager';
 import { CodeMirrorExtension } from './CodeMirrorPlugin';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface for registering CodeMirror Extensions
 
-
 /**
  * Activation function for our extension. Function is called
  * when the extension is activated by Jupyter Lab.
