@@ -59,14 +59,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     return sortTemplates(templates, initialSortOption);
   });
 
-  // When templates are initially loaded, initialize sortedTemplates
-  React.useEffect(() => {
-    console.log("Templates updated:", templates);
-    if (templates.length > 0) {
-      setSortedTemplates(sortTemplates(templates, sortOption));
-    }
-  }, [templates]);
-
   // When the sort option is updated, re-sort and save to local storage
   React.useEffect(() => {
     setSortedTemplates(sortTemplates(templates, sortOption));
