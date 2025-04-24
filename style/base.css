@@ -4,7 +4,7 @@
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
 .library-container {
-  max-height: 100vh;
+  max-height: 90vh;
   overflow-y: scroll;
   overflow-x: hidden;
 }

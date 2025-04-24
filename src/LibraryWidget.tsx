@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon} from '@jupyterlab/ui-components';
+import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon, refreshIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
@@ -16,29 +16,26 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
-  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
+  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>(() => {
+    const initialState: { [key: string]: boolean } = {};
+    templates.forEach(template => {
+      initialState[template.id] = true;
+    });
+    return initialState;
+  });
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
-  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
-  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
+  const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
+  const [sortOption, setSortOption] = useState(initialSortOption);
 
-  // Persist last sorting option
-  React.useEffect(() => {
-    const savedSortOption = localStorage.getItem("sortOption");
-    if (savedSortOption) {
-      setSortOption(savedSortOption);
-    }
-  }, []);
-
-  // When either templates or sortOption changes, reapply sorting
-  React.useEffect(() => {
+  const sortTemplates = (templates: Template[], option: string): Template[] => {
     const sorted = [...templates]; // prevents original array from being modified during sorting
-    
-    switch (sortOption) {
+
+    switch (option) {
       case 'created-desc':
         sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
         break;
@@ -54,18 +51,38 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       default:
         break;
     }
-    setSortedTemplates(sorted);
-  }, [templates, sortOption]);
-  
-  // Whenever sortOption changes, store it in localStorage
+
+    return sorted;
+  };
+
+  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(() => {
+    return sortTemplates(templates, initialSortOption);
+  });
+
+  // When templates are initially loaded, initialize sortedTemplates
   React.useEffect(() => {
-    localStorage.setItem('sortOption', sortOption);
-    console.log(sortOption + " sort option saved to local storage");
+    console.log("Templates updated:", templates);
+    if (templates.length > 0) {
+      setSortedTemplates(sortTemplates(templates, sortOption));
+    }
+  }, [templates]);
+
+  // When the sort option is updated, re-sort and save to local storage
+  React.useEffect(() => {
+    setSortedTemplates(sortTemplates(templates, sortOption));
+    localStorage.setItem("sortOption", sortOption);
   }, [sortOption]);
 
-  const handleSortChange = React.useCallback((option: string) => {
-    setSortOption(option);
-  }, []);
+  React.useEffect(() => {
+    const newExpanded: { [key: string]: boolean } = { ...expandedTemplates };
+    templates.forEach(template => {
+      if (!(template.id in newExpanded)) {
+        newExpanded[template.id] = true;
+      }
+    });
+    setExpandedTemplates(newExpanded);
+  }, [templates]);
+  
 
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
@@ -73,37 +90,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       [id]: !prev[id], // Toggle specific template's expanded state
     }));
   };
-
-  React.useEffect(() => {
-    setRenamingId(null);
-    setEditingId(null);
-
-    const validIds = new Set(templates.map(t => t.id));
-    setExpandedTemplates(prev => {
-      const updated = { ...prev };
-      let changed = false;
-      
-      // Remove any expanded state for templates that no longer exist
-      Object.keys(updated).forEach(id => {
-        if (!validIds.has(id)) {
-          delete updated[id];
-          changed = true;
-        }
-      });
-      
-      // Only return a new object if something changed
-      return changed ? updated : prev;
-    });
-    
-  }, [templates]);
-
-  React.useEffect(() => {
-    // Store sort option in localStorage
-    localStorage.setItem("sortOption", sortOption);
-  }, [sortOption]);
-  
- 
-  
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -177,12 +163,16 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
       <div className="library-sort">
-        <select value={sortOption} onChange={(e) => handleSortChange(e.target.value)}>
+        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
           <option value="created-desc">Most Recently Created</option>
           <option value="created-asc">Least Recently Created</option>
           <option value="updated-desc">Most Recently Updated</option>
           <option value="updated-asc">Least Recently Updated</option>
         </select>
+        <button className="refresh-sort" title="Refresh sorting"
+            onClick={() => setSortedTemplates(sortTemplates(templates, sortOption))}>
+          <refreshIcon.react tag="span" height="16px" width="16px"/>
+        </button>
       </div>
 
       {sortedTemplates.length > 0 ? (
@@ -212,15 +202,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 
                 <div className="template-buttons">
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
-                    <copyIcon.react tag="span" height="16px" width="16px" />
+                    <copyIcon.react tag="span" height="16px" width="16px"/>
                   </button>
 
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    <editIcon.react tag="span" height="16px" width="16px" />
+                    <editIcon.react tag="span" height="16px" width="16px"/>
                   </button>
 
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    <deleteIcon.react tag="span" height="16px" width="16px" />
+                    <deleteIcon.react tag="span" height="16px" width="16px"/>
                   </button>
                 </div>
               </div>
@@ -319,8 +309,8 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
-  loadTemplates() {
-    this.templateManager.loadTemplates();
+  async loadTemplates() {
+    await this.templateManager.loadTemplates();
     this.update();
   }
 
