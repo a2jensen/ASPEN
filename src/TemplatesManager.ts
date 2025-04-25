@@ -34,7 +34,7 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    createTemplate( codeSnippet : string ){
+    async createTemplate( codeSnippet : string ): Promise<Template>{
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -47,17 +47,19 @@ export class TemplatesManager {
         }
         this.templates.push(template);
         
-        this.jsonManager.save(`/snippets/${template.name}.json`, {
+        try {
+          await this.jsonManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
-        }).then(() => {
-            console.log(`Saved ${template.name} to file successfully.`);
-        }).catch(error => {
-            console.error("Error saving file", error);
-        });
-
-        // TODO: May need to call this.update() to refresh the widget state
+          });
+          
+          console.log(`Saved ${template.name} to file successfully.`);
+        }
+        catch(error) {
+          console.error("Error saving file", error);
+        }
+        return template;
     }
 
     /**

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon, refreshIcon } from '@jupyterlab/ui-components';
+import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 
@@ -63,7 +63,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   React.useEffect(() => {
     setSortedTemplates(sortTemplates(templates, sortOption));
     localStorage.setItem("sortOption", sortOption);
-  }, [sortOption]);
+  }, [sortOption, templates]);
 
   React.useEffect(() => {
     const newExpanded: { [key: string]: boolean } = { ...expandedTemplates };
@@ -74,7 +74,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     });
     setExpandedTemplates(newExpanded);
   }, [templates]);
-  
 
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
@@ -161,10 +160,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
           <option value="updated-desc">Most Recently Updated</option>
           <option value="updated-asc">Least Recently Updated</option>
         </select>
-        <button className="refresh-sort" title="Refresh sorting"
-            onClick={() => setSortedTemplates(sortTemplates(templates, sortOption))}>
-          <refreshIcon.react tag="span" height="16px" width="16px"/>
-        </button>
       </div>
 
       {sortedTemplates.length > 0 ? (
@@ -281,8 +276,9 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  createTemplate(codeSnippet: string) {
-    this.templateManager.createTemplate(codeSnippet);
+  async createTemplate(codeSnippet: string) {
+    await this.templateManager.createTemplate(codeSnippet);
+    await this.templateManager.loadTemplates();
     this.update();
   }
 
