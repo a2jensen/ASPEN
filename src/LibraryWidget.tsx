@@ -122,18 +122,17 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       toggleTemplate(template.id);
     }
     console.log("editing mode");
-
-    
-
-    // adjust height when edit starts to fit content
-    // not working!!!
-    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
-    if (textarea) {
-      textarea.style.height = "auto";
-      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
-      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
-    }
   }
+
+  React.useEffect(() => {
+    if (editingId) {
+      const textarea = document.getElementById(editingId) as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }
+  }, [editingId]);
 
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
