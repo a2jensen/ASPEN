@@ -6,7 +6,6 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
-import { changeDetector } from './changeDetection';
 
 /**
  * 
@@ -62,20 +61,6 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
                 console.log("End line,", endLine);
     
                 snippetsManager.createSnippetInstance(view, startLine, endLine, copiedId, text);
-
-                // code to just test out jsdiff
-                const snippets = snippetsManager.getAllSnippets();
-                if(snippets.length >= 2){
-                  console.log('snippets length is >= 2');
-                  for(let i = 1; i < snippets.length; i++){
-                    console.log('for loop running');
-                    const snippet1 = snippets[0];
-                    const snippet2 = snippets[i];
-                    const diff = changeDetector(snippet1, snippet2);
-                    console.log('output of jsdiff: ', diff);
-                  }
-                }
-                
                 setTimeout(() => {
                   snippetsManager.updateSnippetInstance(view);
                   this.decorations = snippetsManager.AssignDecorations(view);

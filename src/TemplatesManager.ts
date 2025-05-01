@@ -1,5 +1,6 @@
 import { ContentsManager } from "@jupyterlab/services";
-import { Template } from "./types";
+import { Template, Snippet } from "./types";
+import { diffWords, Change } from "diff";
 
 /**
  * TemplatesManager Class
@@ -19,7 +20,7 @@ export class TemplatesManager {
      * Initializes a new instance of the TemplatesManager
      * Sets up an empty templates array and creates a ContentsManager instance
      */
-    constructor( contentManager : ContentsManager ){
+    constructor( contentManager : ContentsManager){
         this.templates = []
         this.jsonManager = contentManager;
     }
@@ -208,5 +209,43 @@ export class TemplatesManager {
         
         const template = this.templates.filter( template => template.id === template_id);
         template[0].content = snippetContent;
+      }
+
+      checkDiffs(snippet : Snippet, template_id: string){
+        const snippetContent = snippet.content;
+        const template = this.templates.filter( template => template.id === template_id);
+        const templateContent = template[0].content;
+        return diffWords(templateContent, snippetContent);
+      }
+
+      addTextbox(template_id: string, diffs: Change[]){
+        const template = this.templates.filter( template => template.id === template_id);
+        let updated = '';
+        let i = 0;
+
+        while(i < diffs.length){
+          const curr = diffs[i];
+          //since removed -> added counts as two seperate changes, handle both at once
+          if (curr.removed) {
+            if (i + 1 < diffs.length && diffs[i + 1].added) {
+                updated += '[hole]';
+                i += 2;
+                continue;
+            }
+            else {
+              updated += '[hole]';
+            }
+          }
+          else if (curr.added){
+            updated += '[hole]';
+        }
+        else{
+          updated += curr.value;
+        }
+        i++;
+      }
+
+        template[0].content = updated;
+        console.log("textbox added: ", template[0].content)
       }
 }

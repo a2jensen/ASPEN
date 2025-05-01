@@ -31,7 +31,7 @@ export class SnippetsManager {
   
   /** Map to associate editor views with their unique cell IDs */
   private cellMap: Map<EditorView, number> = new Map()
-  
+   
   private templatesManager : TemplatesManager;
 
   //private contentsManager : ContentsManager;
@@ -43,7 +43,6 @@ export class SnippetsManager {
     this.templatesManager = templates;
     //this.contentsManager = contentsManager;
   }
-
 
   /**
    * Assigns a unique cell ID to an editor view
@@ -103,6 +102,7 @@ export class SnippetsManager {
    * 
    * TODO: Update the content of the snippets as well, not just their positions
    */
+
   updateSnippetInstance(view: EditorView, update?: ViewUpdate) {
       if (!update) return;
       const cellID = this.cellMap.get(view);
@@ -158,6 +158,7 @@ export class SnippetsManager {
       console.log("Updated snippet tracker:", this.snippetTracker);
     }
 
+    
   /**
    * Creates decorations to visually highlight snippets in the editor
    * 
@@ -277,5 +278,15 @@ export class SnippetsManager {
     const templateId = snippet.template_id;
     
     this.templatesManager.propagateChanges(snippetContent, templateId);
+  }
+
+  // Compares content of snippets with templates and adds textboxes if needed
+  checkSnippetDiffs(){
+    for(const snippet of this.snippetTracker){
+      const templateId = snippet.template_id;
+      const diffs = this.templatesManager.checkDiffs(snippet, templateId);
+      this.templatesManager.addTextbox(templateId, diffs);
+      console.log("Textboxes added");
+    }
   }
 }

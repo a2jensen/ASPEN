@@ -9,6 +9,7 @@ import {
 } from '@jupyterlab/application'
 import { TemplatesManager } from './TemplatesManager';
 import { ContentsManager } from "@jupyterlab/services";
+import { INotebookTracker } from "@jupyterlab/notebook";
 import { LibraryWidget } from './LibraryWidget';
 import { SnippetsManager } from './snippetManager';
 import { CodeMirrorExtension } from './CodeMirrorPlugin';
@@ -22,10 +23,9 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param restorer restorer - The layout restorer service for preserving widget state
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
-function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
+function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry, notebookTracker: INotebookTracker) {
   console.log("refactors made");
   const { commands } = app;
-
   const contentsManager = new ContentsManager();
   const templatesManager = new TemplatesManager(contentsManager);
   const snippetsManager = new SnippetsManager(contentsManager, templatesManager);
@@ -34,6 +34,15 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
 
+  notebookTracker.widgetAdded.connect((sender, panel) => {
+    panel.context.saveState.connect((sender, state) => {
+      if(state === "completed"){
+        console.log("document saved");
+        snippetsManager.checkSnippetDiffs();
+      }
+    });
+  });
+  
   /**
    * Event Listener for when a template is copied from the library.
    * Before getting saved to the clipboard, we want to attach a marker as well as its ID onto it in JSON format.
@@ -44,32 +53,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    *     - getData(format): Retrieves data of the specified format from the clipboard
    *     - clearData([format]): Removes data of the specified format or all formats
    */
-
 /**
-  document.addEventListener("click", async (event) => {
-    const target  = event.target as HTMLElement;
-    if (target.classList.contains("template-copy")) {
-      console.log("Copy button clicked, checking clipboard data");
 
-      try {
-        const clipboardText = await navigator.clipboard.readText();
-        console.log("Clipboard content:", clipboardText);
-  
-        const clipboardData = JSON.parse(clipboardText);
-  
-        if(clipboardData.marker === "aspen-template") {
-          console.log("Template was copied:", clipboardData.id);
-        }
-        else{
-          console.warn("Clipboard does not contain a valid template.");
-        }
-      }
-      catch(err){
-        console.error("Error reading clipboard:", err);
-      }
-    }
-  });
-*/
 
   /**
  * Event Listener for when a template is dragged from the library.
@@ -148,7 +133,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 const aspen: JupyterFrontEndPlugin<void> = {
   id : 'aspen-extension', 
   autoStart: true,
-  requires : [ ILayoutRestorer, IEditorExtensionRegistry],
+  requires : [ ILayoutRestorer, IEditorExtensionRegistry, INotebookTracker],
   activate: activate
 };
 
