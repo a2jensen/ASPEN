@@ -44,12 +44,6 @@ The above command copies the frontend part of the extension into JupyterLab. We 
 jupyter labextension develop --overwrite .
 ```
 
-Install these libraries as well:
-```bash
-jlpm add @lumino/widgets
-jlpm add @jupyterlab/apputils @jupyterlab/application
-```
-
 After the install completes, open a second terminal. Run these commands to activate the jupyterlab-ext environment and start JupyterLab in your default web browser.
 
 ```bash
