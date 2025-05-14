@@ -18,6 +18,7 @@ export class TemplatesManager {
     /** JupyterLab's ContentsManager to handle file operations */
     jsonManager : ContentsManager;
 
+    activeTemplateHighlightIds: Set<string> = new Set();
 
     /**
      * Initializes a new instance of the TemplatesManager
@@ -51,6 +52,8 @@ export class TemplatesManager {
             connections: []
         }
         this.templates.push(template);
+        this.activeTemplateHighlightIds.add(template.id);
+
         
         this.jsonManager.save(`/snippets/${template.name}.json`, {
             type: "file",
@@ -79,7 +82,19 @@ export class TemplatesManager {
       return this.templates.find(template => template.id === id);
     }
 
-    //give different color for each template
+    toggleTemplateColor = (id: string) => {
+      if (this.activeTemplateHighlightIds.has(id)) {
+        this.activeTemplateHighlightIds.delete(id); // turn OFF
+      } else {
+        this.activeTemplateHighlightIds.add(id); // turn ON
+      }
+      
+      // Dispatch an event to notify the editor to update decorations
+     document.dispatchEvent(new CustomEvent('Toggle Template Highlight', {
+       detail: { templateId: id }
+      }));
+    }
+
 
     /**
      * Deletes a template from both the in-memory array and filesystem

@@ -11,11 +11,14 @@ import { TemplatesManager } from './TemplatesManager';
 /**
  * React Library Component.
  */
-function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
+function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggleTemplateColor,activeTemplateHighlightIds  }: {
     templates: Template[],
     deleteTemplate : (id : string, name : string) => void,
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
+    toggleTemplateColor : (id : string) => void,
+    activeTemplateHighlightIds: Set<string>,
+
   }) {
   const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -28,23 +31,13 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
 
   const toggleTemplate = (id: string) => {
+
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
       
     }));
-    const isExpanding = !expandedTemplates[id];
   
-    // Dispatch event with both template ID and expanded state
-    const event = new CustomEvent('Toggle Template Highlight', {
-      detail: {
-        templateID: id,
-        isExpanded: isExpanding
-      }
-    });
-    document.dispatchEvent(event);
-    //Can i not just have a event listner here and once this is clicked activate the decoration to the corresponding? snippet
-    //Call the decoration?
   };
 
   const handleSortChange = (option: string) => {
@@ -183,6 +176,19 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
                     <deleteIcon.react tag="span" height="16px" width="16px" />
                   </button>
+
+                  <button 
+                    className={`template-toggle ${activeTemplateHighlightIds.has(template.id) ? 'template-highlight-active' : ''}`}
+                    title={activeTemplateHighlightIds.has(template.id) ? "Hide highlights" : "Show highlights"} 
+                    onClick={() => {
+                      toggleTemplateColor(template.id);
+                    }}
+                  >
+                    <span style={{ 
+                      color: activeTemplateHighlightIds.has(template.id) ? template.color : 'gray' 
+                    }}>▣</span>
+                  </button>
+
                 </div>
               </div>
 
@@ -266,6 +272,8 @@ export class LibraryWidget extends ReactWidget {
 
   }
 
+
+
   deleteTemplate = (id: string, name: string) => {
     this.templateManager.deleteTemplate(id,name);
     this.update();
@@ -281,6 +289,11 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
+  toggleTemplateColor = (id: string) => {
+    this.templateManager.toggleTemplateColor(id);
+    this.update();
+  }
+
   loadTemplates() {
     this.templateManager.loadTemplates();
     this.update();
@@ -291,6 +304,8 @@ export class LibraryWidget extends ReactWidget {
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}
+      toggleTemplateColor={this.toggleTemplateColor}
+      activeTemplateHighlightIds={this.templateManager.activeTemplateHighlightIds}
       />;
   }
 }

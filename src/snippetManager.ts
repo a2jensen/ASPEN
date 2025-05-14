@@ -26,18 +26,16 @@ export class SnippetsManager {
   private cellCounter = 0;
   
   /** Array to keep track of all active snippets */
-  private snippetTracker: Snippet[] = [];
+  public snippetTracker: Snippet[] = [];
   
   /** Map to associate editor views with their unique cell IDs */
-  private cellMap: Map<EditorView, number> = new Map()
+  public cellMap: Map<EditorView, number> = new Map()
   
   private templatesManager : TemplatesManager;
 
   //private contentsManager : ContentsManager;
-
-  expandedTemplateIds: Set<string> = new Set();
   
-  private activeTemplateID: string | null = null;
+  public activeTemplateID: string | null = null;
 
   /**
    * Initializes a new instance of the SnippetsManager
@@ -124,7 +122,7 @@ export class SnippetsManager {
         for (const snippet of this.snippetTracker) {
           let { start_line, end_line } = snippet;
           if (snippet.cell_id !== cellID) continue; 
-          //  Text inserted
+          //Text inserted
           if (fromA < oldDoc.line(start_line).from) {
             start_line += insertedLines - removedLines;
             end_line += insertedLines - removedLines;
@@ -145,8 +143,6 @@ export class SnippetsManager {
           const startPos = newDoc.line(start_line).from;
           const endPos = newDoc.line(end_line).to;
           const updatedSnippet = newDoc.sliceString(startPos, endPos);
-          console.log("Snippet OLD", snippet.content);
-          console.log("Snippet NEW", updatedSnippet);
           snippet.content = updatedSnippet;
 
           console.log("Updated Snippet content", {
@@ -157,10 +153,9 @@ export class SnippetsManager {
           })
         }
       });
+
       console.log("Updated snippet tracker:", this.snippetTracker);
     }
-
-
 
   /**
  * Creates decorations to visually highlight snippets in the editor
@@ -179,18 +174,20 @@ export class SnippetsManager {
 * MAY BE USEFUL : https://codemirror.net/examples/gutter/
  */
 
+  //Toggle everytime we touch in between the start and end line of the snippet  
   //Issue? Maybe? it only works with the cell that is currently active I think it should be fine
   AssignDecorations(view: EditorView): DecorationSet {
+    console.log("Assigning decorations to snippets in the editor view");
     const cellID = this.cellMap.get(view);
     if (!cellID) return Decoration.none;
 
     const builder = new RangeSetBuilder<Decoration>();
     
     //organizes it in order otherwise program will crash
+    //Here is my issue as well even if i call this function withupdate it will only show decorations for expanded??
     const snippetsInCell = this.snippetTracker
     .filter(s => s.cell_id === cellID)
-    //What this is doing is basically filtering the snippets that are in the cell and also checking if the template is expanded or not
-    .filter(s => this.expandedTemplateIds.has(s.template_id) || this.activeTemplateID === s.template_id)
+    .filter(s => this.templatesManager.activeTemplateHighlightIds.has(s.template_id))
     .sort((a, b) => a.start_line - b.start_line);
 
     //goes through the snippetTracker and checks startline/endline for each
@@ -229,26 +226,9 @@ export class SnippetsManager {
           },
         })
       );
-    }
-    
-    return builder.finish();
-  }
 
-  //So what this is doing is basically adding the templateID of expanded templates and getting rid of the ones that are not expanded anymore
-  //
-  highlightTemplateSnippets(view: EditorView, templateID: string, isExpanded: boolean) {
-    if (isExpanded) {
-      // Add this template to the expanded set
-      this.expandedTemplateIds.add(templateID);
-    } else {
-      // Remove this template from the expanded set
-      this.expandedTemplateIds.delete(templateID);
-    }
-    
-    // Force a decoration refresh by triggering a view update
-    if (view) {
-      view.dispatch({ effects: [] }); // triggers CodeMirror to call `update()`
-    }
+    }  
+    return builder.finish();
   }
 
 
