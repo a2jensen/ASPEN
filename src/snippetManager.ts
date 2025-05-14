@@ -281,6 +281,59 @@ AssignDecorations(view: EditorView): DecorationSet {
 
   }
 
+    /**
+   * 
+   * @param snippetId - id of snippet to update
+   * @param templateContent - content to be applied from the template
+   * @returns 
+   */
+  // Arrow functions automatically bind this to the instance where they were defined.
+  recieveChanges2 = ( templateId : string , templateContent : string ) => {
+    console.log("Inside recieveChanges2")
+    // use the cell id and start / end lines to apply changes in the DOM.
+    // returns array of snippets
+    let snippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId) // ERROR HERE
+    console.log("Found the following snippet instances to update", snippets)
+
+    for (const snippet of snippets){
+      if (!snippet) {
+        console.log(`Failed to find snippet with ID ${templateId}.`)
+        return
+      }
+  
+      // find the editor view ID for the cell
+      let targetView : EditorView | undefined;
+      for (const [view, cellId] of this.cellMap.entries()) {
+        if (cellId === snippet.cell_id) {
+          targetView = view;
+          break;
+        }
+      }
+  
+      if (!targetView) {
+        console.log(`Editor view for cell ID ${snippet} not found`)
+        return;
+      }
+      
+      const doc = targetView.state.doc;
+      const startPos = doc.line(snippet.start_line).from;
+      const endPos = doc.line(snippet.end_line).to;
+  
+      // create transaction to replace the content
+      targetView.dispatch({
+        changes : {
+          from : startPos,
+          to: endPos,
+          insert : templateContent
+        }
+      })
+  
+      snippet.content = templateContent
+      console.log(`Updated snippet ${templateId} with the new template content!`)
+    }
+  }
+
+
   /**
    * Propagates changes from snippet instances to their templates
    */

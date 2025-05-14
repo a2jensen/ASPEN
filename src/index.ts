@@ -26,7 +26,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("Added this fix");
+  console.log("added automatic sync, added logic");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -123,6 +123,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   commands.addCommand('templates:push', {
     label: "Push Changes To Template",
     execute: () => {
+      console.log("Starting logic for Push Changes To Template!")
       const content = window.getSelection();
       if (content?.rangeCount === 0 || !content) {
         return;
@@ -157,8 +158,11 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
         console.log("templateId var: ", templateId);
         console.log("Reconstructed inner text with newlines:\n", innerText);
 
-        if (templateId) 
-        snippetsManager.pushSnippetInstanceChanges(innerText, templateId); 
+        if (templateId) {
+          // this will need to get refactored at some point. lets introduce a controller class or something for managing syncing!
+          templatesManager.propagateChanges(innerText, templateId); // push up to snippet
+          snippetsManager.recieveChanges2(templateId, innerText); // push to other instances
+        }
       }
       
       return;
