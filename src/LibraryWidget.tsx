@@ -165,6 +165,18 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
                 )}
 
                 <div className="template-buttons">
+                  <button 
+                    className={`template-toggle ${activeTemplateHighlightIds.has(template.id) ? 'template-highlight-active' : ''}`}
+                    title={activeTemplateHighlightIds.has(template.id) ? "Hide highlights" : "Show highlights"} 
+                    onClick={() => {
+                      toggleTemplateColor(template.id);
+                    }}
+                  >
+                    <span style={{ 
+                      color: activeTemplateHighlightIds.has(template.id) ? template.color : 'gray' 
+                    }}>▣</span>
+                  </button>
+
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
                     <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
@@ -177,17 +189,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
                     <deleteIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
-                  <button 
-                    className={`template-toggle ${activeTemplateHighlightIds.has(template.id) ? 'template-highlight-active' : ''}`}
-                    title={activeTemplateHighlightIds.has(template.id) ? "Hide highlights" : "Show highlights"} 
-                    onClick={() => {
-                      toggleTemplateColor(template.id);
-                    }}
-                  >
-                    <span style={{ 
-                      color: activeTemplateHighlightIds.has(template.id) ? template.color : 'gray' 
-                    }}>▣</span>
-                  </button>
 
                 </div>
               </div>
