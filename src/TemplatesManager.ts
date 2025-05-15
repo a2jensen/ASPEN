@@ -64,7 +64,7 @@ export class TemplatesManager {
         }).catch(error => {
             console.error("Error saving file", error);
         });
-        // TODO: May need to call this.update() to refresh the widget state
+       
         return template;  // Return the created template
     }
 
