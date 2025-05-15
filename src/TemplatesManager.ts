@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 
@@ -15,6 +18,8 @@ export class TemplatesManager {
     /** JupyterLab's ContentsManager to handle file operations */
     jsonManager : ContentsManager;
 
+    activeTemplateHighlightIds: Set<string> = new Set();
+
     /**
      * Initializes a new instance of the TemplatesManager
      * Sets up an empty templates array and creates a ContentsManager instance
@@ -23,6 +28,7 @@ export class TemplatesManager {
         this.templates = []
         this.jsonManager = contentManager;
     }
+
 
     /**
      * Creates a new template from the provided code snippet
@@ -34,7 +40,7 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    async createTemplate( codeSnippet : string ): Promise<Template>{
+async createTemplate( codeSnippet : string ): Promise<Template>{
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -42,10 +48,11 @@ export class TemplatesManager {
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: '#FFE694',  // Default color
+            color: this.RandomColor(),  // Default color
             connections: []
         }
         this.templates.push(template);
+        this.activeTemplateHighlightIds.add(template.id);
         
         try {
           await this.jsonManager.save(`/snippets/${template.name}.json`, {
@@ -62,6 +69,35 @@ export class TemplatesManager {
         return template;
     }
 
+
+    RandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+    
+ 
+    getTemplateById(id: string): Template | undefined {
+      return this.templates.find(template => template.id === id);
+    }
+
+    toggleTemplateColor = (id: string) => {
+      if (this.activeTemplateHighlightIds.has(id)) {
+        this.activeTemplateHighlightIds.delete(id); // turn OFF
+      } else {
+        this.activeTemplateHighlightIds.add(id); // turn ON
+      }
+      
+      // Dispatch an event to notify the editor to update decorations
+     document.dispatchEvent(new CustomEvent('Toggle Template Highlight', {
+       detail: { templateId: id }
+      }));
+    }
+
+
     /**
      * Deletes a template from both the in-memory array and filesystem
      * 
@@ -75,9 +111,14 @@ export class TemplatesManager {
         // Delete the corresponding JSON file
         this.jsonManager.delete(`/snippets/${name}.json`).then(() => {
             console.log(`Successfully deleted template ${name} ${id}`);
+          
+                document.dispatchEvent(new CustomEvent('TemplateDeleted', {
+                  detail: { templateID: id }
+                }));
         }).catch(( error : unknown ) => {
             console.error(`Failed to delete template ${name} ${id}`, error);
         })
+
     }
 
     /**
@@ -154,7 +195,7 @@ export class TemplatesManager {
        * It provides data persistence across browser reloads and sessions.
        * 
        */
-      async loadTemplates() {
+    async loadTemplates() {
         // Clear existing templates before loading
         this.templates = [];
         try {

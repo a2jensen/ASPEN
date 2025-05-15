@@ -1,3 +1,7 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/quotes */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
@@ -22,14 +26,16 @@ export class SnippetsManager {
   private cellCounter = 0;
   
   /** Array to keep track of all active snippets */
-  private snippetTracker: Snippet[] = [];
+  public snippetTracker: Snippet[] = [];
   
   /** Map to associate editor views with their unique cell IDs */
-  private cellMap: Map<EditorView, number> = new Map()
+  public cellMap: Map<EditorView, number> = new Map()
   
   private templatesManager : TemplatesManager;
 
   //private contentsManager : ContentsManager;
+  
+  public activeTemplateID: string | null = null;
 
   /**
    * Initializes a new instance of the SnippetsManager
@@ -37,6 +43,12 @@ export class SnippetsManager {
   constructor( contentsManager : ContentsManager , templates : TemplatesManager){
     this.templatesManager = templates;
     //this.contentsManager = contentsManager;
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+    const customEvent = event as CustomEvent;
+    const templateID = customEvent.detail.templateID;
+
+    this.deleteSnippetsByTemplate(templateID);
+  });
   }
 
 
@@ -82,6 +94,18 @@ export class SnippetsManager {
     this.snippetTracker.push(snippet);
   }
 
+  deleteSnippetsByTemplate(templateID: string) {
+    this.snippetTracker = this.snippetTracker.filter(snippet => {
+      const keep = snippet.template_id !== templateID;
+      if (!keep) {
+        console.log(`Removed snippet for template ID: ${templateID}`);
+      }
+      return keep;
+    });
+
+    console.log(`Snippets remaining after delete:`, this.snippetTracker);
+  }
+
   /**
    * Updates snippet line positions after editor changes
    * 
@@ -116,7 +140,7 @@ export class SnippetsManager {
         for (const snippet of this.snippetTracker) {
           let { start_line, end_line } = snippet;
           if (snippet.cell_id !== cellID) continue; 
-          //  Text inserted
+          //Text inserted
           if (fromA < oldDoc.line(start_line).from) {
             start_line += insertedLines - removedLines;
             end_line += insertedLines - removedLines;
@@ -137,8 +161,6 @@ export class SnippetsManager {
           const startPos = newDoc.line(start_line).from;
           const endPos = newDoc.line(end_line).to;
           const updatedSnippet = newDoc.sliceString(startPos, endPos);
-          console.log("Snippet OLD", snippet.content);
-          console.log("Snippet NEW", updatedSnippet);
           snippet.content = updatedSnippet;
 
           console.log("Updated Snippet content", {
@@ -149,6 +171,7 @@ export class SnippetsManager {
           })
         }
       });
+
       console.log("Updated snippet tracker:", this.snippetTracker);
     }
 
@@ -168,54 +191,65 @@ export class SnippetsManager {
 * 
 * MAY BE USEFUL : https://codemirror.net/examples/gutter/
  */
-AssignDecorations(view: EditorView): DecorationSet {
-  const cellID = this.cellMap.get(view);
-  if (!cellID) return Decoration.none;
 
-  const builder = new RangeSetBuilder<Decoration>();
-  
-  //organizes it in order otherwise program will crash
-  const snippetsInCell = this.snippetTracker
-  .filter(s => s.cell_id === cellID)
-  .sort((a, b) => a.start_line - b.start_line);
+  //Toggle everytime we touch in between the start and end line of the snippet  
+  //Issue? Maybe? it only works with the cell that is currently active I think it should be fine
+  AssignDecorations(view: EditorView): DecorationSet {
+    console.log("Assigning decorations to snippets in the editor view");
+    const cellID = this.cellMap.get(view);
+    if (!cellID) return Decoration.none;
 
-  //goes through the snippetTracker and checks startline/endline for each
-  for (const snippet of snippetsInCell) {
-    const startLine = view.state.doc.line(snippet.start_line);
-    const endLine = view.state.doc.line(snippet.end_line);
+    const builder = new RangeSetBuilder<Decoration>();
     
-    // Remove empty snippets (where start line equals end line)
-    if (startLine == endLine) {
-      continue;
-    }
+    //organizes it in order otherwise program will crash
+    //Here is my issue as well even if i call this function withupdate it will only show decorations for expanded??
+    const snippetsInCell = this.snippetTracker
+    .filter(s => s.cell_id === cellID)
+    .filter(s => this.templatesManager.activeTemplateHighlightIds.has(s.template_id))
+    .sort((a, b) => a.start_line - b.start_line);
 
-    // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-    builder.add(startLine.from, startLine.from, Decoration.line({
-        attributes: { 
-          style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-start-line',
-          'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
-          'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString(),
-          'data-associated-template': snippet.template_id.toString()
-         },
-      })
-    );
-  
-    builder.add(endLine.from, endLine.from, Decoration.line({
-        attributes: { 
-          style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-end-line',
-          'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
-        },
-      })
-    );
+    //goes through the snippetTracker and checks startline/endline for each
+    for (const snippet of snippetsInCell) {
+      const startLine = view.state.doc.line(snippet.start_line);
+      const endLine = view.state.doc.line(snippet.end_line);
+      
+      // Remove empty snippets (where start line equals end line)
+      if (startLine == endLine) {
+        continue;
+      }
+
+     //Dont need now because its not giving me random colors might implement later 
+      const template = this.templatesManager.getTemplateById(snippet.template_id);
+      //ITS ACTUALL NOT DELETING IT IT STILL IS TRACKING THE LINE NUMBERS NEED TO FIX THAT
+      const borderColor = template ? template.color : undefined;
+   
+      builder.add(startLine.from, startLine.from, Decoration.line({
+          attributes: { 
+            style: `border-top: 2px solid ${borderColor}; border-left: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};`,
+            class: 
+            'snippet-start-line',
+            'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
+            'data-start-line': snippet.start_line.toString(),
+            'data-end-line': snippet.end_line.toString(),
+            'data-associated-template': snippet.template_id.toString()
+          },
+        })
+      );
+    
+      builder.add(endLine.from, endLine.from, Decoration.line({
+          attributes: { 
+            style: `border-bottom: 2px solid ${borderColor}; border-left: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};`,
+            class: 
+            'snippet-end-line',
+            'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
+          },
+        })
+      );
+
+    }  
+    return builder.finish();
   }
-  
-  return builder.finish();
-}
+
 
   /**
    * Loads snippets from persistent storage

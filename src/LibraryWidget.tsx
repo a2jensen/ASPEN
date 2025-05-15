@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -6,15 +8,17 @@ import "../style/base.css";
 import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
-
 /**
  * React Library Component.
  */
-function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
+function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggleTemplateColor,activeTemplateHighlightIds  }: {
     templates: Template[],
     deleteTemplate : (id : string, name : string) => void,
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
+    toggleTemplateColor : (id : string) => void,
+    activeTemplateHighlightIds: Set<string>,
+
   }) {
   const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>(() => {
     const initialState: { [key: string]: boolean } = {};
@@ -29,7 +33,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
-  const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
+ const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
   const [sortOption, setSortOption] = useState(initialSortOption);
 
   const sortTemplates = (templates: Template[], option: string): Template[] => {
@@ -74,12 +78,13 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     });
     setExpandedTemplates(newExpanded);
   }, [templates]);
-
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
+      
     }));
+  
   };
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
@@ -187,6 +192,18 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                 )}
 
                 <div className="template-buttons">
+                  <button 
+                    className={`template-toggle ${activeTemplateHighlightIds.has(template.id) ? 'template-highlight-active' : ''}`}
+                    title={activeTemplateHighlightIds.has(template.id) ? "Hide highlights" : "Show highlights"} 
+                    onClick={() => {
+                      toggleTemplateColor(template.id);
+                    }}
+                  >
+                    <span style={{ 
+                      color: activeTemplateHighlightIds.has(template.id) ? template.color : 'gray' 
+                    }}>▣</span>
+                  </button>
+
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
                     <copyIcon.react tag="span" height="16px" width="16px"/>
                   </button>
@@ -198,6 +215,8 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
                     <deleteIcon.react tag="span" height="16px" width="16px"/>
                   </button>
+
+
                 </div>
               </div>
 
@@ -276,9 +295,9 @@ export class LibraryWidget extends ReactWidget {
   }
 
   async createTemplate(codeSnippet: string) {
-    await this.templateManager.createTemplate(codeSnippet);
     await this.templateManager.loadTemplates();
     this.update();
+    return await this.templateManager.createTemplate(codeSnippet);
   }
 
   deleteTemplate = (id: string, name: string) => {
@@ -296,6 +315,11 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
+  toggleTemplateColor = (id: string) => {
+    this.templateManager.toggleTemplateColor(id);
+    this.update();
+  }
+
   async loadTemplates() {
     await this.templateManager.loadTemplates();
     this.update();
@@ -306,6 +330,8 @@ export class LibraryWidget extends ReactWidget {
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}
+      toggleTemplateColor={this.toggleTemplateColor}
+      activeTemplateHighlightIds={this.templateManager.activeTemplateHighlightIds}
       />;
   }
 }

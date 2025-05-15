@@ -10,8 +10,21 @@ import {
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
 
-// Create a global flag to track if the event listener has been registered
+
+//Everything is expanded by default and then we can choose to collapse them and once they are collapsed it gets rid of the colors and for the snippets there is a button and once clicked on it it will bold the corresponding template ?
+//Temporary is the colors and then end product would be name of template? Fix the templates side bar to get closer and tighter. They are indepentent of each other so when you click toggle on template it will get rid of decoration but you go 
+// to snippet side and there will be a button if its toggled off to show and bold the correspoinding snippet in the template 
+//delimiters
+
+
+//Work on library view design make tighter always expanded! and then choose to unexpand
+//Decorations with color always on
+
+//Adding the button?? Which will bold the template that is corresponding to or add the color next to the template that it is corresponding too the snippet??
+
+
 let saveSnippetListenerRegistered = false;
+//Allows me to access the current view
 let currentView: EditorView | null = null;
 
 /**
@@ -24,10 +37,22 @@ let currentView: EditorView | null = null;
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
 export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension {
-  // Register the global event listener only once
+  // Checks that listner inly added once
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
+    document.addEventListener('Toggle Template Highlight', (event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Force the view to update which will trigger the update method
+      // where decorations are refreshed
+      currentView.dispatch({
+        effects: [], // Empty transaction to trigger an update
+        annotations: [] // No annotations needed
+      });
+    });
     // This event listener will now be registered only once
     document.addEventListener('Save Code Snippet', (event) => {
       const templateID = (event as CustomEvent).detail.templateID;
@@ -49,12 +74,15 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         return; // Do not create an empty snippet
       }
      
+      console.log("Adding snippet");
       //Issue here because of design its not being applied 
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.updateSnippetInstance(currentView!);
         snippetsManager.createSnippetInstance(currentView!, startLine, endLine, templateID, droppedText);
-        currentView!.dispatch({ effects: [] });
+        snippetsManager.AssignDecorations(currentView!);
+        
+        
       }, 10);
       // Update decorations through the plugin instance rather than directly here
       // The ViewPlugin's update method will handle that
@@ -120,7 +148,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
   
           setTimeout(() => {
-            //snippetsManager.updateSnippetInstance(view);
+            snippetsManager.updateSnippetInstance(view);
             this.decorations = snippetsManager.AssignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is pasted
         });
@@ -150,9 +178,9 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           const selection = view.state.selection.main;
           const dropPos = selection.from;
           const startLine = view.state.doc.lineAt(dropPos).number;
-          //console.log("Start line", startLine);
+          
           const endLine = startLine + droppedText.split('\n').length - 1;
-          //console.log("End line,", endLine);
+         
           const templateID = parsedText.templateID;
   
           snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
@@ -198,8 +226,12 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         // Update the current view reference
         currentView = update.view;
         
+        //can i make it update that once it is update.transaction.length >0 and it has to be in between or equal to start and end line fo snippet
+        //cause my goal is to apply the decorations when the snippet is clicked on
+        //if (update.changes.empty) return;
         if (update.docChanged || update.transactions.length > 0) {
           snippetsManager.updateSnippetInstance(update.view, update);
+        
           this.decorations = snippetsManager.AssignDecorations(update.view);
           
         }
