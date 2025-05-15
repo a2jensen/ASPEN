@@ -124,16 +124,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     console.log("editing mode");
   }
 
-  React.useEffect(() => {
-    if (editingId) {
-      const textarea = document.getElementById(editingId) as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    }
-  }, [editingId]);
-
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
     setNewContent(textarea.value);
