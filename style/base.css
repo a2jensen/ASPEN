@@ -62,15 +62,13 @@
 
 .template-name,
 .rename-input {
-  font-size: 1rem;
+  font: unset;
+  font-size: 2rem;
   width: 100%;
-  padding: 3px;
   min-width: 100px;
+  padding: 3px;
   border: 1px solid transparent;
   display: inline-block;
-}
-
-.rename-input {
   box-sizing: border-box;
 }
 
@@ -79,14 +77,18 @@
   font-size: medium;
   white-space: pre-wrap; /* Preserve spaces and line breaks */
   font-family: monospace; /* Maintain code styling */
-  margin: 3px;
-  padding: 3px;
+  margin: 8px;
+  padding: 8px;
   resize: none;
-  border: 1px transparent;
+  border: 1px solid #cacaca;
   border-radius: 8px;
   background-color: transparent;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   box-sizing: border-box;
+  width: 98%;
+  text-wrap: nowrap;
+  display: block;
 }
 
 .template-snippet {
@@ -94,9 +96,8 @@
 }
 
 /* style and layout stays the same when editing, only colors border */
-.edit-content-textarea {
-  width: 95%;
-  box-sizing: border-box;
+.edit-content-textarea{
+  /*height: 1000px;*/
 }
 
 .template-date {

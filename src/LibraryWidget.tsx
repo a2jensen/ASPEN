@@ -137,9 +137,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
     setNewContent(textarea.value);
-    textarea.style.height = "auto";
-    console.log('scrollHeight:', textarea.scrollHeight); //
-    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically // not working !!!
   }
 
   const handleEditConfirm = (id: string) => {
