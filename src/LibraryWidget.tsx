@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
+import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
 import { Template } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 /**
@@ -20,18 +20,65 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
     activeTemplateHighlightIds: Set<string>,
 
   }) {
-  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
+  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>(() => {
+    const initialState: { [key: string]: boolean } = {};
+    templates.forEach(template => {
+      initialState[template.id] = true;
+    });
+    return initialState;
+  });
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
-  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
-  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
+ const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
+  const [sortOption, setSortOption] = useState(initialSortOption);
 
+  const sortTemplates = (templates: Template[], option: string): Template[] => {
+    const sorted = [...templates]; // prevents original array from being modified during sorting
+
+    switch (option) {
+      case 'created-desc':
+        sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+      case 'created-asc':
+        sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+        break;
+      case 'updated-desc':
+        sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
+        break;
+      case 'updated-asc':
+        sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
+        break;
+      default:
+        break;
+    }
+
+    return sorted;
+  };
+
+  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(() => {
+    return sortTemplates(templates, initialSortOption);
+  });
+
+  // When the sort option is updated, re-sort and save to local storage
+  React.useEffect(() => {
+    setSortedTemplates(sortTemplates(templates, sortOption));
+    localStorage.setItem("sortOption", sortOption);
+  }, [sortOption, templates]);
+
+  React.useEffect(() => {
+    const newExpanded: { [key: string]: boolean } = { ...expandedTemplates };
+    templates.forEach(template => {
+      if (!(template.id in newExpanded)) {
+        newExpanded[template.id] = true;
+      }
+    });
+    setExpandedTemplates(newExpanded);
+  }, [templates]);
   const toggleTemplate = (id: string) => {
-
     setExpandedTemplates((prev) => ({
       ...prev,
       [id]: !prev[id], // Toggle specific template's expanded state
@@ -39,30 +86,6 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
     }));
   
   };
-
-  const handleSortChange = (option: string) => {
-    setSortOption(option);
-    let sorted = [...templates]; // prevents original array from being modified during sorting
-
-    switch (option) {
-      case 'created-desc':
-        sorted = sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-        break;
-        case 'created-asc':
-          sorted = sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
-          break;
-        case 'updated-desc':
-          sorted = sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
-          break;
-        case 'updated-asc':
-          sorted = sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
-          break;
-        default:
-          break;
-    }
-    
-    setSortedTemplates(sorted);
-  }
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -100,17 +123,21 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
   const handleEditStart = (template: Template) => {
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
-    console.log("editing mode"); //
-
-    // adjust height when edit starts to fit content
-    // not working!!!
-    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
-    if (textarea) {
-      textarea.style.height = "auto";
-      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
-      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
+    if (!expandedTemplates[template.id]) {
+      toggleTemplate(template.id);
     }
+    console.log("editing mode");
   }
+
+  React.useEffect(() => {
+    if (editingId) {
+      const textarea = document.getElementById(editingId) as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }
+  }, [editingId]);
 
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
@@ -131,7 +158,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
       <div className="library-sort">
-        <select value={sortOption} onChange={(e) => handleSortChange(e.target.value)}>
+        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
           <option value="created-desc">Most Recently Created</option>
           <option value="created-asc">Least Recently Created</option>
           <option value="updated-desc">Most Recently Updated</option>
@@ -145,7 +172,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "v" : ">"}
+                  {expandedTemplates[template.id] ? <caretDownIcon.react tag="span" height="16px" width="16px" /> : <caretRightIcon.react tag="span" height="16px" width="16px" />}
                 </button>
                 
                 {renamingId === template.id ? (
@@ -178,15 +205,15 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate,toggl
                   </button>
 
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
-                    <copyIcon.react tag="span" height="16px" width="16px" />
+                    <copyIcon.react tag="span" height="16px" width="16px"/>
                   </button>
 
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    <editIcon.react tag="span" height="16px" width="16px" />
+                    <editIcon.react tag="span" height="16px" width="16px"/>
                   </button>
 
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    <deleteIcon.react tag="span" height="16px" width="16px" />
+                    <deleteIcon.react tag="span" height="16px" width="16px"/>
                   </button>
 
 
@@ -267,13 +294,11 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  createTemplate(codeSnippet: string): Template {
+  async createTemplate(codeSnippet: string) {
+    await this.templateManager.loadTemplates();
     this.update();
-    return this.templateManager.createTemplate(codeSnippet);
-
+    return await this.templateManager.createTemplate(codeSnippet);
   }
-
-
 
   deleteTemplate = (id: string, name: string) => {
     this.templateManager.deleteTemplate(id,name);
@@ -295,8 +320,8 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
-  loadTemplates() {
-    this.templateManager.loadTemplates();
+  async loadTemplates() {
+    await this.templateManager.loadTemplates();
     this.update();
   }
 

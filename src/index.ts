@@ -27,7 +27,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("testing addeddddddddddddd");
+  console.log("grey styling bg color added!!! border added everywhere solid");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -105,11 +105,11 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
-    execute: () => {
+    execute: async () => {
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
         console.log("Saving the snippet");
-        const template = libraryWidget.createTemplate(snippet);
+        const template = await libraryWidget.createTemplate(snippet);
 
         document.dispatchEvent(new CustomEvent('Save Code Snippet', {
           detail: {

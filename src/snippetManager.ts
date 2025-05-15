@@ -43,6 +43,12 @@ export class SnippetsManager {
   constructor( contentsManager : ContentsManager , templates : TemplatesManager){
     this.templatesManager = templates;
     //this.contentsManager = contentsManager;
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+    const customEvent = event as CustomEvent;
+    const templateID = customEvent.detail.templateID;
+
+    this.deleteSnippetsByTemplate(templateID);
+  });
   }
 
 
@@ -86,6 +92,18 @@ export class SnippetsManager {
     }
     console.log("Snippet object being created: ", snippet);
     this.snippetTracker.push(snippet);
+  }
+
+  deleteSnippetsByTemplate(templateID: string) {
+    this.snippetTracker = this.snippetTracker.filter(snippet => {
+      const keep = snippet.template_id !== templateID;
+      if (!keep) {
+        console.log(`Removed snippet for template ID: ${templateID}`);
+      }
+      return keep;
+    });
+
+    console.log(`Snippets remaining after delete:`, this.snippetTracker);
   }
 
   /**
@@ -202,7 +220,8 @@ export class SnippetsManager {
 
      //Dont need now because its not giving me random colors might implement later 
       const template = this.templatesManager.getTemplateById(snippet.template_id);
-      const borderColor = template ? template.color : '#FFC0CB';
+      //ITS ACTUALL NOT DELETING IT IT STILL IS TRACKING THE LINE NUMBERS NEED TO FIX THAT
+      const borderColor = template ? template.color : undefined;
    
       builder.add(startLine.from, startLine.from, Decoration.line({
           attributes: { 

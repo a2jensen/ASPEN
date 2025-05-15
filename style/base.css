@@ -4,7 +4,7 @@
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
 .library-container {
-  max-height: 100vh;
+  max-height: 90vh;
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -79,13 +79,14 @@
   font-size: medium;
   white-space: pre-wrap; /* Preserve spaces and line breaks */
   font-family: monospace; /* Maintain code styling */
-  margin: 10px;
-  padding: 10px;
-  min-height: 15px;
+  margin: 8px;
+  padding: 8px;
   resize: none;
-  border: 1px solid #b6b6b6;
+  border: 1px solid rgb(148, 146, 146);
   border-radius: 8px;
   background-color: transparent;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .template-snippet {
@@ -95,7 +96,10 @@
 /* style and layout stays the same when editing, only colors border */
 .edit-content-textarea {
   width: 95%;
-  box-sizing: border-box;
+  min-height: 100px;
+  max-height: 200px;
+  overflow-y: auto;
+  resize: vertical;
 }
 
 .template-date {

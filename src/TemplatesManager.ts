@@ -40,7 +40,7 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    createTemplate( codeSnippet : string ): Template{
+async createTemplate( codeSnippet : string ): Promise<Template>{
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -48,25 +48,27 @@ export class TemplatesManager {
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: this.RandomColor(),  // Assign a random color for visual distinction
+            color: this.RandomColor(),  // Default color
             connections: []
         }
         this.templates.push(template);
         this.activeTemplateHighlightIds.add(template.id);
-
         
-        this.jsonManager.save(`/snippets/${template.name}.json`, {
+        try {
+          await this.jsonManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
-        }).then(() => {
-            console.log(`Saved ${template.name} to file successfully.`);
-        }).catch(error => {
-            console.error("Error saving file", error);
-        });
-       
-        return template;  // Return the created template
+          });
+          
+          console.log(`Saved ${template.name} to file successfully.`);
+        }
+        catch(error) {
+          console.error("Error saving file", error);
+        }
+        return template;
     }
+
 
     RandomColor() {
         const letters = '0123456789ABCDEF';
@@ -109,9 +111,14 @@ export class TemplatesManager {
         // Delete the corresponding JSON file
         this.jsonManager.delete(`/snippets/${name}.json`).then(() => {
             console.log(`Successfully deleted template ${name} ${id}`);
+          
+                document.dispatchEvent(new CustomEvent('TemplateDeleted', {
+                  detail: { templateID: id }
+                }));
         }).catch(( error : unknown ) => {
             console.error(`Failed to delete template ${name} ${id}`, error);
         })
+
     }
 
     /**
@@ -188,38 +195,45 @@ export class TemplatesManager {
        * It provides data persistence across browser reloads and sessions.
        * 
        */
-      loadTemplates(){
+    async loadTemplates() {
         // Clear existing templates before loading
         this.templates = [];
-        this.jsonManager.get('/snippets').then(model => {
-            if (model.type === 'directory') {
-              for (const file of model.content) {
-                this.jsonManager.get(file.path).then(fileModel => {
-                  try {
-                    const templateData = JSON.parse(fileModel.content as string);
-                    const template: Template = {
-                      id: templateData.id || `${Date.now()}`,  // Use provided ID or generate new one
-                      name: templateData.name || file.name,    // Use provided name or filename
-                      content: templateData.content || "",     // Use provided content or empty string
-                      dateCreated: new Date(templateData.dateCreated || Date.now()),
-                      dateUpdated: new Date(templateData.dateUpdated || Date.now()),
-                      tags: templateData.tags || [],           // Use provided tags or empty array
-                      color: templateData.color || "#ffffff",  // Use provided color or default white
-                      connections : []
-                    };
-                    this.templates.push(template);
-                    console.log(`Loaded template: ${template.name}`, template);
-                  } catch (error) {
-                    console.error(`Error parsing JSON from ${file.path}:`, error);
-                  }
-                }).catch(error => {
-                  console.error(`Error loading file: ${file.path}`, error);
-                });
+        try {
+          const model = await this.jsonManager.get('/snippets');
+          if (model.type === 'directory') {
+            const filePromises = model.content.map(async (file: any) => {
+              try {
+                const fileModel = await this.jsonManager.get(file.path);
+                const templateData = JSON.parse(fileModel.content as string);
+
+                const template: Template = {
+                  id: templateData.id || `${Date.now()}`,  // Use provided ID or generate new one
+                  name: templateData.name || file.name,    // Use provided name or filename
+                  content: templateData.content || "",     // Use provided content or empty string
+                  dateCreated: new Date(templateData.dateCreated || Date.now()),
+                  dateUpdated: new Date(templateData.dateUpdated || Date.now()),
+                  tags: templateData.tags || [],           // Use provided tags or empty array
+                  color: templateData.color || "#ffffff",  // Use provided color or default white
+                  connections : []
+                };
+
+                console.log(`Loaded template: ${template.name}`, template);
+                return template;
               }
-            }
-          }).catch(error => {
-            console.error("Error fetching snippets directory:", error);
-          });
+              catch (error) {
+                console.error(`Error parsing JSON from ${file.path}:`, error);
+                return null;
+              }
+            });
+
+            const loadedTemplates = await Promise.all(filePromises);
+            this.templates = loadedTemplates.filter(Boolean);
+          }
+        }
+        catch (error) {
+          console.error(`Error fetching snippets directory`, error);
+        }
+        
       }
 
       /**
