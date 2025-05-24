@@ -1,6 +1,7 @@
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
+import { Textbox } from './CodeMirrorPlugin';
 import { Snippet } from "./types";
 import {
   Decoration,
@@ -179,6 +180,8 @@ export class SnippetsManager {
     console.log("INSIDE ASSIGN DECORATIONS FUNCTION!")
     const cellID = this.cellMap.get(view);
     if (!cellID) return Decoration.none;
+    // need to add decorations to a sorted array to prevent codemirror errors
+    const decorations = [];
 
     const builder = new RangeSetBuilder<Decoration>();
     const button = document.createElement("button");
@@ -195,7 +198,26 @@ export class SnippetsManager {
     for (const snippet of snippetsInCell) {
       const startLine = view.state.doc.line(snippet.start_line);
       const endLine = view.state.doc.line(snippet.end_line);
-      
+    
+    // textbox decoration
+    const regex = /\[hole\]/g;
+    let match;
+    while ((match = regex.exec(snippet.content)) !== null) {
+      const matchStart = startLine.from + match.index;
+      const matchEnd = matchStart + match[0].length;
+      console.log("from: ", matchStart + " to: ", matchEnd);
+
+      decorations.push({
+        from: matchStart,
+        to: matchEnd,
+        deco: Decoration.replace({
+          widget: new Textbox(""),
+          side: 1,
+          inclusive: false
+        })
+      });
+    }
+
       /** Reposition the button */
       button.style.position = "absolute";
       button.style.right = "5px";
@@ -207,21 +229,33 @@ export class SnippetsManager {
       }
 
       // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-      builder.add(startLine.from, startLine.from, Decoration.line({
+      decorations.push({
+        from: startLine.from,
+        to: startLine.from,
+        deco: Decoration.line({
           attributes: { 
             style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
             class: 'snippet-start-line'
-           },
+           }
         })
-      );
-    
-      builder.add(endLine.from, endLine.from, Decoration.line({
+      });
+
+      decorations.push({
+        from: endLine.from,
+        to: endLine.from,
+        deco: Decoration.line({
           attributes: { 
             style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-            class : 'snippet-end-line'
-          },
+            class: 'snippet-start-line'
+           }
         })
-      );
+      });
+    }
+
+    decorations.sort((a, b) => a.from - b.from);
+
+    for(const {from, to, deco} of decorations){
+      builder.add(from, to, deco);
     }
     
     /** CODE THAT ADDS IN A PUSH BUTTON! */

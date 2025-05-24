@@ -3,7 +3,8 @@ import {
   DecorationSet,
   EditorView,
   ViewPlugin,
-  ViewUpdate
+  ViewUpdate,
+  WidgetType
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
 
@@ -16,6 +17,7 @@ import { SnippetsManager } from './snippetManager';
  * @param snippetsManager 
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
+
 export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extension {
     return ViewPlugin.fromClass(
       class {
@@ -148,3 +150,69 @@ export function CodeMirrorExtension( snippetsManager : SnippetsManager) : Extens
       }
     );
   }
+
+// textbox class
+export class Textbox extends WidgetType{
+  name: string;
+
+  constructor(name: string){
+    super();
+    this.name = name;
+  }
+  eq(other: Textbox): boolean {
+    return other.name === this.name;
+  }
+  toDOM(){
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = this.name;
+    input.style.width = "1ch";
+    input.style.minWidth = "1ch";
+    input.style.background = "#cfe1b9";
+    input.style.border = "2px solid #97a97c";
+    input.style.borderRadius =  "4px";
+    input.style.fontSize = "inherit";
+    input.style.boxSizing = "content-box";
+    input.style.paddingInlineStart = "2px";
+    input.style.paddingInlineEnd = "2px";
+    input.style.fontFamily = "inherit";
+    input.style.letterSpacing = "inherit";
+    input.style.fontWeight = "inherit";
+
+    const sizer = document.createElement("span");
+    sizer.style.position = "absolute";
+    sizer.style.visibility = "hidden";
+    sizer.style.whiteSpace = "pre";
+    sizer.style.font = "inherit";
+    sizer.style.padding = "0";
+    sizer.style.margin = "0";
+    sizer.style.border = "0";
+    // match the sizer with the input font attributes for accurate resizing
+    sizer.style.fontFamily = input.style.fontFamily;
+    sizer.style.fontSize = input.style.fontSize;
+    sizer.style.fontWeight = input.style.fontWeight;
+    sizer.style.letterSpacing = input.style.letterSpacing;
+    document.body.appendChild(sizer); 
+
+    const resize = () => {
+      sizer.textContent = input.value || " ";
+      input.style.width = (sizer.offsetWidth) + "px";
+    };
+
+    input.addEventListener("input", resize);
+
+    input.addEventListener("mousedown", e => e.stopPropagation());
+    input.addEventListener("keydown", e => e.stopPropagation());
+    input.addEventListener("keypress", e => e.stopPropagation());
+    input.addEventListener("keyup", e => e.stopPropagation());
+
+    return input;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+  stopEvent(): boolean {
+    return true;
+  }
+} 
