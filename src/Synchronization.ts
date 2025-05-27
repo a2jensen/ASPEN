@@ -1,13 +1,16 @@
 import { TemplatesManager } from "./TemplatesManager";
 import { SnippetsManager } from "./snippetManager";
+import { LibraryWidget } from "./LibraryWidget";
 
 export class Synchronization {
     private templatesManager : TemplatesManager
     private snippetsManager : SnippetsManager
+    private libraryWidget : LibraryWidget
 
-    constructor ( templatesManagerInstance : TemplatesManager, snippetsManagerInstance : SnippetsManager){
+    constructor ( templatesManagerInstance : TemplatesManager, snippetsManagerInstance : SnippetsManager, libraryWidgetInstance : LibraryWidget){
         this.templatesManager = templatesManagerInstance;
         this.snippetsManager = snippetsManagerInstance;
+        this.libraryWidget = libraryWidgetInstance
     }
 
     /**
@@ -28,5 +31,6 @@ export class Synchronization {
             this.templatesManager.edit(templateId, content)
         }
         this.snippetsManager.editAll(templateId, content)
+        this.libraryWidget.update()
     }
 }

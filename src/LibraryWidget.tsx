@@ -9,6 +9,13 @@ import { TemplatesManager } from './TemplatesManager';
 import { SnippetsManager } from './snippetManager';
 
 /**
+ * TODO: possibly move updates into the REACT component itself....
+ * pass in templatesManager / snippetsManager into component...
+ * useEffect for state updates
+ * edge case : handle array updates outside of component, implement Signaling possibly
+ */
+
+/**
  * React Library Component.
  */
 function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemplate }: {
@@ -18,6 +25,7 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
+    console.log("Library received templates:", templates);
   const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
@@ -59,6 +67,7 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
   }
 
   React.useEffect(() => {
+    console.log("USE EFFECT 1")
     setRenamingId(null);
     setEditingId(null);
 
@@ -78,8 +87,32 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
       // Only return a new object if something changed
       return changed ? updated : prev;
     });
-    
   }, [templates])
+
+  /** 
+  React.useEffect(() => {
+    console.log("USE EFFECT 2")
+    let sorted = [...templates];
+    switch (sortOption) {
+      case 'created-desc':
+        sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+      case 'created-asc':
+        sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+        break;
+      case 'updated-desc':
+        sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
+        break;
+      case 'updated-asc':
+        sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
+        break;
+      default:
+        break;
+    }
+    setSortedTemplates(sorted);
+  }, [templates, sortOption]);
+  */
+
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -300,8 +333,9 @@ export class LibraryWidget extends ReactWidget {
   }
 
   render() {
+    console.log("RENDERING LIBRARY WIDGET", this.templateManager.templates);
     return <Library 
-      templates={this.templateManager.templates}
+      templates={[...this.templateManager.templates]}
       snippets={this.snippetsManager.snippetTracker}
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}

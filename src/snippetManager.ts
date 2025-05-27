@@ -17,15 +17,9 @@ import {
  * It maintains the connection between snippet/template instances in the editor and their templates.
  */
 export class SnippetsManager {
-  /** Counter for generating unique cell IDs */
-  public cellCounter; // TODO: MAKE PRIVATE
-  
-  /** Array to keep track of all active snippets */
-  public snippetTracker: Snippet[]; // TODO: MAKE PRIVATE
-  
-  /** Map to associate editor views with their unique cell IDs */
-  public cellMap: Map<EditorView, number>;
-
+  public cellCounter; // TODO: MAKE PRIVATE /** Counter for generating unique cell IDs */
+  public snippetTracker: Snippet[]; // TODO: MAKE PRIVATE /** Array to keep track of all active snippets */
+  public cellMap: Map<EditorView, number>; /** Map to associate editor views with their unique cell IDs */
   //private contentsManager : ContentsManager;
 
   /**

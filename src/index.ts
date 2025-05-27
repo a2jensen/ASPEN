@@ -27,14 +27,14 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("added automatic sync, added logic");
+  console.log("rendering logs added!!! removed effect removed edit changes()");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
   const templatesManager = new TemplatesManager(contentsManager);
   const snippetsManager = new SnippetsManager(contentsManager);
-  const synchronization = new Synchronization(templatesManager, snippetsManager);
   const libraryWidget = new LibraryWidget(templatesManager, snippetsManager);
+  const synchronization = new Synchronization(templatesManager, snippetsManager, libraryWidget);
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
@@ -165,6 +165,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
         console.log("Reconstructed inner text with newlines:\n", innerText);
 
         if (templateId) {
+          // temporary fix, do something like LibraryWidget.synch. similar to create above
           synchronization.synch(templateId, innerText, true);
         }
       }
