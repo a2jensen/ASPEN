@@ -13,6 +13,7 @@ import { TemplatesManager } from './TemplatesManager';
 import { ContentsManager } from "@jupyterlab/services";
 import { LibraryWidget } from './LibraryWidget';
 import { SnippetsManager } from './snippetManager';
+import { Synchronization } from './Synchronization'
 import { CodeMirrorExtension } from './CodeMirrorPlugin';
 import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface for registering CodeMirror Extensions
 
@@ -26,13 +27,14 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("grey styling bg color added!!! border added everywhere solid");
+  console.log("rendering logs added!!! removed effect removed edit changes()");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
   const templatesManager = new TemplatesManager(contentsManager);
-  const snippetsManager = new SnippetsManager(contentsManager, templatesManager);
-  const libraryWidget = new LibraryWidget(templatesManager);
+  const snippetsManager = new SnippetsManager(contentsManager);
+  const libraryWidget = new LibraryWidget(templatesManager, snippetsManager);
+  const synchronization = new Synchronization(templatesManager, snippetsManager, libraryWidget);
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
@@ -100,8 +102,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   /**
    * Adding command that allows their highlighted code to be saved as a template.
    */
- 
-
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
     execute: () => {
@@ -123,12 +123,16 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   commands.addCommand('templates:push', {
     label: "Push Changes To Template",
     execute: () => {
+      console.log("Starting logic for Push Changes To Template!")
       const content = window.getSelection();
       if (content?.rangeCount === 0 || !content) {
         return;
       }
 
-      const range = content.getRangeAt(0); // returns the DOM that the user highlighted
+      /**
+       * Query the highlighted DOM and check if the instance is within it
+       */
+      const range = content.getRangeAt(0);
       console.log("range ", range);
       // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
       const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM
@@ -146,6 +150,9 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       
       
       if (startCheck && endCheck ) {
+        /**
+         * Grab the needed data and pass it into the synch function
+         */
         const templateId = startCheck?.getAttribute("data-associated-template")
         console.log("templateId var: ", templateId);
 
@@ -157,8 +164,10 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
         console.log("templateId var: ", templateId);
         console.log("Reconstructed inner text with newlines:\n", innerText);
 
-        if (templateId) 
-        snippetsManager.pushSnippetInstanceChanges(innerText, templateId); 
+        if (templateId) {
+          // temporary fix, do something like LibraryWidget.synch. similar to create above
+          synchronization.synch(templateId, innerText, true);
+        }
       }
       
       return;

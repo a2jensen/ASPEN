@@ -3,39 +3,97 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
-import { Template } from "./types";
+import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
+import { Template, Snippet } from "./types";
 import { TemplatesManager } from './TemplatesManager';
+import { SnippetsManager } from './snippetManager';
+
+/**
+ * TODO: possibly move updates into the REACT component itself....
+ * pass in templatesManager / snippetsManager into component...
+ * useEffect for state updates
+ * edge case : handle array updates outside of component, implement Signaling possibly
+ */
 
 /**
  * React Library Component.
  */
-function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
+function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemplate }: {
     templates: Template[],
+    snippets: Snippet[],
     deleteTemplate : (id : string, name : string) => void,
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
   }) {
-  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>(() => {
-    const initialState: { [key: string]: boolean } = {};
-    templates.forEach(template => {
-      initialState[template.id] = true;
-    });
-    return initialState;
-  });
+    console.log("Library received templates:", templates);
+  const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
-  const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
-  const [sortOption, setSortOption] = useState(initialSortOption);
+  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
+  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
 
-  const sortTemplates = (templates: Template[], option: string): Template[] => {
-    const sorted = [...templates]; // prevents original array from being modified during sorting
+  const toggleTemplate = (id: string) => {
+    setExpandedTemplates((prev) => ({
+      ...prev,
+      [id]: !prev[id], // Toggle specific template's expanded state
+    }));
+  };
+
+  const handleSortChange = (option: string) => {
+    setSortOption(option);
+    let sorted = [...templates]; // prevents original array from being modified during sorting
 
     switch (option) {
+      case 'created-desc':
+        sorted = sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+        case 'created-asc':
+          sorted = sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+          break;
+        case 'updated-desc':
+          sorted = sorted.sort((a, b) => new Date(b.dateUpdated).getTime() - new Date(a.dateUpdated).getTime());
+          break;
+        case 'updated-asc':
+          sorted = sorted.sort((a, b) => new Date(a.dateUpdated).getTime() - new Date(b.dateUpdated).getTime());
+          break;
+        default:
+          break;
+    }
+    
+    setSortedTemplates(sorted);
+  }
+
+  React.useEffect(() => {
+    console.log("USE EFFECT 1")
+    setRenamingId(null);
+    setEditingId(null);
+
+    const validIds = new Set(templates.map(t => t.id));
+    setExpandedTemplates(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      
+      // Remove any expanded state for templates that no longer exist
+      Object.keys(updated).forEach(id => {
+        if (!validIds.has(id)) {
+          delete updated[id];
+          changed = true;
+        }
+      });
+      
+      // Only return a new object if something changed
+      return changed ? updated : prev;
+    });
+  }, [templates])
+
+  /** 
+  React.useEffect(() => {
+    console.log("USE EFFECT 2")
+    let sorted = [...templates];
+    switch (sortOption) {
       case 'created-desc':
         sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
         break;
@@ -51,36 +109,10 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
       default:
         break;
     }
+    setSortedTemplates(sorted);
+  }, [templates, sortOption]);
+  */
 
-    return sorted;
-  };
-
-  const [sortedTemplates, setSortedTemplates] = useState<Template[]>(() => {
-    return sortTemplates(templates, initialSortOption);
-  });
-
-  // When the sort option is updated, re-sort and save to local storage
-  React.useEffect(() => {
-    setSortedTemplates(sortTemplates(templates, sortOption));
-    localStorage.setItem("sortOption", sortOption);
-  }, [sortOption, templates]);
-
-  React.useEffect(() => {
-    const newExpanded: { [key: string]: boolean } = { ...expandedTemplates };
-    templates.forEach(template => {
-      if (!(template.id in newExpanded)) {
-        newExpanded[template.id] = true;
-      }
-    });
-    setExpandedTemplates(newExpanded);
-  }, [templates]);
-
-  const toggleTemplate = (id: string) => {
-    setExpandedTemplates((prev) => ({
-      ...prev,
-      [id]: !prev[id], // Toggle specific template's expanded state
-    }));
-  };
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
@@ -118,21 +150,20 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
   const handleEditStart = (template: Template) => {
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
-    if (!expandedTemplates[template.id]) {
-      toggleTemplate(template.id);
+    console.log("editing mode"); //
+
+    // adjust height when edit starts to fit content
+    // not working!!!
+    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.height = "auto";
+      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
+      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
     }
-    console.log("editing mode");
   }
 
-  React.useEffect(() => {
-    if (editingId) {
-      const textarea = document.getElementById(editingId) as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    }
-  }, [editingId]);
+
+  
 
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
@@ -153,7 +184,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
     <div className="library-container">
       <h3 className="library-title">Your Templates</h3>
       <div className="library-sort">
-        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+        <select value={sortOption} onChange={(e) => handleSortChange(e.target.value)}>
           <option value="created-desc">Most Recently Created</option>
           <option value="created-asc">Least Recently Created</option>
           <option value="updated-desc">Most Recently Updated</option>
@@ -167,7 +198,7 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? <caretDownIcon.react tag="span" height="16px" width="16px" /> : <caretRightIcon.react tag="span" height="16px" width="16px" />}
+                  {expandedTemplates[template.id] ? "v" : ">"}
                 </button>
                 
                 {renamingId === template.id ? (
@@ -188,19 +219,18 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
 
                 <div className="template-buttons">
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
-                    <copyIcon.react tag="span" height="16px" width="16px"/>
+                    <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
-
                   <button className="template-edit" title="Edit template" onClick={() => handleEditStart(template)}>
-                    <editIcon.react tag="span" height="16px" width="16px"/>
+                    <editIcon.react tag="span" height="16px" width="16px" />
                   </button>
 
                   <button className="template-delete" title="Delete template" onClick={() => deleteTemplate(template.id, template.name)}>
-                    <deleteIcon.react tag="span" height="16px" width="16px"/>
+                    <deleteIcon.react tag="span" height="16px" width="16px" />
                   </button>
                 </div>
               </div>
-
+              
               {/** Section corresponding to when the template is opened */}
               {expandedTemplates[template.id] && (
               <div className="template-content"
@@ -267,42 +297,46 @@ function Library({ templates, deleteTemplate, renameTemplate, editTemplate }: {
  */
 export class LibraryWidget extends ReactWidget {
   templateManager : TemplatesManager;
+  snippetsManager : SnippetsManager;
 
-  constructor( templatesManager : TemplatesManager ) {
+  constructor( templatesManager : TemplatesManager, snippetsManager : SnippetsManager ) {
     super();
     this.addClass('jp-LibraryWidget');
     this.templateManager = templatesManager;
+    this.snippetsManager = snippetsManager;
     this.loadTemplates();
   }
 
-  async createTemplate(codeSnippet: string) {
-    await this.templateManager.createTemplate(codeSnippet);
-    await this.templateManager.loadTemplates();
+  createTemplate(codeSnippet: string) {
+    this.templateManager.create(codeSnippet);
     this.update();
   }
 
   deleteTemplate = (id: string, name: string) => {
-    this.templateManager.deleteTemplate(id,name);
+    this.templateManager.delete(id);
     this.update();
   }
 
   renameTemplate = (id: string, newName: string) => {
-    this.templateManager.renameTemplate(id, newName);
+    this.templateManager.rename(id, newName);
     this.update();
   }
 
   editTemplate = (id: string, newContent: string) => {
-    this.templateManager.editTemplate(id, newContent);
+    this.templateManager.edit(id, newContent);
     this.update();
   }
 
-  async loadTemplates() {
-    await this.templateManager.loadTemplates();
+  loadTemplates() {
+    this.templateManager.loadTemplates();
     this.update();
   }
 
   render() {
-    return <Library templates={this.templateManager.templates}
+    console.log("RENDERING LIBRARY WIDGET", this.templateManager.templates);
+    return <Library 
+      templates={this.templateManager.templates}
+      snippets={this.snippetsManager.snippetTracker}
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}

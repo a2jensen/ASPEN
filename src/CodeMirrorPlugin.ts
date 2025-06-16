@@ -52,8 +52,8 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       //Issue here because of design its not being applied 
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
-        snippetsManager.updateSnippetInstance(currentView!);
-        snippetsManager.createSnippetInstance(currentView!, startLine, endLine, templateID, droppedText);
+        snippetsManager.update(currentView!);
+        snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
         currentView!.dispatch({ effects: [] });
       }, 10);
       // Update decorations through the plugin instance rather than directly here
@@ -85,7 +85,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         currentView = view;
         
         // Initialize decorations
-        this.decorations = snippetsManager.AssignDecorations(view);
+        this.decorations = snippetsManager.assignDecorations(view);
         
         /**
          * Event listener for paste events
@@ -117,11 +117,10 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   
           const templateId = parsedText.templateID;
           console.log("The template id associated with the instance", templateId);
-          snippetsManager.createSnippetInstance(view, startLine, endLine, templateId, droppedText);
+          snippetsManager.create(view, startLine, endLine, templateId, droppedText);
   
           setTimeout(() => {
-            //snippetsManager.updateSnippetInstance(view);
-            this.decorations = snippetsManager.AssignDecorations(view);
+            this.decorations = snippetsManager.assignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is pasted
         });
   
@@ -155,19 +154,11 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           //console.log("End line,", endLine);
           const templateID = parsedText.templateID;
   
-          snippetsManager.createSnippetInstance(view, startLine + 1, endLine - 1, templateID, droppedText);
-          //this.decorations = snippetsManager.AssignDecorations(view);
+          snippetsManager.create(view, startLine + 1, endLine - 1, templateID, droppedText);
 
           setTimeout(() => {
-            snippetsManager.updateSnippetInstance(view);
-            this.decorations = snippetsManager.AssignDecorations(view);
-
-            // move cursor to end of inserted text, so that there is no selection
-            const cursorPos = dropPos + droppedText.length;
-            view.dispatch({
-              selection: { anchor: cursorPos },
-              scrollIntoView: true
-            });
+            snippetsManager.update(view);
+            this.decorations = snippetsManager.assignDecorations(view);
           }, 10); // A small delay to ensure updates are applied after the text is dropped
         });
       }
@@ -199,8 +190,8 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         currentView = update.view;
         
         if (update.docChanged || update.transactions.length > 0) {
-          snippetsManager.updateSnippetInstance(update.view, update);
-          this.decorations = snippetsManager.AssignDecorations(update.view);
+          snippetsManager.update(update.view, update);
+          this.decorations = snippetsManager.assignDecorations(update.view);
           
         }
       }
