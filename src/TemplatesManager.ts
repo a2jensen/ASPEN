@@ -10,10 +10,10 @@ import { Template } from "./types";
  */
 export class TemplatesManager {
     /** Array containing all loaded templates */
-    templates : Template[];
+    templates : Template[]; // TODO:refactor so it is private! this needs to be done during libWidget refactor
     
     /** JupyterLab's ContentsManager to handle file operations */
-    jsonManager : ContentsManager;
+    contentsManager : ContentsManager;
 
     /**
      * Initializes a new instance of the TemplatesManager
@@ -21,7 +21,11 @@ export class TemplatesManager {
      */
     constructor( contentManager : ContentsManager ){
         this.templates = []
-        this.jsonManager = contentManager;
+        this.contentsManager = contentManager;
+    }
+
+    get(templateId : string) : Template | undefined {
+      return this.templates.find(template => template.id === templateId)
     }
 
     /**
@@ -34,32 +38,29 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    async createTemplate( codeSnippet : string ): Promise<Template>{
+    create( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
-            name: `Snippet ${this.templates.length + 1}`,  // Auto-generate name based on count
+            name: `Template ${this.templates.length + 1}`,  // Auto-generate name based on count
             content: codeSnippet,
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
             color: '#FFE694',  // Default color
-            connections: []
         }
         this.templates.push(template);
         
-        try {
-          await this.jsonManager.save(`/snippets/${template.name}.json`, {
+        this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
-          });
-          
-          console.log(`Saved ${template.name} to file successfully.`);
-        }
-        catch(error) {
-          console.error("Error saving file", error);
-        }
-        return template;
+        }).then(() => {
+            console.log(`Saved ${template.name} to file successfully.`);
+        }).catch(error => {
+            console.error("Error saving file", error);
+        });
+
+        // TODO: May need to call this.update() to refresh the widget state
     }
 
     /**
@@ -68,15 +69,18 @@ export class TemplatesManager {
      * @param id - The unique identifier of the template to delete
      * @param name - The name of the template (used for file path construction)
      */
-    deleteTemplate( id : string, name: string){
+    delete( templateId : string ){
+        const template = this.get(templateId);
+        if (!template) return;
+
         // Filter out the template with the specified ID
-        this.templates = this.templates.filter(template => template.id !== id);
+        this.templates = this.templates.filter(template => template.id !== templateId);
 
         // Delete the corresponding JSON file
-        this.jsonManager.delete(`/snippets/${name}.json`).then(() => {
-            console.log(`Successfully deleted template ${name} ${id}`);
+        this.contentsManager.delete(`/snippets/${template.name}.json`).then(() => {
+            console.log(`Successfully deleted template ${template.name} ${templateId}`);
         }).catch(( error : unknown ) => {
-            console.error(`Failed to delete template ${name} ${id}`, error);
+            console.error(`Failed to delete template ${template.name} ${templateId}`, error);
         })
     }
 
@@ -92,24 +96,24 @@ export class TemplatesManager {
      * 3. Saves the updated template to the original file path
      * 4. Renames the file to match the new template name
      */
-    renameTemplate(id : string, newName : string) {
-        const template = this.templates.find((t) => t.id === id);
+    rename(templateId : string, newName : string) {
+        const template = this.get(templateId)
         if (!template) return;  // Exit if template not found
 
         const oldName = template.name;
-        const oldPath = `/snippets/${oldName}.json`;
+        const oldPath = `/snippets/${template.name}.json`;
         const newPath = `/snippets/${newName}.json`;
 
         template.name = newName;
         template.dateUpdated = new Date();
 
-        this.jsonManager.save(oldPath, {
+        this.contentsManager.save(oldPath, {
             type: "file",
             format: "text",
             content: JSON.stringify(template, null, 2)
         }).then(() => {
             console.log(`Template renamed to ${newName} and saved successfully.`)
-            return this.jsonManager.rename(oldPath, newPath);
+            return this.contentsManager.rename(oldPath, newPath);
         }).catch(( error : unknown ) => {
             console.error(`Error renaming template file for ${oldName}`, error);
         })
@@ -126,8 +130,9 @@ export class TemplatesManager {
      * 2. Updates its content and dateUpdated properties
      * 3. Saves the updated template to its existing file path
      */
-    editTemplate (id: string, newContent: string) {
-        const template = this.templates.find((t) => t.id === id);
+    edit(templateId: string, newContent: string) {
+        const template = this.get(templateId)
+        //const template = this.templates.find((t) => t.id === id);
         if (!template)
           return;  // Exit if template not found
     
@@ -136,7 +141,7 @@ export class TemplatesManager {
     
         const filePath = `/snippets/${template.name}.json`;
     
-        this.jsonManager.save(filePath, {
+        this.contentsManager.save(filePath, {
           type : "file",
           format: "text",
           content: JSON.stringify(template, null, 2)
@@ -154,65 +159,36 @@ export class TemplatesManager {
        * It provides data persistence across browser reloads and sessions.
        * 
        */
-      async loadTemplates() {
+      loadTemplates(){
         // Clear existing templates before loading
         this.templates = [];
-        try {
-          const model = await this.jsonManager.get('/snippets');
-          if (model.type === 'directory') {
-            const filePromises = model.content.map(async (file: any) => {
-              try {
-                const fileModel = await this.jsonManager.get(file.path);
-                const templateData = JSON.parse(fileModel.content as string);
-
-                const template: Template = {
-                  id: templateData.id || `${Date.now()}`,  // Use provided ID or generate new one
-                  name: templateData.name || file.name,    // Use provided name or filename
-                  content: templateData.content || "",     // Use provided content or empty string
-                  dateCreated: new Date(templateData.dateCreated || Date.now()),
-                  dateUpdated: new Date(templateData.dateUpdated || Date.now()),
-                  tags: templateData.tags || [],           // Use provided tags or empty array
-                  color: templateData.color || "#ffffff",  // Use provided color or default white
-                  connections : []
-                };
-
-                console.log(`Loaded template: ${template.name}`, template);
-                return template;
+        this.contentsManager.get('/snippets').then(model => {
+            if (model.type === 'directory') {
+              for (const file of model.content) {
+                this.contentsManager.get(file.path).then(fileModel => {
+                  try {
+                    const templateData = JSON.parse(fileModel.content as string);
+                    const template: Template = {
+                      id: templateData.id || `${Date.now()}`,  // Use provided ID or generate new one
+                      name: templateData.name || file.name,    // Use provided name or filename
+                      content: templateData.content || "",     // Use provided content or empty string
+                      dateCreated: new Date(templateData.dateCreated || Date.now()),
+                      dateUpdated: new Date(templateData.dateUpdated || Date.now()),
+                      tags: templateData.tags || [],           // Use provided tags or empty array
+                      color: templateData.color || "#ffffff",  // Use provided color or default white
+                    };
+                    this.templates.push(template);
+                    console.log(`Loaded template: ${template.name}`, template);
+                  } catch (error) {
+                    console.error(`Error parsing JSON from ${file.path}:`, error);
+                  }
+                }).catch(error => {
+                  console.error(`Error loading file: ${file.path}`, error);
+                });
               }
-              catch (error) {
-                console.error(`Error parsing JSON from ${file.path}:`, error);
-                return null;
-              }
-            });
-
-            const loadedTemplates = await Promise.all(filePromises);
-            this.templates = loadedTemplates.filter(Boolean);
-          }
-        }
-        catch (error) {
-          console.error(`Error fetching snippets directory`, error);
-        }
-        
-      }
-
-      /**
-       * Updates a template with changes from its snippet instance
-       * 
-       * This method is intended to synchronize changes between template objects
-       * and their instances in the application.
-       * 
-       * @param snippet_instance - The content of the snippet
-       * @param template_id - The ID of the template to update
-       * 
-       * TODO: Implementation is incomplete - needs to:
-       * 1. Find the template with matching template_id
-       * 2. Update the template with the content from snippet_instance
-       */
-      propagateChanges( snippetContent : string, template_id : string){
-        const template = this.templates.find( template => template.id === template_id);
-        if (template){
-          this.editTemplate(template_id, snippetContent)
-          console.log("Updated template content!")
-        }
+            }
+          }).catch(error => {
+            console.error("Error fetching snippets directory:", error);
+          });
       }
 }
