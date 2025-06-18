@@ -153,9 +153,6 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
     console.log("editing mode"); //
   }
 
-
-  
-
   const handleEditChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = event.target;
     setNewContent(textarea.value);
