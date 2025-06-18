@@ -41,6 +41,21 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
+        //Issue with this is that it instantly deletes but still only for active cell :/
+    //I need it to happen to all cells at once I think I have to use the other one where it checks
+    //For everything everytime I type? :/
+    //Also idk if event listner is best thing to use and if im using to many and if that the best way
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Update decorations
+      currentView.dispatch({
+        effects: [] 
+      });
+  });
+  
     document.addEventListener('Toggle Template Highlight', (event) => {
       if (!currentView) {
         console.warn("No active editor view available");
