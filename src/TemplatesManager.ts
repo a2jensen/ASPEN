@@ -42,7 +42,6 @@ export class TemplatesManager {
      * 2. Adds the template to the in-memory array
      * 3. Persists the template as a JSON file in the /snippets directory
      */
-    
     create( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
@@ -51,10 +50,11 @@ export class TemplatesManager {
             dateCreated: new Date(),
             dateUpdated: new Date(),
             tags: [],
-            color: '#FFE694',  // Default color
+            color: this.RandomColor(),  // Default color
         }
         this.templates.push(template);
         this.activeTemplateHighlightIds.add(template.id);
+        console.log("Active template highlight IDs:", this.activeTemplateHighlightIds);
 
         this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",
@@ -65,8 +65,8 @@ export class TemplatesManager {
         }).catch(error => {
             console.error("Error saving file", error);
         });
-
         // TODO: May need to call this.update() to refresh the widget state
+        return template;
     }
 
     /**
