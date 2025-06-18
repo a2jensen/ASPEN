@@ -318,11 +318,9 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  //CHANGED THIS
-  async createTemplate(codeSnippet: string) {
-    await this.templateManager.loadTemplates();
+  createTemplate(codeSnippet: string) {
     this.update();
-    return await this.templateManager.create(codeSnippet);
+    return this.templateManager.create(codeSnippet);
   }
 
   deleteTemplate = (id: string, name: string) => {
@@ -345,8 +343,8 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
-  async loadTemplates() {
-    await this.templateManager.loadTemplates();
+  loadTemplates() {
+    this.templateManager.loadTemplates();
     this.update();
   }
 
@@ -358,7 +356,7 @@ export class LibraryWidget extends ReactWidget {
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}
-       toggleTemplateColor={this.toggleTemplateColor}
+      toggleTemplateColor={this.toggleTemplateColor}
       activeTemplateHighlightIds={this.templateManager.activeTemplateHighlightIds}
       />;
   }

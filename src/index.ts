@@ -104,15 +104,16 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    */
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
-    execute: () => {
+    execute: async () => {
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
         console.log("Saving the snippet");
-        libraryWidget.createTemplate(snippet);
-        //give me the template ID and export it too
+        const template = await libraryWidget.createTemplate(snippet);
+
         document.dispatchEvent(new CustomEvent('Save Code Snippet', {
-          detail: { snippetText: snippet,
-            templateID: `${Date.now()}` // Use timestamp as unique ID
+          detail: {
+            snippetText: snippet,
+            templateID: template.id
           }
         }));
         console.log("Event Listener Dispatched!!!");
