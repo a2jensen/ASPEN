@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import "../style/index.css";
 import "../style/base.css";
-import { copyIcon, editIcon, deleteIcon } from '@jupyterlab/ui-components';
+import { copyIcon, editIcon, deleteIcon, caretDownIcon, caretRightIcon } from '@jupyterlab/ui-components';
 import { Template, Snippet } from "./types";
 import { TemplatesManager } from './TemplatesManager';
 import { SnippetsManager } from './snippetManager';
@@ -198,7 +198,7 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
               {/** Section corresponding to when the template is not opened */}
               <div className="template-header">
                 <button className='template-toggle' onClick={() => toggleTemplate(template.id)}>
-                  {expandedTemplates[template.id] ? "v" : ">"}
+                  {expandedTemplates[template.id] ? <caretDownIcon.react tag="span" height="16px" width="16px" /> : <caretRightIcon.react tag="span" height="16px" width="16px" />}
                 </button>
                 
                 {renamingId === template.id ? (
