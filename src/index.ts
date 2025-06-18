@@ -27,7 +27,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("rendering logs added!!! removed effect removed edit changes()");
+  console.log("toggle icon updated");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
