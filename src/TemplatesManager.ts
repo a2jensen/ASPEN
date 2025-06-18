@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 
@@ -14,6 +17,8 @@ export class TemplatesManager {
     
     /** JupyterLab's ContentsManager to handle file operations */
     contentsManager : ContentsManager;
+
+    activeTemplateHighlightIds: Set<string> = new Set();
 
     /**
      * Initializes a new instance of the TemplatesManager
@@ -49,7 +54,8 @@ export class TemplatesManager {
             color: '#FFE694',  // Default color
         }
         this.templates.push(template);
-        
+        this.activeTemplateHighlightIds.add(template.id);
+
         this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
@@ -79,6 +85,10 @@ export class TemplatesManager {
         // Delete the corresponding JSON file
         this.contentsManager.delete(`/snippets/${template.name}.json`).then(() => {
             console.log(`Successfully deleted template ${template.name} ${templateId}`);
+            document.dispatchEvent(new CustomEvent('TemplateDeleted', {
+              detail: { templateID: templateId}
+                }));
+
         }).catch(( error : unknown ) => {
             console.error(`Failed to delete template ${template.name} ${templateId}`, error);
         })
@@ -151,8 +161,35 @@ export class TemplatesManager {
             console.error("Error updating template content", error);
           });
       }
+    /** Purpose generate a random color for the specific template and 
+     * its corresponding snippets */
+    RandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+     }
 
-      /**
+    /**This is to add whether or not the snippet is on or off when 
+     * first created it should be on
+     * therefore adding it to template color which makes it be on and if toggled off then deleted from list */ 
+    toggleTemplateColor = (id: string) => {
+      if (this.activeTemplateHighlightIds.has(id)) {
+        this.activeTemplateHighlightIds.delete(id); // turn OFF
+      } else {
+        this.activeTemplateHighlightIds.add(id); // turn ON
+      }  
+      // Dispatch an event to notify the editor to update decorations
+     document.dispatchEvent(new CustomEvent('Toggle Template Highlight', {
+       detail: { templateId: id }
+      }));
+    }
+ 
+
+
+     /**
        * Loads all templates from the filesystem into memory
        * 
        * Used to initialize or refresh the templates array using the persisted JSON files.
