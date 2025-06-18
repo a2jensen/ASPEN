@@ -203,12 +203,16 @@ export class SnippetsManager {
 
     const builder = new RangeSetBuilder<Decoration>();
     
-    //organizes it in order otherwise program will crash
-    //FIX THE TEMPLATES MANAGER ADD IT??
+    console.log("snippetTracker: CHECKKK", this.snippetTracker);
+    console.log("cellID: ", this.templatesManager.activeTemplateHighlightIds);
+    //Issue here is that snippetsInCell does not have have the the save snippet in here 
     const snippetsInCell = this.snippetTracker
     .filter(s => s.cell_id === cellID)
     .filter(s => this.templatesManager.activeTemplateHighlightIds.has(s.template_id))
     .sort((a, b) => a.start_line - b.start_line);
+
+    console.log("Snippets in cell:", snippetsInCell);
+    console.log("active template highlight IDs:", this.templatesManager.activeTemplateHighlightIds);
 
     //goes through the snippetTracker and checks startline/endline for each
     for (const snippet of snippetsInCell) {

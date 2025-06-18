@@ -57,6 +57,7 @@ export class TemplatesManager {
         }
         this.templates.push(template);
         this.activeTemplateHighlightIds.add(template.id);
+        console.log("Active template highlight IDs:", this.activeTemplateHighlightIds);
 
         this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",

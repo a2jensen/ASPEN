@@ -93,7 +93,9 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         console.warn("Skipping empty snippet");
         return; // Do not create an empty snippet
       }
-      
+     
+      console.log("Decorations should be addedddd");
+      //Issue here because of design its not being applied 
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.update(currentView!);
