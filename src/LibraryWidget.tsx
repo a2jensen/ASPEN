@@ -151,15 +151,6 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
     setEditingId(template.id); // enter editing mode
     setNewContent(template.content); // current content is prefilled
     console.log("editing mode"); //
-
-    // adjust height when edit starts to fit content
-    // not working!!!
-    const textarea = document.getElementById(template.id) as HTMLTextAreaElement;
-    if (textarea) {
-      textarea.style.height = "auto";
-      console.log('scrollHeight:', textarea.scrollHeight); // not reaching !!!
-      textarea.style.height = "300px";//`${textarea.scrollHeight}px`;
-    }
   }
 
 
@@ -170,7 +161,6 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
     setNewContent(textarea.value);
     textarea.style.height = "auto";
     console.log('scrollHeight:', textarea.scrollHeight); //
-    textarea.style.height = `${textarea.scrollHeight}px`; // adjust height dynamically // not working !!!
   }
 
   const handleEditConfirm = (id: string) => {
