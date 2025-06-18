@@ -32,7 +32,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
 
   const contentsManager = new ContentsManager();
   const templatesManager = new TemplatesManager(contentsManager);
-  const snippetsManager = new SnippetsManager(contentsManager);
+  const snippetsManager = new SnippetsManager(contentsManager, templatesManager);
   const libraryWidget = new LibraryWidget(templatesManager, snippetsManager);
   const synchronization = new Synchronization(templatesManager, snippetsManager, libraryWidget);
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
