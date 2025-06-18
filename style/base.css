@@ -62,15 +62,13 @@
 
 .template-name,
 .rename-input {
+  font: unset;
   font-size: 1rem;
   width: 100%;
   padding: 3px;
   min-width: 100px;
   border: 1px solid transparent;
   display: inline-block;
-}
-
-.rename-input {
   box-sizing: border-box;
 }
 
@@ -82,11 +80,15 @@
   margin: 8px;
   padding: 8px;
   resize: none;
-  border: 1px solid rgb(148, 146, 146);
+  border: 1px solid #cacaca;
   border-radius: 8px;
   background-color: transparent;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   box-sizing: border-box;
+  width: 98%;
+  text-wrap: nowrap;
+  display: block;
 }
 
 .template-snippet {
@@ -95,11 +97,7 @@
 
 /* style and layout stays the same when editing, only colors border */
 .edit-content-textarea {
-  width: 95%;
-  min-height: 100px;
-  max-height: 200px;
-  overflow-y: auto;
-  resize: vertical;
+  
 }
 
 .template-date {
