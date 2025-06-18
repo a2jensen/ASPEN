@@ -1,6 +1,9 @@
 /* eslint-disable curly */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 
@@ -54,7 +57,6 @@ export class TemplatesManager {
         }
         this.templates.push(template);
         this.activeTemplateHighlightIds.add(template.id);
-        console.log("Active template highlight IDs:", this.activeTemplateHighlightIds);
 
         this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",

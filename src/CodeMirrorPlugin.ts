@@ -51,6 +51,29 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       });
     });
 
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Update decorations
+      currentView.dispatch({
+        effects: [] 
+      });
+  });
+  
+    document.addEventListener('Toggle Template Highlight', (event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Force the view to update which will trigger the update method
+      // where decorations are refreshed
+      currentView.dispatch({
+        effects: [], // Empty transaction to trigger an update
+      });
+    });
+
     // This event listener will now be registered only once
    document.addEventListener('Save Code Snippet', (event) => {
       const templateID = (event as CustomEvent).detail.templateID;
@@ -70,9 +93,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         console.warn("Skipping empty snippet");
         return; // Do not create an empty snippet
       }
-     
-      console.log("Decorations should be addedddd");
-      //Issue here because of design its not being applied 
+      
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.update(currentView!);

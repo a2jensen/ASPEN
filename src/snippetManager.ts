@@ -3,6 +3,11 @@
 /* eslint-disable curly */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
+/* eslint-disable prefer-const */
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { TemplatesManager } from './TemplatesManager';
@@ -198,16 +203,12 @@ export class SnippetsManager {
 
     const builder = new RangeSetBuilder<Decoration>();
     
-    console.log("snippetTracker: CHECKKK", this.snippetTracker);
-    console.log("cellID: ", this.templatesManager.activeTemplateHighlightIds);
-    //Issue here is that snippetsInCell does not have have the the save snippet in here 
+    //organizes it in order otherwise program will crash
+    //FIX THE TEMPLATES MANAGER ADD IT??
     const snippetsInCell = this.snippetTracker
     .filter(s => s.cell_id === cellID)
     .filter(s => this.templatesManager.activeTemplateHighlightIds.has(s.template_id))
     .sort((a, b) => a.start_line - b.start_line);
-
-    console.log("Snippets in cell:", snippetsInCell);
-    console.log("active template highlight IDs:", this.templatesManager.activeTemplateHighlightIds);
 
     //goes through the snippetTracker and checks startline/endline for each
     for (const snippet of snippetsInCell) {
