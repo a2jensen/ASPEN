@@ -159,6 +159,13 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           setTimeout(() => {
             snippetsManager.update(view);
             this.decorations = snippetsManager.assignDecorations(view);
+
+            // move cursor to end of inserted text, so that there is no selection
+            const cursorPos = dropPos + droppedText.length;
+            view.dispatch({
+              selection: { anchor: cursorPos },
+              scrollIntoView: true
+            });
           }, 10); // A small delay to ensure updates are applied after the text is dropped
         });
       }
