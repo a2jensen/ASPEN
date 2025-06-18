@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { TemplatesManager } from "./TemplatesManager";
 import { SnippetsManager } from "./snippetManager";
 import { LibraryWidget } from "./LibraryWidget";

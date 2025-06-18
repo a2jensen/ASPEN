@@ -39,7 +39,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
 
-  /**
+/**
    * Event Listener for when a template is copied from the library.
    * Before getting saved to the clipboard, we want to attach a marker as well as its ID onto it in JSON format.
    * @param event - The ClipboardEvent object containing information about the copy action
@@ -147,8 +147,14 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       const startCheck = tempDiv.querySelector('.snippet-start-line');
       const endCheck = tempDiv.querySelector('.snippet-end-line');
       console.log(`Start and end check ${startCheck} AND ${endCheck}`)
-      
-      
+      //So from my understanding this code above adds a start and end line div thing when there is a highlighted area
+
+      //So i am assuming the issue is that when the user highlights the area its not being exact its only
+      //making sure start and end are there and if those conditions met then it can push
+      //so would i change this ?
+      //x < startCheck then dont include but endcheck < x dont include either
+      //but startCheck and endcheck arent numbers they are divs
+
       if (startCheck && endCheck ) {
         /**
          * Grab the needed data and pass it into the synch function

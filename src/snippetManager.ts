@@ -223,6 +223,7 @@ assignDecorations(view: EditorView): DecorationSet {
 
 
   // Arrow functions automatically bind this to the instance where they were defined.
+  //I can make this take in the ints from there?
   editAll = ( templateId : string , templateContent : string ) => {
     // use the cell id and start / end lines to apply changes in the DOM.
     // returns array of snippets
@@ -243,7 +244,10 @@ assignDecorations(view: EditorView): DecorationSet {
           break;
         }
       }
-  
+    
+    //This is being called when the user highlights out of bounds of the snippet
+    //so maybe just do a break dont let it do it?
+    //its not being called its not failing any of the tests 
       if (!targetView) {
         console.log(`Editor view for cell ID ${snippet} not found`)
         return;
@@ -252,7 +256,7 @@ assignDecorations(view: EditorView): DecorationSet {
       const doc = targetView.state.doc;
       const startPos = doc.line(snippet.start_line).from;
       const endPos = doc.line(snippet.end_line).to;
-  
+      //if the start and end positions equals the content of the start and end positions of index?
       // create transaction to replace the content
       targetView.dispatch({
         changes : {
@@ -262,6 +266,8 @@ assignDecorations(view: EditorView): DecorationSet {
         }
       })
   
+      //can i make it check every snippet and see if its in bounds for at least one of them?
+      // if not then just return and dont do anything
       snippet.content = templateContent
       console.log(`Updated snippet ${templateId} with the new template content!`)
     }
