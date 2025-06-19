@@ -71,6 +71,7 @@ export class SnippetsManager {
     const cellID = this.assignCellID(view, cellIndex);
     const snippet = {
       id: `${Date.now()}`,
+      notebook_id : notebookId,
       cell_id: cellID ?? 0, 
       content: content,
       start_line: startLine,
