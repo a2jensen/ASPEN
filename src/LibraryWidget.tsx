@@ -32,8 +32,10 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState<string>("");
 
+  // sort by last used sort option (or created-desc if none)
+  const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
+  const [sortOption, setSortOption] = useState(initialSortOption);
   const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
-  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
 
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
@@ -88,6 +90,11 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
       return changed ? updated : prev;
     });
   }, [templates])
+
+  // When the sort option is updated, save to local storage
+  React.useEffect(() => {
+    localStorage.setItem("sortOption", sortOption);
+  }, [sortOption]);
 
   /** 
   React.useEffect(() => {
