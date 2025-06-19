@@ -8,11 +8,17 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
+//import { Snippet } from './types'
 import { SnippetsManager } from './snippetManager';
+import { INotebookTracker, NotebookPanel } from "@jupyterlab/notebook"
+
 
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;
 let currentView: EditorView | null = null;
+let notebookPanel : NotebookPanel | null;
+let notebookId : string | null
+let cellIndex : number | null
 
 /**
  * 
@@ -23,14 +29,40 @@ let currentView: EditorView | null = null;
  * @param snippetsManager 
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
-export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension {
+
+
+export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTracker : INotebookTracker): Extension {
+ 
+  notebookTracker.currentChanged.connect(() => {
+    console.log("Inside notebooktracker within CodeMirrorExtension!!!")
+
+    notebookPanel = notebookTracker.currentWidget;
+    if (!notebookPanel) {
+      console.log("no notebook opened yet...")
+      return
+    }
+
+    const notebook = notebookPanel.content;
+    notebookId = notebookPanel.context.path;
+    cellIndex = notebook.activeCellIndex;
+
+    notebook.activeCellChanged.connect(() => {
+      cellIndex = notebook.activeCellIndex;
+      console.log("Active cell changed: ", cellIndex);
+    })
+
+    console.log("notebookId:", notebookId);
+    console.log("cellIndex:", cellIndex);
+  }) 
+
+  // could this be possible moved into the view plugin?
   // Register the global event listener only once
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
     // This event listener will now be registered only once
     document.addEventListener('Save Code Snippet', (event) => {
-      const templateID = (event as CustomEvent).detail.templateID;
+      const templateId = (event as CustomEvent).detail.templateID;
       
       if (!currentView) {
         console.warn("No active editor view available");
@@ -41,7 +73,6 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       const startLine = currentView.state.doc.lineAt(selection.from).number;
       const endLine = currentView.state.doc.lineAt(selection.to).number;
       
-  
       const droppedText = currentView.state.sliceDoc(selection.from, selection.to).trim();
       
       if (!droppedText) {
@@ -53,7 +84,17 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.update(currentView!);
-        snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
+        //snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
+        
+        cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
+        if (cellIndex == null || notebookId === null){
+          console.log("failing to create snippet, invalid notebookId and / or cell index")
+          console.log("Notebook ID, should be null :", notebookId)
+          console.log("cell index, should be null : ", cellIndex)
+          return;
+        }
+        snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
+
         currentView!.dispatch({ effects: [] });
       }, 10);
       // Update decorations through the plugin instance rather than directly here
@@ -117,7 +158,11 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   
           const templateId = parsedText.templateID;
           console.log("The template id associated with the instance", templateId);
-          snippetsManager.create(view, startLine, endLine, templateId, droppedText);
+
+          cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
+          if (notebookId && cellIndex){
+            snippetsManager.create(view, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
+          }
   
           setTimeout(() => {
             this.decorations = snippetsManager.assignDecorations(view);
@@ -152,9 +197,19 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
           //console.log("Start line", startLine);
           const endLine = startLine + droppedText.split('\n').length - 1;
           //console.log("End line,", endLine);
-          const templateID = parsedText.templateID;
+          const templateId = parsedText.templateID;
+          
+          snippetsManager.update(currentView!);
+          //snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
+          cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
+          if (cellIndex == null || notebookId === null){
+            console.log("failing to create snippet, invalid notebookId and / or cell index")
+            console.log("Notebook ID, should be null :", notebookId)
+            console.log("cell index, should be null : ", cellIndex)
+            return;
+          }
+          snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
   
-          snippetsManager.create(view, startLine + 1, endLine - 1, templateID, droppedText);
 
           setTimeout(() => {
             snippetsManager.update(view);
@@ -182,22 +237,50 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
        * 1. Updates the positions of snippet instances via snippetsManager
        * 2. Refreshes the decorations to reflect the current state
        */
+
+      /**
+       * We need to get the cell ID
+       */
       update(update: ViewUpdate) {
         // Update the stored view instance
         this.view = update.view;
-        
         // Update the current view reference
         currentView = update.view;
         
+        //const changes = update.changes
+        //const checker = update.view.state.doc.lines
+        //const cursorPos = update.state.selection.main.head;
+        //const cursorLine = update.state.doc.lineAt(cursorPos).number - 1; // 0-indexed
+        
+        /**
+        console.log("current position of cursorLine", cursorLine)
+        console.log("the current length of the cell!", checker);
+        
+        console.log("The update object", update.selectionSet)  */
+        
+        //const editedSnippets : Snippet[] = []
+        
+        /**
+        for (const snippet of snippetsManager.snippetTracker){
+          const from = update.view.state.doc.line(snippet.start_line + 1).from;
+          const to = update.view.state.doc.line(snippet.end_line + 1).to;
+          if (changes.touchesRange(from, to) || changes.touchesRange(from, to) == "cover") {
+            editedSnippets.push(snippet)
+            console.log("Edited snippets updated!", snippet);
+            console.log(changes.touchesRange(1,2))
+          } 
+        }    */
+        //console.log(notebookTracker)
+
+        // this is always called
         if (update.docChanged || update.transactions.length > 0) {
           snippetsManager.update(update.view, update);
           this.decorations = snippetsManager.assignDecorations(update.view);
-          
         }
       }
     },
     {
-      // Provide the decorations from this plugin to CodeMirror
+      // Allow the plugin to provide decorations
       decorations: v => v.decorations
     }
   );

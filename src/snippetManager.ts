@@ -19,7 +19,7 @@ import {
 export class SnippetsManager {
   public cellCounter; /** Counter for generating unique cell IDs */
   public snippetTracker: Snippet[]; /** Array to keep track of all active snippets */
-  public cellMap: Map<EditorView, number>; /** Map to associate editor views with their unique cell IDs */
+  public cellMap: Map<EditorView, number>; /** Map editor views with their unique cell IDs */
   //private contentsManager : ContentsManager;
   
   /**
@@ -42,12 +42,16 @@ export class SnippetsManager {
    * If the view already has an ID, returns the existing ID.
    * Otherwise, increments the counter and assigns a new ID.
    */
-  assignCellID(view: EditorView) {
+  assignCellID(view: EditorView, notebookId : number) {
+    console.log("-------inside assignCellId function----------")
+    console.log("what was passed in to assignCellId : ", notebookId);
     if (!this.cellMap.has(view)) {
-      this.cellCounter++;
-      this.cellMap.set(view, this.cellCounter);
+      this.cellMap.set(view, notebookId);
+      console.log("editor not mapped to a cell... adding to data structure")
     }
-    return this.cellMap.get(view) ?? 0;
+    console.log("Done with assignCellID ---------")
+    console.log("CellMap data structure : ", this.cellMap)
+    return this.cellMap.get(view);
   }
 
   /**
@@ -62,11 +66,12 @@ export class SnippetsManager {
    * Method is called when a template is dropped or pasted into the editor.
    * It creates a new Snippet object and adds it to the snippetTracker.
    */
-  create(view: EditorView, startLine: number, endLine: number, templateID: string, content: string) {
-    const cellID = this.assignCellID(view);
+  create(view: EditorView, startLine: number, endLine: number, templateID: string, content: string, notebookId : string, cellIndex : number) {
+    console.log("---------inside snippets create-----------")
+    const cellID = this.assignCellID(view, cellIndex);
     const snippet = {
       id: `${Date.now()}`,
-      cell_id: cellID, 
+      cell_id: cellID ?? 0, 
       content: content,
       start_line: startLine,
       end_line: endLine,
@@ -74,6 +79,7 @@ export class SnippetsManager {
     }
     console.log("Snippet object being created: ", snippet);
     this.snippetTracker.push(snippet);
+    console.log("-------exiting the assignCellId function----------")
   }
 
   /**
@@ -93,6 +99,7 @@ export class SnippetsManager {
    * TODO: Update the content of the snippets as well, not just their positions
    */
   update(view: EditorView, update?: ViewUpdate) {
+    console.log("-------inside the snippets update function----------")
       if (!update) return;
       const cellID = this.cellMap.get(view);
       if (!cellID) return;
@@ -144,6 +151,7 @@ export class SnippetsManager {
         }
       });
       console.log("Updated snippet tracker:", this.snippetTracker);
+      console.log("-------exiting the update function----------")
     }
 
   /**
@@ -162,8 +170,12 @@ export class SnippetsManager {
 * 
  */
 assignDecorations(view: EditorView): DecorationSet {
+  console.log("-------inside the assignDecorations function----------")
   const cellID = this.cellMap.get(view);
-  if (!cellID) return Decoration.none;
+  if (cellID === undefined){
+    console.log("undefined case reached... cellID is ", cellID)
+    return Decoration.none;
+  }
 
   const builder = new RangeSetBuilder<Decoration>();
   
@@ -171,6 +183,8 @@ assignDecorations(view: EditorView): DecorationSet {
   const snippetsInCell = this.snippetTracker
   .filter(s => s.cell_id === cellID)
   .sort((a, b) => a.start_line - b.start_line);
+
+  console.log("All the snippets that are within this cell..", snippetsInCell);
 
   //goes through the snippetTracker and checks startline/endline for each
   for (const snippet of snippetsInCell) {
@@ -187,7 +201,7 @@ assignDecorations(view: EditorView): DecorationSet {
         attributes: { 
           style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
           class: 
-          'snippet-start-line',
+         'snippet-start-line',
           'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
           'data-start-line': snippet.start_line.toString(),
           'data-end-line': snippet.end_line.toString(),
@@ -206,7 +220,7 @@ assignDecorations(view: EditorView): DecorationSet {
       })
     );
   }
-  
+  console.log("-------exiting the assignDecorations function----------")
   return builder.finish();
 }
 
@@ -224,6 +238,7 @@ assignDecorations(view: EditorView): DecorationSet {
 
   // Arrow functions automatically bind this to the instance where they were defined.
   editAll = ( templateId : string , templateContent : string ) => {
+    console.log("----------inside editAll function---------------")
     // use the cell id and start / end lines to apply changes in the DOM.
     // returns array of snippets
     let snippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId) // ERROR HERE
@@ -264,6 +279,7 @@ assignDecorations(view: EditorView): DecorationSet {
   
       snippet.content = templateContent
       console.log(`Updated snippet ${templateId} with the new template content!`)
+      console.log("----------exiting the editAll function---------------")
     }
   }
 }
