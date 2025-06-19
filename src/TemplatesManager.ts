@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 
@@ -59,7 +62,8 @@ export class TemplatesManager {
         }).catch(error => {
             console.error("Error saving file", error);
         });
-
+        
+        return template;
         // TODO: May need to call this.update() to refresh the widget state
     }
 

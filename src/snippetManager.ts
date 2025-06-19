@@ -1,3 +1,8 @@
+/* eslint-disable prefer-const */
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { Snippet } from "./types";
@@ -161,7 +166,7 @@ export class SnippetsManager {
 * - Implement different color schemes for dark and light editor modes
 * 
  */
-assignDecorations(view: EditorView): DecorationSet {
+  assignDecorations(view: EditorView): DecorationSet {
   const cellID = this.cellMap.get(view);
   if (!cellID) return Decoration.none;
 
@@ -208,7 +213,7 @@ assignDecorations(view: EditorView): DecorationSet {
   }
   
   return builder.finish();
-}
+  }
 
   /**
    * Loads snippets from persistent storage
@@ -221,7 +226,7 @@ assignDecorations(view: EditorView): DecorationSet {
     // TODO: Implementation needed
   }
 
-
+//right track get the two things and then fix everything 
   // Arrow functions automatically bind this to the instance where they were defined.
   //I can make this take in the ints from there?
   editAll = ( templateId : string , templateContent : string ) => {

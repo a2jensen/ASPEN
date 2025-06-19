@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -308,8 +310,8 @@ export class LibraryWidget extends ReactWidget {
   }
 
   createTemplate(codeSnippet: string) {
-    this.templateManager.create(codeSnippet);
     this.update();
+    return  this.templateManager.create(codeSnippet);
   }
 
   deleteTemplate = (id: string, name: string) => {

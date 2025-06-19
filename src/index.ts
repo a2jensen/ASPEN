@@ -104,21 +104,23 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    */
   commands.addCommand('templates:create', {
     label: 'Save Code Snippet',
-    execute: () => {
+    execute: async () => {
       const snippet : string = window.getSelection()?.toString() || '';
       if (snippet){
         console.log("Saving the snippet");
-        libraryWidget.createTemplate(snippet);
-        //give me the template ID and export it too
+        const template = await libraryWidget.createTemplate(snippet);
+
         document.dispatchEvent(new CustomEvent('Save Code Snippet', {
-          detail: { snippetText: snippet,
-            templateID: `${Date.now()}` // Use timestamp as unique ID
+          detail: {
+            snippetText: snippet,
+            templateID: template.id
           }
         }));
         console.log("Event Listener Dispatched!!!");
       }
     },
   }); 
+; 
 
   commands.addCommand('templates:push', {
     label: "Push Changes To Template",
@@ -128,57 +130,70 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       if (content?.rangeCount === 0 || !content) {
         return;
       }
-
       /**
        * Query the highlighted DOM and check if the instance is within it
        */
       const range = content.getRangeAt(0);
       console.log("range ", range);
-      // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
-      const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM
-      console.log("range cloned contented : ", fragment)
 
+      // https://developer.mozilla.org/en-US/docs/Web/API/Range/cloneContents
+      const fragment = range.cloneContents(); // DOM fragment of the selection, making a deep copy of DOM so we don't directly edit the base DOM      
       // Create a temporary wrapper to check for class names, acts as a temporary "mini-DOM" where we can make edits
       const tempDiv = document.createElement('div');
-      console.log("tempDiv init ", tempDiv)
       tempDiv.appendChild(fragment);
-      console.log("tempDiv after appending : ", fragment)
-
       const startCheck = tempDiv.querySelector('.snippet-start-line');
-      const endCheck = tempDiv.querySelector('.snippet-end-line');
-      console.log(`Start and end check ${startCheck} AND ${endCheck}`)
-      //So from my understanding this code above adds a start and end line div thing when there is a highlighted area
-
-      //So i am assuming the issue is that when the user highlights the area its not being exact its only
-      //making sure start and end are there and if those conditions met then it can push
-      //so would i change this ?
-      //x < startCheck then dont include but endcheck < x dont include either
-      //but startCheck and endcheck arent numbers they are divs
+      const endCheck = tempDiv.querySelector('.snippet-end-line');     
 
       if (startCheck && endCheck ) {
         /**
-         * Grab the needed data and pass it into the synch function
+         * Grab the needed data and pass it into the sync function
          */
         const templateId = startCheck?.getAttribute("data-associated-template")
         console.log("templateId var: ", templateId);
-
+        
         // Get all lines inside the tempDiv / highlighted snippet
         const codeLines = Array.from(tempDiv.querySelectorAll('.cm-line'))
         .map(lineEl => (lineEl as HTMLElement).innerText.trimEnd());
         const innerText = codeLines.join('\n'); // Explicitly join lines with \n
 
         console.log("templateId var: ", templateId);
-        console.log("Reconstructed inner text with newlines:\n", innerText);
 
-        if (templateId) {
-          // temporary fix, do something like LibraryWidget.synch. similar to create above
-          synchronization.synch(templateId, innerText, true);
-        }
+        /**The goal of this code is to make sure the range is in between the start and end line and if its near any of the start and end lines/ start check end check 
+         * if it is it gets the start and end line from them
+         */
+        const startLineEl = getClosestLineElement(range.startContainer);
+        const endLineEl = getClosestLineElement(range.endContainer);
+
+        const startLine = parseInt(startLineEl?.getAttribute('data-start-line') || '-1', 10);
+        const endLine = parseInt(endLineEl?.getAttribute('data-end-line') || '-1', 10);
+
+        snippetsManager.snippetTracker.forEach((snippet) => {
+          if ((snippet.start_line <= startLine && snippet.end_line >= endLine)
+           ) {
+            console.log("Snippet is within the selected range.");           
+            if (templateId) {
+              synchronization.synch(templateId, innerText, true);
+            }
+            } else {
+              console.log("Snippet is NOT within the selected range.");
+             }
+          
+        });
       }
       
       return;
     }
   })
+
+  
+  /**Purpose of this is making sure that it is a text element and finding the closest .cm-line because thats where the 
+   * start and end line is at 
+   */
+  function getClosestLineElement(node: Node): HTMLElement | null {
+  // Ensure we’re working with an Element, not a Text node
+    const el = node instanceof HTMLElement ? node : node.parentElement;
+    return el?.closest('.cm-line') as HTMLElement | null;
+  }
 
   /** Adding the templates:create command to their respective context menus */
   app.contextMenu.addItem({
