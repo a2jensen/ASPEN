@@ -143,7 +143,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
       tempDiv.appendChild(fragment);
       const startCheck = tempDiv.querySelector('.snippet-start-line');
       const endCheck = tempDiv.querySelector('.snippet-end-line');     
-
+      console.log(startCheck)
+      console.log(endCheck)
       if (startCheck && endCheck ) {
         /**
          * Grab the needed data and pass it into the sync function
@@ -155,8 +156,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
         const codeLines = Array.from(tempDiv.querySelectorAll('.cm-line'))
         .map(lineEl => (lineEl as HTMLElement).innerText.trimEnd());
         const innerText = codeLines.join('\n'); // Explicitly join lines with \n
-
-        console.log("templateId var: ", templateId);
 
         /**The goal of this code is to make sure the range is in between the start and end line and if its near any of the start and end lines/ start check end check 
          * if it is it gets the start and end line from them
@@ -190,7 +189,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
    * start and end line is at 
    */
   function getClosestLineElement(node: Node): HTMLElement | null {
-  // Ensure we’re working with an Element, not a Text node
     const el = node instanceof HTMLElement ? node : node.parentElement;
     return el?.closest('.cm-line') as HTMLElement | null;
   }
