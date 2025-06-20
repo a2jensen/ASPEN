@@ -27,7 +27,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("real drag and drop cursor fix");
+  console.log("force dispatch");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -118,7 +118,57 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
         console.log("Event Listener Dispatched!!!");
       }
     },
-  }); 
+  });
+
+  commands.addCommand('templates:unsync', {
+    label: 'Unsync From Template',
+    execute: () => {
+      console.log("Starting to unsync snippet from template...");
+      // find if the cursor is within a snippet
+      const selection = window.getSelection();
+      const anchorNode = selection?.anchorNode;
+      if (!anchorNode) {
+        console.warn("Selection does not have an anchor node.");
+        return;
+      }
+
+      const element = anchorNode instanceof Element
+        ? anchorNode
+        : anchorNode.parentElement;
+
+      if (!element) {
+        console.warn("Could not resolve a DOM element from anchor node.");
+        return;
+      }
+
+      const startLine = element.closest('.snippet-start-line');
+      if (!startLine) {
+        console.warn("Cursor is not within a snippet.");
+        return; // can unsync only when cursor is within the bounds of a snippet
+      }
+
+      const snippetId = startLine.getAttribute('data-snippet-id');
+      if (!snippetId) {
+        console.warn("No snippet ID found.");
+        return;
+      }
+
+      const editorRoot = startLine.closest('.cm-editor');
+      if (!editorRoot) {
+        console.warn("No EditorView found.");
+        return;
+      }
+
+      const views = Array.from(snippetsManager.cellMap.keys());
+      const targetView = views.find(view => view.dom === editorRoot);
+      if (!targetView) {
+        console.warn("No matching EditorView found.");
+        return;
+      }
+
+      snippetsManager.unsync(targetView, snippetId);
+    }
+  });
 
   commands.addCommand('templates:push', {
     label: "Push Changes To Template",
@@ -189,15 +239,23 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-FileEditor',
-    rank : 2
+    rank : 1
   });
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-Notebook',
-    rank: 2
+    rank: 1
   });
-
-
+  app.contextMenu.addItem({
+    command: 'templates:unsync',
+    selector: '.jp-FileEditor',
+    rank: 1
+  });
+  app.contextMenu.addItem({
+    command: 'templates:unsync',
+    selector: '.jp-Notebook',
+    rank: 1
+  });
 
   /** Registers Library Widget to the right sidebar. */
   app.shell.add(libraryWidget, 'right', { rank : 300});

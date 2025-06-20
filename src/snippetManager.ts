@@ -144,71 +144,81 @@ export class SnippetsManager {
         }
       });
       console.log("Updated snippet tracker:", this.snippetTracker);
-    }
+  }
+
+  unsync(view: EditorView, snippetId: string) {
+    const cellId = this.cellMap.get(view);
+    if (!cellId) return;
+    // remove the snipppet from the tracker
+    this.snippetTracker = this.snippetTracker.filter(
+      s => !(s.id === snippetId)
+    );
+    console.log("Snippet " + snippetId + " unsynced from template");
+  }
 
   /**
- * Creates decorations to visually highlight snippets in the editor
- * 
- * @param view - The editor view to apply decorations to
- * @returns A DecorationSet containing all the visual decorations for snippets
+   * Creates decorations to visually highlight snippets in the editor
+   * 
+   * @param view - The editor view to apply decorations to
+   * @returns A DecorationSet containing all the visual decorations for snippets
 
-* This method creates border decorations around snippets to visually distinguish them
-* in the editor. It applies borders to the start and end lines of each snippet.
-* It also applies a button to the 
-* 
-* Potential enhancements:
-* - Use different border colors based on the template type
-* - Implement different color schemes for dark and light editor modes
-* 
- */
-assignDecorations(view: EditorView): DecorationSet {
-  const cellID = this.cellMap.get(view);
-  if (!cellID) return Decoration.none;
+  * This method creates border decorations around snippets to visually distinguish them
+  * in the editor. It applies borders to the start and end lines of each snippet.
+  * It also applies a button to the 
+  * 
+  * Potential enhancements:
+  * - Use different border colors based on the template type
+  * - Implement different color schemes for dark and light editor modes
+  * 
+  */
+  assignDecorations(view: EditorView): DecorationSet {
+    const cellID = this.cellMap.get(view);
+    if (!cellID) return Decoration.none;
 
-  const builder = new RangeSetBuilder<Decoration>();
-  
-  //organizes it in order otherwise program will crash
-  const snippetsInCell = this.snippetTracker
-  .filter(s => s.cell_id === cellID)
-  .sort((a, b) => a.start_line - b.start_line);
-
-  //goes through the snippetTracker and checks startline/endline for each
-  for (const snippet of snippetsInCell) {
-    const startLine = view.state.doc.line(snippet.start_line);
-    const endLine = view.state.doc.line(snippet.end_line);
+    const builder = new RangeSetBuilder<Decoration>();
     
-    // Remove empty snippets (where start line equals end line)
-    if (startLine == endLine) {
-      continue;
-    }
+    //organizes it in order otherwise program will crash
+    const snippetsInCell = this.snippetTracker
+    .filter(s => s.cell_id === cellID)
+    .sort((a, b) => a.start_line - b.start_line);
 
-    // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-    builder.add(startLine.from, startLine.from, Decoration.line({
-        attributes: { 
-          style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-start-line',
-          'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
-          'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString(),
-          'data-associated-template': snippet.template_id.toString()
-         },
-      })
-    );
-  
-    builder.add(endLine.from, endLine.from, Decoration.line({
-        attributes: { 
-          style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-end-line',
-          'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
-        },
-      })
-    );
+    //goes through the snippetTracker and checks startline/endline for each
+    for (const snippet of snippetsInCell) {
+      const startLine = view.state.doc.line(snippet.start_line);
+      const endLine = view.state.doc.line(snippet.end_line);
+      
+      // Remove empty snippets (where start line equals end line)
+      if (startLine == endLine) {
+        continue;
+      }
+
+      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
+      builder.add(startLine.from, startLine.from, Decoration.line({
+          attributes: { 
+            style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class: 
+            'snippet-start-line',
+            'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
+            'data-start-line': snippet.start_line.toString(),
+            'data-end-line': snippet.end_line.toString(),
+            'data-associated-template': snippet.template_id.toString()
+          },
+        })
+      );
+    
+      builder.add(endLine.from, endLine.from, Decoration.line({
+          attributes: { 
+            style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class: 
+            'snippet-end-line',
+            'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
+          },
+        })
+      );
+    }
+    
+    return builder.finish();
   }
-  
-  return builder.finish();
-}
 
   /**
    * Loads snippets from persistent storage
