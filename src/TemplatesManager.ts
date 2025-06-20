@@ -1,3 +1,6 @@
+/* eslint-disable curly */
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ContentsManager } from "@jupyterlab/services";
 import { Template } from "./types";
 

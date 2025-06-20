@@ -1,3 +1,8 @@
+/* eslint-disable prefer-const */
+/* eslint-disable eqeqeq */
+/* eslint-disable curly */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/quotes */
 import { RangeSetBuilder } from '@codemirror/state';
 import { ContentsManager } from "@jupyterlab/services";
 import { Snippet } from "./types";
@@ -101,7 +106,6 @@ export class SnippetsManager {
       const newDoc = update.state.doc;      // Updated document state
       const newTotalLines = newDoc.lines; //total of line after changes
       
-
       //from A and to A are the new things that were added, so we checking it with old doc to see what was inserted and what was not
       update.changes.iterChanges((fromA, toA, fromB, toB, insertedText) => {
         const insertedLines = insertedText.toString().split("\n").length - 1; //how many new line inerted
@@ -115,8 +119,20 @@ export class SnippetsManager {
             start_line += insertedLines - removedLines;
             end_line += insertedLines - removedLines;
           }
-          //Text inserted inside the snippet → expand snippet range
+          //Text inserted inside the snippet expand snippet range
+            //Goal of this function is to be able to exit out of snippet
+          //I cant just do when I create a snipet extra space
+          //b/c if delete cant esacape 
+          //idk where to add this it makes sense here? but when / where would i call it in constructor?
+          //lel
           else if (fromA >= oldDoc.line(start_line).from && toA <= oldDoc.line(end_line).to) {
+                const AtEnd = (insertedLines > 0 &&  oldDoc.lineAt(fromA).number === end_line);
+                if( (AtEnd)){
+                  console.log("no more snippet");
+
+                  continue;
+                }
+              
             end_line += insertedLines - removedLines;
           }
     
@@ -127,12 +143,9 @@ export class SnippetsManager {
           snippet.start_line = start_line;
           snippet.end_line = end_line;
 
-          //TODO: Update contents of the snippets as well, not just their position
           const startPos = newDoc.line(start_line).from;
           const endPos = newDoc.line(end_line).to;
           const updatedSnippet = newDoc.sliceString(startPos, endPos);
-          console.log("Snippet OLD", snippet.content);
-          console.log("Snippet NEW", updatedSnippet);
           snippet.content = updatedSnippet;
 
           console.log("Updated Snippet content", {
@@ -161,54 +174,54 @@ export class SnippetsManager {
 * - Implement different color schemes for dark and light editor modes
 * 
  */
-assignDecorations(view: EditorView): DecorationSet {
-  const cellID = this.cellMap.get(view);
-  if (!cellID) return Decoration.none;
+  assignDecorations(view: EditorView): DecorationSet {
+    const cellID = this.cellMap.get(view);
+    if (!cellID) return Decoration.none;
 
-  const builder = new RangeSetBuilder<Decoration>();
-  
-  //organizes it in order otherwise program will crash
-  const snippetsInCell = this.snippetTracker
-  .filter(s => s.cell_id === cellID)
-  .sort((a, b) => a.start_line - b.start_line);
-
-  //goes through the snippetTracker and checks startline/endline for each
-  for (const snippet of snippetsInCell) {
-    const startLine = view.state.doc.line(snippet.start_line);
-    const endLine = view.state.doc.line(snippet.end_line);
+    const builder = new RangeSetBuilder<Decoration>();
     
-    // Remove empty snippets (where start line equals end line)
-    if (startLine == endLine) {
-      continue;
-    }
+    //organizes it in order otherwise program will crash
+    const snippetsInCell = this.snippetTracker
+    .filter(s => s.cell_id === cellID)
+    .sort((a, b) => a.start_line - b.start_line);
 
-    // Apply borders to snippet start & end, currently using pink (#FFC0CB)
-    builder.add(startLine.from, startLine.from, Decoration.line({
-        attributes: { 
-          style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-start-line',
-          'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
-          'data-start-line': snippet.start_line.toString(),
-          'data-end-line': snippet.end_line.toString(),
-          'data-associated-template': snippet.template_id.toString()
-         },
-      })
-    );
-  
-    builder.add(endLine.from, endLine.from, Decoration.line({
-        attributes: { 
-          style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
-          class: 
-          'snippet-end-line',
-          'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
-        },
-      })
-    );
+    //goes through the snippetTracker and checks startline/endline for each
+    for (const snippet of snippetsInCell) {
+      const startLine = view.state.doc.line(snippet.start_line);
+      const endLine = view.state.doc.line(snippet.end_line);
+      // Remove empty snippets (where start line equals end line)
+      if (startLine == endLine) {
+        continue;
+      }
+
+      // Apply borders to snippet start & end, currently using pink (#FFC0CB)
+      builder.add(startLine.from, startLine.from, Decoration.line({
+          attributes: { 
+            style: `border-top: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class: 
+            'snippet-start-line',
+            'data-snippet-id': snippet.cell_id.toString(), // Store snippet ID as data attribute, as well as start and end lines
+            'data-start-line': snippet.start_line.toString(),
+            'data-end-line': snippet.end_line.toString(),
+            'data-associated-template': snippet.template_id.toString()
+          },
+        })
+      );
+    
+      builder.add(endLine.from, endLine.from, Decoration.line({
+          attributes: { 
+            style: `border-bottom: 2px solid #FFC0CB; border-left: 2px solid #FFC0CB; border-right: 2px solid #FFC0CB;`,
+            class: 
+            'snippet-end-line',
+            'data-snippet-id': snippet.cell_id.toString() // Store snippet ID as data attribute
+          },
+        })
+      );
+    }
+    
+    return builder.finish();
   }
-  
-  return builder.finish();
-}
+
 
   /**
    * Loads snippets from persistent storage

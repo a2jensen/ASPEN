@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -116,7 +118,7 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
   
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, template: Template) => {
     //added a line before and after the content in order to be able to get out of template, issue still there tho if we delete it it wont work
-    event.dataTransfer.setData("text/plain", "\n"+template.content + "\n");
+    event.dataTransfer.setData("text/plain", "\n" + template.content + "\n");
     event.dataTransfer.setData("application/json", JSON.stringify(template)); // Store full template info
     event.dataTransfer.effectAllowed = "copy";
   };
