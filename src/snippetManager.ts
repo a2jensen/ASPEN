@@ -19,7 +19,7 @@ import {
 export class SnippetsManager {
   public cellCounter; /** Counter for generating unique cell IDs */
   public snippetTracker: Snippet[]; /** Array to keep track of all active snippets */
-  public cellMap: Map<EditorView, number>; /** Map editor views with their unique cell IDs */
+  public cellMap: Map<EditorView, string>; /** Map editor views with their unique cell IDs */
   //private contentsManager : ContentsManager;
   
   /**
@@ -42,11 +42,11 @@ export class SnippetsManager {
    * If the view already has an ID, returns the existing ID.
    * Otherwise, increments the counter and assigns a new ID.
    */
-  assignCellID(view: EditorView, notebookId : number) {
+  assignCellID(view: EditorView, cellId : string) {
     console.log("-------inside assignCellId function----------")
-    console.log("what was passed in to assignCellId : ", notebookId);
+    console.log("what was passed in to assignCellId : ", cellId);
     if (!this.cellMap.has(view)) {
-      this.cellMap.set(view, notebookId);
+      this.cellMap.set(view, cellId);
       console.log("editor not mapped to a cell... adding to data structure")
     }
     console.log("Done with assignCellID ---------")
@@ -66,13 +66,13 @@ export class SnippetsManager {
    * Method is called when a template is dropped or pasted into the editor.
    * It creates a new Snippet object and adds it to the snippetTracker.
    */
-  create(view: EditorView, startLine: number, endLine: number, templateID: string, content: string, notebookId : string, cellIndex : number) {
+  create(view: EditorView, startLine: number, endLine: number, templateID: string, content: string, notebookId : string, cellIndex : string) {
     console.log("---------inside snippets create-----------")
     const cellID = this.assignCellID(view, cellIndex);
     const snippet = {
       id: `${Date.now()}`,
       notebook_id : notebookId,
-      cell_id: cellID ?? 0, 
+      cell_id: cellID ?? "", 
       content: content,
       start_line: startLine,
       end_line: endLine,
@@ -282,5 +282,52 @@ assignDecorations(view: EditorView): DecorationSet {
       console.log(`Updated snippet ${templateId} with the new template content!`)
       console.log("----------exiting the editAll function---------------")
     }
+  }
+
+  applyHighlights = (templateId : string ,line : number, charRange : number[], text : string) => {
+    let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
+
+    for (const snippet of relatedSnippets) {
+
+      // find the target view
+      let targetView : EditorView | undefined;
+      for (const [view, cellId] of this.cellMap.entries()) {
+        if (cellId === snippet.cell_id){
+          targetView = view;
+          break;
+        }
+      }
+
+      if (!targetView){
+        return;
+      }
+
+      const doc = targetView.state.doc;
+      
+      // get the line and chars in the view we want to edit
+      const targetLine = doc.line(line + 1);
+      const absoluteFrom = targetLine.from + charRange[0];
+      const absoluteTo = targetLine.from + charRange[1];
+
+      // build decoration
+      const builder = new RangeSetBuilder<Decoration>();
+      builder.add(
+        absoluteFrom,
+        absoluteTo,
+        Decoration.mark({
+          class : 'highlight-variant-change'
+        })
+      );
+
+      const decorationSet = builder.finish();
+
+      // apply decorations
+      /** 
+      targetView.dispatch({
+        effects : EditorView.decorations.of(decorationSet)
+      });
+      */
+    }
+
   }
 }

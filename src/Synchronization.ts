@@ -1,6 +1,7 @@
 import { TemplatesManager } from "./TemplatesManager";
 import { SnippetsManager } from "./snippetManager";
 import { LibraryWidget } from "./LibraryWidget";
+import { Snippet } from "./types"
 
 export class Synchronization {
     private templatesManager : TemplatesManager
@@ -15,10 +16,12 @@ export class Synchronization {
 
     /**
      * Function that is called everytime an edit to a snippet instance is made.  called within the code mirror plugin.
-     * NOTE. I NEED TO GET JSDIFF INSTALLED CORRECTLY BEFORE WORKING ON THIS
      */
-    jsDiff(){
-        return 0;
+    jsDiff(templateId : string ,line : number, charRange : number[], text : string) : void {
+        const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => snippet.template_id === templateId)
+        
+        // highlight @ line x -> charRange [b,z] on every snippet
+        
     }
     
 

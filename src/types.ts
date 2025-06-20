@@ -29,7 +29,7 @@ export interface Template {
 export interface Snippet {
 id: string;
 notebook_id : string;
-cell_id: number;
+cell_id: string;
 content : string;
 start_line: number;
 end_line: number;

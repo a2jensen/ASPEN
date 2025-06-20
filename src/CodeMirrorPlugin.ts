@@ -8,7 +8,7 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-//import { Snippet } from './types'
+import { Snippet } from './types'
 import { SnippetsManager } from './snippetManager';
 import { INotebookTracker, NotebookPanel } from "@jupyterlab/notebook"
 
@@ -17,8 +17,10 @@ import { INotebookTracker, NotebookPanel } from "@jupyterlab/notebook"
 let saveSnippetListenerRegistered = false;
 let currentView: EditorView | null = null;
 let notebookPanel : NotebookPanel | null;
-let notebookId : string | null
-let cellIndex : number | null
+let notebookId : string 
+let cellId : string | undefined;
+let highlightedRanges: { from: number; to: number }[] = [];
+
 
 /**
  * 
@@ -44,15 +46,24 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
 
     const notebook = notebookPanel.content;
     notebookId = notebookPanel.context.path;
-    cellIndex = notebook.activeCellIndex;
+    let cell = notebook.activeCell;
+    if (cell){
+      console.log("DETECTEDDDDD the active cell, here is the ID ", cell.model.id);
+      console.log(cellId)
+      cellId = cell.model.id
+    } else {
+      console.log("Id is undefined")
+    }
+    
 
     notebook.activeCellChanged.connect(() => {
-      cellIndex = notebook.activeCellIndex;
-      console.log("Active cell changed: ", cellIndex);
+      // cellIndex = notebook.activeCellIndex;
+      cellId = notebook.activeCell?.model.id
+      console.log("Active cell changed: ", cellId);
     })
 
     console.log("notebookId:", notebookId);
-    console.log("cellIndex:", cellIndex);
+    console.log("cellIndex:", cellId);
   }) 
 
   // could this be possible moved into the view plugin?
@@ -86,14 +97,14 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
         snippetsManager.update(currentView!);
         //snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
         
-        cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
-        if (cellIndex == null || notebookId === null){
+        cellId = notebookPanel?.content.activeCell?.id ?? cellId;
+        if (cellId == null || notebookId === null){
           console.log("failing to create snippet, invalid notebookId and / or cell index")
           console.log("Notebook ID, should be null :", notebookId)
-          console.log("cell index, should be null : ", cellIndex)
+          console.log("cell index, should be null : ", cellId)
           return;
         }
-        snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
+        snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellId);
 
         currentView!.dispatch({ effects: [] });
       }, 10);
@@ -128,46 +139,6 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
         // Initialize decorations
         this.decorations = snippetsManager.assignDecorations(view);
         
-        /**
-         * Event listener for paste events
-         * 
-         * Handles when a template is pasted into the editor from the clipboard.
-         * Parses the clipboard data and creates a new snippet instance if it contains
-         * a valid template.
-         */
-        view.dom.addEventListener("paste", event => {
-          event.preventDefault();
-  
-          const clipboardContent = event.clipboardData?.getData('application/json');
-          const droppedText = event.clipboardData?.getData('text/plain');
-          console.log("dropped text app/json", clipboardContent);
-          console.log("dropped text text/plain", droppedText);
-  
-          if (!clipboardContent) return;
-          if(!droppedText) return;
-  
-          const parsedText = JSON.parse(clipboardContent);
-          if(!(parsedText.marker === "aspen-template")) return; 
-          
-          const selection = view.state.selection.main;
-          const dropPos = selection.from;
-          const startLine = view.state.doc.lineAt(dropPos).number;
-          const endLine = startLine + droppedText.split('\n').length - 1;
-          console.log("Start line", startLine);
-          console.log("End line,", endLine);
-  
-          const templateId = parsedText.templateID;
-          console.log("The template id associated with the instance", templateId);
-
-          cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
-          if (notebookId && cellIndex){
-            snippetsManager.create(view, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
-          }
-  
-          setTimeout(() => {
-            this.decorations = snippetsManager.assignDecorations(view);
-          }, 10); // A small delay to ensure updates are applied after the text is pasted
-        });
   
         /**
          * Event listener for drop events
@@ -200,21 +171,24 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
           const templateId = parsedText.templateID;
           
           snippetsManager.update(currentView!);
-          //snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
-          cellIndex = notebookPanel?.content.activeCellIndex ?? cellIndex;
-          if (cellIndex == null || notebookId === null){
+          cellId = notebookPanel?.content.activeCell?.model.id ?? cellId;
+          if (cellId == null || notebookId === null){
             console.log("failing to create snippet, invalid notebookId and / or cell index")
             console.log("Notebook ID, should be null :", notebookId)
-            console.log("cell index, should be null : ", cellIndex)
+            console.log("cell index, should be null : ", cellId)
             return;
           }
-          snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellIndex);
+          
+          snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellId);
+      
+          
+
   
 
           setTimeout(() => {
             snippetsManager.update(view);
             this.decorations = snippetsManager.assignDecorations(view);
-          }, 10); // A small delay to ensure updates are applied after the text is dropped
+          }, 1000); // A small delay to ensure updates are applied after the text is dropped
         });
       }
       
@@ -246,31 +220,67 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
         this.view = update.view;
         // Update the current view reference
         currentView = update.view;
-        
+        snippetsManager.cellMap
+
+
         //const changes = update.changes
-        //const checker = update.view.state.doc.lines
-        //const cursorPos = update.state.selection.main.head;
-        //const cursorLine = update.state.doc.lineAt(cursorPos).number - 1; // 0-indexed
+        const checker = update.view.state.doc.lines
+        const cursorPos = update.state.selection.main.head;
+        const cursorLine = update.state.doc.lineAt(cursorPos).number - 1; // 0-indexed
         
-        /**
+       
         console.log("current position of cursorLine", cursorLine)
         console.log("the current length of the cell!", checker);
+        console.log("The update object", update.selectionSet)  
+
+        const editorViewId = snippetsManager.cellMap.get(currentView)
+        const editedSnippets : Snippet[] = snippetsManager.snippetTracker.filter(snip => snip.cell_id === editorViewId)
+        console.log("FILTERED SNIPPETS -> ONES THAT ARE CURRENTLY IN THE CELL! ", editedSnippets)
         
-        console.log("The update object", update.selectionSet)  */
         
-        //const editedSnippets : Snippet[] = []
-        
-        /**
-        for (const snippet of snippetsManager.snippetTracker){
-          const from = update.view.state.doc.line(snippet.start_line + 1).from;
-          const to = update.view.state.doc.line(snippet.end_line + 1).to;
-          if (changes.touchesRange(from, to) || changes.touchesRange(from, to) == "cover") {
-            editedSnippets.push(snippet)
-            console.log("Edited snippets updated!", snippet);
-            console.log(changes.touchesRange(1,2))
-          } 
-        }    */
-        //console.log(notebookTracker)
+        for (const snippet of editedSnippets){
+          if (cursorLine >= snippet.start_line && cursorLine <= snippet.end_line){
+            console.log("CURSOR / UPDATE HAS BEEN DONE WITHIN AN INSTANCE!!!!")
+            // call the JS Diff function here
+            // test first if you can highlight at a character level
+            const doc = update.state.doc
+
+            /**
+             * ranges are at a character level
+             * fromA -> toA range of the changes in old doc
+             * fromB -> toB range of the new doc - range of the new changes in new doc
+             * inserted: text that gets added in the new range of fromB -> toB
+             */
+            update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+              const startLine = doc.lineAt(fromB)
+              const lineNumber = startLine.number - 1;
+              const lineOffset = startLine.from;
+
+              const charStart = fromB - lineOffset;
+              const charEnd = charStart + inserted.length
+
+              const insertedText = inserted.toString();
+              const deletedText = doc.sliceString(fromA, toA);
+
+              if (lineNumber >= snippet.start_line && lineNumber <= snippet.end_line) {
+                console.log(`🟡 Snippet: ${snippet.id}`);
+                console.log(`  📍 Line: ${lineNumber}`);
+                console.log(`  ✏️ Char range: [${charStart}:${charEnd}]`);
+                console.log(`  ➕ Inserted text: "${insertedText}"`);
+                console.log(`  ❌ Deleted text: "${deletedText}"`);
+                
+               // this.highlightedRanges.push({ from: fromB, to: toB });
+
+                // Optional: store this edit somewhere
+                // snippet.changes.push({ lineNumber, charStart, insertedText });
+                
+              }
+
+            })
+
+          }
+        }    
+        console.log(notebookTracker)
 
         // this is always called
         if (update.docChanged || update.transactions.length > 0) {
