@@ -28,15 +28,60 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Update decorations
+      currentView.dispatch({
+        effects: [] 
+      });
+  });
+  
+    document.addEventListener('Toggle Template Highlight', (event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Force the view to update which will trigger the update method
+      // where decorations are refreshed
+      currentView.dispatch({
+        effects: [], // Empty transaction to trigger an update
+      });
+    });
+
+    document.addEventListener('TemplateDeleted', (event: Event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Update decorations
+      currentView.dispatch({
+        effects: [] 
+      });
+  });
+  
+    document.addEventListener('Toggle Template Highlight', (event) => {
+      if (!currentView) {
+        console.warn("No active editor view available");
+        return;
+      }
+      // Force the view to update which will trigger the update method
+      // where decorations are refreshed
+      currentView.dispatch({
+        effects: [], // Empty transaction to trigger an update
+      });
+    });
+
     // This event listener will now be registered only once
-    document.addEventListener('Save Code Snippet', (event) => {
+   document.addEventListener('Save Code Snippet', (event) => {
       const templateID = (event as CustomEvent).detail.templateID;
       
       if (!currentView) {
         console.warn("No active editor view available");
         return;
       }
-      
       const selection = currentView.state.selection.main;
       const startLine = currentView.state.doc.lineAt(selection.from).number;
       const endLine = currentView.state.doc.lineAt(selection.to).number;
@@ -49,15 +94,15 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         return; // Do not create an empty snippet
       }
      
+      console.log("Decorations should be addedddd");
       //Issue here because of design its not being applied 
       //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.update(currentView!);
         snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
-        currentView!.dispatch({ effects: [] });
+        snippetsManager.assignDecorations(currentView!);
       }, 10);
-      // Update decorations through the plugin instance rather than directly here
-      // The ViewPlugin's update method will handle that
+
     });
   }
   

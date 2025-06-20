@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/quotes */
+/* eslint-disable prettier/prettier */
 import { ReactWidget } from '@jupyterlab/ui-components';
 import * as React from 'react';
 import { useState } from 'react';
@@ -18,12 +20,14 @@ import { SnippetsManager } from './snippetManager';
 /**
  * React Library Component.
  */
-function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemplate }: {
+function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemplate,toggleTemplateColor,activeTemplateHighlightIds }: {
     templates: Template[],
     snippets: Snippet[],
     deleteTemplate : (id : string, name : string) => void,
     renameTemplate : (id : string, name : string) => void,
     editTemplate : (id : string, name : string) => void,
+    toggleTemplateColor : (id : string) => void,
+    activeTemplateHighlightIds: Set<string>,
   }) {
     console.log("Library received templates:", templates);
   const [expandedTemplates, setExpandedTemplates] = useState<{ [key: string]: boolean }>({});
@@ -212,6 +216,19 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
                 )}
 
                 <div className="template-buttons">
+
+                 <button 
+                    className={`template-toggle ${activeTemplateHighlightIds.has(template.id) ? 'template-highlight-active' : ''}`}
+                    title={activeTemplateHighlightIds.has(template.id) ? "Hide highlights" : "Show highlights"} 
+                    onClick={() => {
+                      toggleTemplateColor(template.id);
+                    }}
+                  >
+                    <span style={{ 
+                      color: activeTemplateHighlightIds.has(template.id) ? template.color : 'gray' 
+                    }}>▣</span>
+                  </button>
+
                   <button className="template-copy" title="Copy to clipboard" onClick={() => handleCopy(template)}>
                     <copyIcon.react tag="span" height="16px" width="16px" />
                   </button>
@@ -302,8 +319,8 @@ export class LibraryWidget extends ReactWidget {
   }
 
   createTemplate(codeSnippet: string) {
-    this.templateManager.create(codeSnippet);
     this.update();
+    return this.templateManager.create(codeSnippet);
   }
 
   deleteTemplate = (id: string, name: string) => {
@@ -321,6 +338,11 @@ export class LibraryWidget extends ReactWidget {
     this.update();
   }
 
+  toggleTemplateColor = (id: string) => {
+    this.templateManager.toggleTemplateColor(id);
+    this.update();
+  }
+
   loadTemplates() {
     this.templateManager.loadTemplates();
     this.update();
@@ -334,6 +356,8 @@ export class LibraryWidget extends ReactWidget {
       deleteTemplate={this.deleteTemplate}
       renameTemplate={this.renameTemplate}
       editTemplate={this.editTemplate}
+      toggleTemplateColor={this.toggleTemplateColor}
+      activeTemplateHighlightIds={this.templateManager.activeTemplateHighlightIds}
       />;
   }
 }
