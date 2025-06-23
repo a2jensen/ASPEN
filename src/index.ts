@@ -214,8 +214,8 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   extensions.addExtension({
     name: '@aspen/codemirror_plugin',
     factory: () => ({
-      extension: CodeMirrorExtension(snippetsManager, notebookTracker),
-      instance: () => CodeMirrorExtension(snippetsManager, notebookTracker),
+      extension: CodeMirrorExtension(synchronization,snippetsManager, notebookTracker),
+      instance: () => CodeMirrorExtension(synchronization, snippetsManager, notebookTracker),
       reconfigure: () => null
     })
   });

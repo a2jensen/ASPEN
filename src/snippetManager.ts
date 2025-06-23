@@ -7,6 +7,9 @@ import {
   EditorView,
   ViewUpdate
 } from '@codemirror/view';
+import { StateEffect } from '@codemirror/state';
+import { viewBreakpointIcon } from '@jupyterlab/ui-components';
+import { CodeMirrorExtension } from './CodeMirrorPlugin';
 
 
 /**
@@ -31,7 +34,6 @@ export class SnippetsManager {
     this.cellCounter = 0;
     //this.contentsManager = contentsManager;
   }
-
 
   /**
    * Assigns a unique cell ID to an editor view
@@ -284,11 +286,14 @@ assignDecorations(view: EditorView): DecorationSet {
     }
   }
 
-  applyHighlights = (templateId : string ,line : number, charRange : number[], text : string) => {
+  /***
+   * 
+   */
+  applyHighlights = (templateId : string , relativePosline : number, charRange : number[] ) => {
+    console.log("Within the APPLY HIGHLIGHTS function!")
     let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
     for (const snippet of relatedSnippets) {
-
       // find the target view
       let targetView : EditorView | undefined;
       for (const [view, cellId] of this.cellMap.entries()) {
@@ -305,7 +310,8 @@ assignDecorations(view: EditorView): DecorationSet {
       const doc = targetView.state.doc;
       
       // get the line and chars in the view we want to edit
-      const targetLine = doc.line(line + 1);
+      const targetLineNumber = snippet.start_line + relativePosline + 1;
+      const targetLine = doc.line(targetLineNumber);
       const absoluteFrom = targetLine.from + charRange[0];
       const absoluteTo = targetLine.from + charRange[1];
 
@@ -321,12 +327,13 @@ assignDecorations(view: EditorView): DecorationSet {
 
       const decorationSet = builder.finish();
 
-      // apply decorations
-      /** 
+      /** implementation of dispatching highlighting is bugged right now
       targetView.dispatch({
-        effects : EditorView.decorations.of(decorationSet)
-      });
-      */
+        effects: StateEffect.appendConfig.of([
+          EditorView.decorations.of(decorationSet)
+        ])
+      });    
+      */  
     }
 
   }

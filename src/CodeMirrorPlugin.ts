@@ -11,6 +11,7 @@ import {
 import { Snippet } from './types'
 import { SnippetsManager } from './snippetManager';
 import { INotebookTracker, NotebookPanel } from "@jupyterlab/notebook"
+import { Synchronization } from './Synchronization';
 
 
 // Create a global flag to track if the event listener has been registered
@@ -19,7 +20,7 @@ let currentView: EditorView | null = null;
 let notebookPanel : NotebookPanel | null;
 let notebookId : string 
 let cellId : string | undefined;
-let highlightedRanges: { from: number; to: number }[] = [];
+//let highlightedRanges: { from: number; to: number }[] = [];
 
 
 /**
@@ -33,7 +34,7 @@ let highlightedRanges: { from: number; to: number }[] = [];
  */
 
 
-export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTracker : INotebookTracker): Extension {
+export function CodeMirrorExtension(synchronizationManager : Synchronization , snippetsManager: SnippetsManager, notebookTracker : INotebookTracker): Extension {
  
   notebookTracker.currentChanged.connect(() => {
     console.log("Inside notebooktracker within CodeMirrorExtension!!!")
@@ -243,7 +244,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
             console.log("CURSOR / UPDATE HAS BEEN DONE WITHIN AN INSTANCE!!!!")
             // call the JS Diff function here
             // test first if you can highlight at a character level
-            const doc = update.state.doc
+            const doc = update.state.doc;
 
             /**
              * ranges are at a character level
@@ -253,7 +254,7 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
              */
             update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
               const startLine = doc.lineAt(fromB)
-              const lineNumber = startLine.number - 1;
+              const lineNumber = startLine.number; // used to + 1... idk why
               const lineOffset = startLine.from;
 
               const charStart = fromB - lineOffset;
@@ -268,9 +269,14 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager, notebookTr
                 console.log(`  ✏️ Char range: [${charStart}:${charEnd}]`);
                 console.log(`  ➕ Inserted text: "${insertedText}"`);
                 console.log(`  ❌ Deleted text: "${deletedText}"`);
-                
-               // this.highlightedRanges.push({ from: fromB, to: toB });
 
+                const relativePosLine = lineNumber - snippet.start_line;
+                const charRange = [charStart, charEnd]
+                console.log("relative calculations, ", relativePosLine);
+                
+                // this.highlightedRanges.push({ from: fromB, to: toB });
+                synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, snippet.content)
+                
                 // Optional: store this edit somewhere
                 // snippet.changes.push({ lineNumber, charStart, insertedText });
                 
