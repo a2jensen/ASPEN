@@ -6,23 +6,11 @@
 
 JupyterLab Extension aimed at making code reuse easier. Inspiration taken directly from Elyra code snippets.
 
-## Development Workflow
-
-Main branch : It is the live deployed version of the extension
-Development branch : We will first push our changes and handle all merge conflicts within the development branch
-Personal Branches: Our own branches where we will handle development of our assigned task
-
--Each developer will have specific task(s) assigned to them.
-
-1. Work on your task inside your own personal branch
-2. Once your task is finished:
-    - Merge development branch into your branch
-    - Handle any merge conflicts
-    - Once you are satisfied with the current version of your branch after merging with development, create a pull request to push it into development
-
-
 ## Developer Setup
-These commands and small paragraphs were pulled from the Jupyter Lab extension tutorial.
+Prerequisites: conda, jupyterlab, python
+
+For context, conda is a self-contained space that will be used to create an isolated environment with the needed dependencies and installations for ASPEN. When running ASPEN, it will be done within a Conda environment.
+
 
 - Run this command to create a named conda environment
 ```bash
@@ -33,21 +21,16 @@ activate the environment
 ```bash
 conda activate aspen
 ```
+
 The repo has enough code in it to see it working in your JupyterLab. Run the following command to install the initial project dependencies and install the extension into the JupyterLab environment.
 ```bash
 pip install -ve .
 ```
 
-The above command copies the frontend part of the extension into JupyterLab. We can run this pip install command again every time we make a change to copy the change into JupyterLab. Even better, we can use the develop command to create a symbolic link from JupyterLab to our source directory. This means our changes are automatically available in JupyterLab:
+The above command installs the Python package in editable mode and triggers the JavaScript build process. It also registers the extension with JupyterLab, making both the frontend and backend code available. We can run this pip install command again every time we make a change to copy the change into JupyterLab. Even better, we can use the develop command to create a symbolic link from JupyterLab to our source directory. This means our changes are automatically available in JupyterLab:
 
 ```bash
 jupyter labextension develop --overwrite .
-```
-
-Install these libraries as well:
-```bash
-jlpm add @lumino/widgets
-jlpm add @jupyterlab/apputils @jupyterlab/application
 ```
 
 After the install completes, open a second terminal. Run these commands to activate the jupyterlab-ext environment and start JupyterLab in your default web browser.
@@ -60,7 +43,20 @@ jupyter lab
 Afterwords, navigate to the dev console and look for a message along the lines of "JupyterLab extension jupyterlab_apod is activated!" You should be setup now.
 
 Instead of having to run `jlpm run build` and `jlpm run watch`, we have a make file setup.
+
 Running `make build` will automatically run these commands for you.
+
+Running `make delete` will delete the javascript dependencies - specifically the folders + files `.yarn`, `node_modules`, `tsconfig.tsbuildinfo`. In order to reinstall the needed dependencies again run:
+
+```bash
+jlpm install
+jlpm build
+```
+
+Note(6/19/25): If you delete the dependencies via `make delete`, running the command `pip install -ve .` will give an `OS-error` for some reason(even after reinstalling the dependencies again). This should be be a non-issue however as the extension still builds.
+
+
+
 
 ## Github Commands
 
