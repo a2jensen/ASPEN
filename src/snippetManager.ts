@@ -148,12 +148,7 @@ export class SnippetsManager {
             start_line += insertedLines - removedLines;
             end_line += insertedLines - removedLines;
           }
-          //Text inserted inside the snippet expand snippet range
-            //Goal of this function is to be able to exit out of snippet
-          //I cant just do when I create a snipet extra space
-          //b/c if delete cant esacape 
-          //idk where to add this it makes sense here? but when / where would i call it in constructor?
-          //lel
+
           else if (fromA >= oldDoc.line(start_line).from && toA <= oldDoc.line(end_line).to) {
                 const AtEnd = (insertedLines > 0 &&  oldDoc.lineAt(fromA).number === end_line);
                 if( (AtEnd)){
