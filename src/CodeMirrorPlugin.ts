@@ -275,7 +275,7 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
                 console.log("relative calculations, ", relativePosLine);
                 
                 // this.highlightedRanges.push({ from: fromB, to: toB });
-                synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, snippet.content)
+                synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, snippet.content, insertedText)
                 
                 // Optional: store this edit somewhere
                 // snippet.changes.push({ lineNumber, charStart, insertedText });

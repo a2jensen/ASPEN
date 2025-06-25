@@ -18,7 +18,7 @@ export class Synchronization {
     /**
      * Function that is called everytime an edit to a snippet instance is made.  called within the code mirror plugin.
      */
-    diffs(templateId : string ,relativePosLine : number, charRange : number[], updatedText : string) : void {
+    diffs(templateId : string ,relativePosLine : number, charRange : number[], updatedText : string, insertedText : string) : void {
         console.log("--------within the diffs function-----------")
         const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
@@ -30,7 +30,7 @@ export class Synchronization {
             for (const char of diff){
                 if (char.added) {
                     // apply highlights
-                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange);
+                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, insertedText);
                     break;
                 } else {
                     continue

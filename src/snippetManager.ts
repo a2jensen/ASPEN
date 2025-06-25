@@ -289,7 +289,7 @@ assignDecorations(view: EditorView): DecorationSet {
   /***
    * 
    */
-  applyHighlights = (templateId : string , relativePosline : number, charRange : number[] ) => {
+  applyHighlights = (templateId : string , relativePosline : number, charRange : number[], insertedText: string ) => {
     console.log("******Within the APPLY HIGHLIGHTS function!******")
     let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
@@ -310,26 +310,33 @@ assignDecorations(view: EditorView): DecorationSet {
       const doc = targetView.state.doc;
       
       // get the line and chars in the view we want to edit
-      const targetLineNumber = snippet.start_line + relativePosline + 1;
+      const targetLineNumber = snippet.start_line + relativePosline - 1;
+      // grabbing the line 
       const targetLine = doc.line(targetLineNumber);
       const absoluteFrom = targetLine.from + charRange[0];
-      const absoluteTo = targetLine.from + charRange[1];
-      const ranges = targetView.visibleRanges// testing https://codemirror.net/docs/ref/#view.EditorView.visibleRanges
-      console.log(ranges)
+      //const absoluteTo = targetLine.from + charRange[1];
+      
       // build decoration
-
       setTimeout(() => {
         console.log("inside set timeout")
+
+        // 
+        targetView?.dispatch({changes : { from : absoluteFrom, to: absoluteFrom + insertedText.length, insert: insertedText}})
+
+        // setting up a new decoration at the specific index range [absoluteFrom, absoluteFrom + 1] (this could be edited as it right now causes wrong behavior)
+        // ranges are char level indexes...
         const builder = new RangeSetBuilder<Decoration>();
         builder.add(
           absoluteFrom,
-          absoluteTo,
+          absoluteFrom + insertedText.length,
           Decoration.mark({
             class : 'highlight-variant-change'
           })
         );
 
         const decorationSet = builder.finish();
+      
+
         targetView?.dispatch({
           effects: StateEffect.appendConfig.of([
             EditorView.decorations.of(decorationSet)
