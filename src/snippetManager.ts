@@ -8,8 +8,8 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
-import { viewBreakpointIcon } from '@jupyterlab/ui-components';
-import { CodeMirrorExtension } from './CodeMirrorPlugin';
+//import { viewBreakpointIcon } from '@jupyterlab/ui-components';
+//import { CodeMirrorExtension } from './CodeMirrorPlugin';
 
 
 /**
@@ -290,7 +290,7 @@ assignDecorations(view: EditorView): DecorationSet {
    * 
    */
   applyHighlights = (templateId : string , relativePosline : number, charRange : number[] ) => {
-    console.log("Within the APPLY HIGHLIGHTS function!")
+    console.log("******Within the APPLY HIGHLIGHTS function!******")
     let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
     for (const snippet of relatedSnippets) {
@@ -314,26 +314,29 @@ assignDecorations(view: EditorView): DecorationSet {
       const targetLine = doc.line(targetLineNumber);
       const absoluteFrom = targetLine.from + charRange[0];
       const absoluteTo = targetLine.from + charRange[1];
-
+      const ranges = targetView.visibleRanges// testing https://codemirror.net/docs/ref/#view.EditorView.visibleRanges
+      console.log(ranges)
       // build decoration
-      const builder = new RangeSetBuilder<Decoration>();
-      builder.add(
-        absoluteFrom,
-        absoluteTo,
-        Decoration.mark({
-          class : 'highlight-variant-change'
-        })
-      );
 
-      const decorationSet = builder.finish();
+      setTimeout(() => {
+        console.log("inside set timeout")
+        const builder = new RangeSetBuilder<Decoration>();
+        builder.add(
+          absoluteFrom,
+          absoluteTo,
+          Decoration.mark({
+            class : 'highlight-variant-change'
+          })
+        );
 
-      /** implementation of dispatching highlighting is bugged right now
-      targetView.dispatch({
-        effects: StateEffect.appendConfig.of([
-          EditorView.decorations.of(decorationSet)
-        ])
-      });    
-      */  
+        const decorationSet = builder.finish();
+        targetView?.dispatch({
+          effects: StateEffect.appendConfig.of([
+            EditorView.decorations.of(decorationSet)
+          ])
+        });   
+      }, 0);
+
     }
 
   }

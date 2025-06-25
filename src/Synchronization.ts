@@ -31,6 +31,7 @@ export class Synchronization {
                 if (char.added) {
                     // apply highlights
                     this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange);
+                    break;
                 } else {
                     continue
                 }
