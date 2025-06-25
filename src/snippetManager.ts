@@ -238,7 +238,6 @@ assignDecorations(view: EditorView): DecorationSet {
     // TODO: Implementation needed
   }
 
-
   // Arrow functions automatically bind this to the instance where they were defined.
   editAll = ( templateId : string , templateContent : string ) => {
     console.log("----------inside editAll function---------------")
@@ -313,7 +312,9 @@ assignDecorations(view: EditorView): DecorationSet {
       const targetLineNumber = snippet.start_line + relativePosline - 1;
       // grabbing the line 
       const targetLine = doc.line(targetLineNumber);
-      const absoluteFrom = targetLine.from + charRange[0];
+      const absoluteFrom = targetLine.from + charRange[1];
+      console.log("from: ", absoluteFrom);
+      console.log("insertedText length ", insertedText.length);
       //const absoluteTo = targetLine.from + charRange[1];
       
       // build decoration
@@ -330,7 +331,7 @@ assignDecorations(view: EditorView): DecorationSet {
           absoluteFrom,
           absoluteFrom + insertedText.length,
           Decoration.mark({
-            class : 'highlight-variant-change'
+            class : 'highlight-variant'
           })
         );
 

@@ -1,7 +1,8 @@
 /* eslint-disable curly */
 /* eslint-disable @typescript-eslint/quotes */
 /* eslint-disable prettier/prettier */
-import { Extension } from '@codemirror/state';
+import { Extension, RangeSetBuilder } from '@codemirror/state';
+import { Decoration } from '@codemirror/view'
 import {
   DecorationSet,
   EditorView,
@@ -217,17 +218,27 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
        * We need to get the cell ID
        */
       update(update: ViewUpdate) {
+        let builder = new RangeSetBuilder<Decoration>()
+
         // Update the stored view instance
         this.view = update.view;
         // Update the current view reference
         currentView = update.view;
         snippetsManager.cellMap
 
+        if (update.docChanged || update.transactions.length > 0){
+          snippetsManager.update(update.view, update);
+        }
+
+        const borderDeco = snippetsManager.assignDecorations(update.view);
+        borderDeco.between(0, this.view.state.doc.length, (from, to, decoration) => {
+          builder.add(from, to, decoration);
+        });
 
         //const changes = update.changes
         const checker = update.view.state.doc.lines
         const cursorPos = update.state.selection.main.head;
-        const cursorLine = update.state.doc.lineAt(cursorPos).number - 1; // 0-indexed
+        const cursorLine = update.state.doc.lineAt(cursorPos).number; //
         
        
         console.log("current position of cursorLine", cursorLine)
@@ -237,8 +248,7 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
         const editorViewId = snippetsManager.cellMap.get(currentView)
         const editedSnippets : Snippet[] = snippetsManager.snippetTracker.filter(snip => snip.cell_id === editorViewId)
         console.log("FILTERED SNIPPETS -> ONES THAT ARE CURRENTLY IN THE CELL! ", editedSnippets)
-        
-        
+
         for (const snippet of editedSnippets){
           if (cursorLine >= snippet.start_line && cursorLine <= snippet.end_line){
             console.log("CURSOR / UPDATE HAS BEEN DONE WITHIN AN INSTANCE!!!!")
@@ -254,7 +264,7 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
              */
             update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
               const startLine = doc.lineAt(fromB)
-              const lineNumber = startLine.number; // used to + 1... idk why
+              const lineNumber = startLine.number; // used to + 1
               const lineOffset = startLine.from;
 
               const charStart = fromB - lineOffset;
@@ -263,6 +273,16 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
               const insertedText = inserted.toString();
               const deletedText = doc.sliceString(fromA, toA);
 
+              const fromPos = doc.line(snippet.start_line).from;
+              const toPos = doc.line(snippet.end_line).to;
+              const updatedContent = doc.sliceString(fromPos, toPos);
+
+              // i dont think we need to worry about this case
+              /** 
+              if(deletedText.length > 0){
+                updatedContent = snippet.content(:) + snippet.content()
+              }
+              */
               if (lineNumber >= snippet.start_line && lineNumber <= snippet.end_line) {
                 console.log(`🟡 Snippet: ${snippet.id}`);
                 console.log(`  📍 Line: ${lineNumber}`);
@@ -275,24 +295,18 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
                 console.log("relative calculations, ", relativePosLine);
                 
                 // this.highlightedRanges.push({ from: fromB, to: toB });
-                synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, snippet.content, insertedText)
-                
+                console.log("updated content", updatedContent);
+                if(update.selectionSet){
+                  synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, updatedContent, insertedText)
+                }
+               
                 // Optional: store this edit somewhere
                 // snippet.changes.push({ lineNumber, charStart, insertedText });
-                
               }
-
-            })
-
+            });
           }
-        }    
-        console.log(notebookTracker)
-
-        // this is always called
-        if (update.docChanged || update.transactions.length > 0) {
-          snippetsManager.update(update.view, update);
-          this.decorations = snippetsManager.assignDecorations(update.view);
         }
+        this.decorations = builder.finish();
       }
     },
     {

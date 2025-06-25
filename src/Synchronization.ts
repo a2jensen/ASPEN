@@ -3,6 +3,7 @@ import { SnippetsManager } from "./snippetManager";
 import { LibraryWidget } from "./LibraryWidget";
 import { Snippet } from "./types"
 import { diffChars } from "diff";
+// import { EditorView } from "@codemirror/view";
 
 export class Synchronization {
     private templatesManager : TemplatesManager
@@ -18,19 +19,20 @@ export class Synchronization {
     /**
      * Function that is called everytime an edit to a snippet instance is made.  called within the code mirror plugin.
      */
-    diffs(templateId : string ,relativePosLine : number, charRange : number[], updatedText : string, insertedText : string) : void {
+    diffs(templateId : string ,relativePosLine : number, charRange : number[], updatedText : string, inserted: string) : void {
         console.log("--------within the diffs function-----------")
         const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => snippet.template_id === templateId)
-
+        console.log('related snippets: ', relatedSnippets);
         // this should only loop once
         // first loop, difference detected. in snippet manager we loop over and update all snippets
         // following loops, we compare and see that they are all the same so char.added is false
         for (const snippet of relatedSnippets){
             const diff = diffChars(snippet.content,updatedText);
+            console.log(diff);
             for (const char of diff){
-                if (char.added) {
+                if (char.added || char.removed) {
                     // apply highlights
-                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, insertedText);
+                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, inserted);
                     break;
                 } else {
                     continue
