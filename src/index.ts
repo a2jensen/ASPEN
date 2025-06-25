@@ -27,7 +27,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("real drag and drop cursor fix");
+  console.log("perhaps perhaps");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -106,17 +106,22 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     label: 'Save Code Snippet',
     execute: async () => {
       const snippet : string = window.getSelection()?.toString() || '';
-      if (snippet){
+      if (snippet) {
         console.log("Saving the snippet");
         const template = await libraryWidget.createTemplate(snippet);
-
-        document.dispatchEvent(new CustomEvent('Save Code Snippet', {
-          detail: {
-            snippetText: snippet,
-            templateID: template.id
-          }
-        }));
-        console.log("Event Listener Dispatched!!!");
+        
+        if (template) {
+          document.dispatchEvent(new CustomEvent('Save Code Snippet', {
+            detail: {
+              snippetText: snippet,
+              templateID: template.id
+            }
+          }));
+          console.log("Event Listener Dispatched!!!");
+        }
+        else {
+        console.error("Template creation failed.")
+        }
       }
     },
   }); 
