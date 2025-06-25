@@ -20,12 +20,12 @@ export class TemplatesManager {
      * Sets up an empty templates array and creates a ContentsManager instance
      */
     constructor( contentManager : ContentsManager ){
-        this.templates = []
+        this.templates = [];
         this.contentsManager = contentManager;
     }
 
     get(templateId : string) : Template | undefined {
-      return this.templates.find(template => template.id === templateId)
+      return this.templates.find(template => template.id === templateId);
     }
 
     /**
@@ -38,7 +38,7 @@ export class TemplatesManager {
      * 3. Persists the template as a JSON file in the /snippets directory
      */
     
-    create( codeSnippet : string ){
+    async create( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Template ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -50,17 +50,18 @@ export class TemplatesManager {
         }
         this.templates.push(template);
         
-        this.contentsManager.save(`/snippets/${template.name}.json`, {
+        // saving a file is asynchronous
+        try {
+          await this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
-        }).then(() => {
-            console.log(`Saved ${template.name} to file successfully.`);
-        }).catch(error => {
-            console.error("Error saving file", error);
-        });
-
-        // TODO: May need to call this.update() to refresh the widget state
+          });
+          return template;
+        }
+        catch(error) {
+          console.error("Error saving file", error);
+        }
     }
 
     /**

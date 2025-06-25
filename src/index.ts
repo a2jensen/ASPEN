@@ -27,7 +27,7 @@ import { IEditorExtensionRegistry } from '@jupyterlab/codemirror'; // Interface 
  * @param extensions extensions - The registry for CodeMirror editor extensions
  */
 function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions: IEditorExtensionRegistry) {
-  console.log("real drag and drop cursor fix");
+  console.log("should work??");
   const { commands } = app;
 
   const contentsManager = new ContentsManager();
@@ -189,12 +189,12 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-FileEditor',
-    rank : 2
+    rank : 1
   });
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-Notebook',
-    rank: 2
+    rank: 1
   });
 
 

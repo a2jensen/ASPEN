@@ -294,8 +294,8 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  createTemplate(codeSnippet: string) {
-    this.templateManager.create(codeSnippet);
+  async createTemplate(codeSnippet: string) {
+    await this.templateManager.create(codeSnippet);
     this.update();
   }
 
