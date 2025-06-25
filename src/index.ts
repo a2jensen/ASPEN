@@ -190,12 +190,12 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-FileEditor',
-    rank : 2
+    rank : 1
   });
   app.contextMenu.addItem({
     command: 'templates:push',
     selector: '.jp-Notebook',
-    rank: 2
+    rank: 1
   });
 
 
