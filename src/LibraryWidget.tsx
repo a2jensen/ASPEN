@@ -40,7 +40,6 @@ function Library({ templates, snippets, deleteTemplate, renameTemplate, editTemp
   const initialSortOption = localStorage.getItem("sortOption") || "created-desc";
   const [sortOption, setSortOption] = useState(initialSortOption);
   const [sortedTemplates, setSortedTemplates] = useState<Template[]>(templates);
-  const [sortOption, setSortOption] = useState<string>('created-desc'); // Default to sort by most recently created
 
   const toggleTemplate = (id: string) => {
     setExpandedTemplates((prev) => ({
