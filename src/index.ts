@@ -38,6 +38,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
   libraryWidget.id = "jupyterlab-librarywidget-sidebarRight";
   libraryWidget.title.iconClass = 'jp-SideBar-tabIcon'; 
   libraryWidget.title.caption = "Library display of templates";
+  
 
   /**
    * Event Listener for when a template is copied from the library.
@@ -99,6 +100,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
     }
   })
 
+
   /**
    * Adding command that allows their highlighted code to be saved as a template.
    */
@@ -116,7 +118,6 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
             templateID: template.id
           }
         }));
-        console.log("Event Listener Dispatched!!!");
       }
     },
   }); 

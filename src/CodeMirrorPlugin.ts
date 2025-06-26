@@ -9,10 +9,18 @@ import {
   ViewUpdate,
 } from '@codemirror/view';
 import { SnippetsManager } from './snippetManager';
+import { keymap } from '@codemirror/view';
+import { defaultKeymap} from '@codemirror/commands';
+import { exitSnippet } from './exitSnippet';
 
 // Create a global flag to track if the event listener has been registered
 let saveSnippetListenerRegistered = false;
 let currentView: EditorView | null = null;
+export const customKeymap = keymap.of([
+    {
+      key: "Ctrl-Shift-Enter", run: exitSnippet
+    }
+  ]);
 
 /**
  * 
@@ -24,58 +32,23 @@ let currentView: EditorView | null = null;
  * @returns ViewPluginExtension. Create a plugin for a class whose constructor takes a single editor view as argument.
  */
 export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension {
-  // Register the global event listener only once
   if (!saveSnippetListenerRegistered) {
     saveSnippetListenerRegistered = true;
     
-    document.addEventListener('TemplateDeleted', (event: Event) => {
-      if (!currentView) {
-        console.warn("No active editor view available");
+    const handleEvent = (event: Event)=>{
+      if(!currentView){
+        console.warn("No active view");
         return;
       }
-      // Update decorations
       currentView.dispatch({
-        effects: [] 
-      });
-  });
-  
-    document.addEventListener('Toggle Template Highlight', (event) => {
-      if (!currentView) {
-        console.warn("No active editor view available");
-        return;
-      }
-      // Force the view to update which will trigger the update method
-      // where decorations are refreshed
-      currentView.dispatch({
-        effects: [], // Empty transaction to trigger an update
-      });
-    });
-
-    document.addEventListener('TemplateDeleted', (event: Event) => {
-      if (!currentView) {
-        console.warn("No active editor view available");
-        return;
-      }
-      // Update decorations
-      currentView.dispatch({
-        effects: [] 
-      });
-  });
-  
-    document.addEventListener('Toggle Template Highlight', (event) => {
-      if (!currentView) {
-        console.warn("No active editor view available");
-        return;
-      }
-      // Force the view to update which will trigger the update method
-      // where decorations are refreshed
-      currentView.dispatch({
-        effects: [], // Empty transaction to trigger an update
-      });
-    });
+        effects: []
+        });
+      };
+    document.addEventListener('TemplateDeleted',handleEvent);
+    document.addEventListener('Toggle Template Highlight',handleEvent);
 
     // This event listener will now be registered only once
-   document.addEventListener('Save Code Snippet', (event) => {
+    document.addEventListener('Save Code Snippet', (event) => {
       const templateID = (event as CustomEvent).detail.templateID;
       
       if (!currentView) {
@@ -94,9 +67,6 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         return; // Do not create an empty snippet
       }
      
-      console.log("Decorations should be addedddd");
-      //Issue here because of design its not being applied 
-      //Have to do an automatic refresh to reapply the decorations
       setTimeout(() => {
         snippetsManager.update(currentView!);
         snippetsManager.create(currentView!, startLine, endLine, templateID, droppedText);
@@ -132,43 +102,6 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         // Initialize decorations
         this.decorations = snippetsManager.assignDecorations(view);
         
-        /**
-         * Event listener for paste events
-         * 
-         * Handles when a template is pasted into the editor from the clipboard.
-         * Parses the clipboard data and creates a new snippet instance if it contains
-         * a valid template.
-         */
-        view.dom.addEventListener("paste", event => {
-          event.preventDefault();
-  
-          const clipboardContent = event.clipboardData?.getData('application/json');
-          const droppedText = event.clipboardData?.getData('text/plain');
-          console.log("dropped text app/json", clipboardContent);
-          console.log("dropped text text/plain", droppedText);
-  
-          if (!clipboardContent) return;
-          if(!droppedText) return;
-  
-          const parsedText = JSON.parse(clipboardContent);
-          if(!(parsedText.marker === "aspen-template")) return; 
-          
-          const selection = view.state.selection.main;
-          const dropPos = selection.from;
-          const startLine = view.state.doc.lineAt(dropPos).number;
-          const endLine = startLine + droppedText.split('\n').length - 1;
-          console.log("Start line", startLine);
-          console.log("End line,", endLine);
-  
-          const templateId = parsedText.templateID;
-          console.log("The template id associated with the instance", templateId);
-          snippetsManager.create(view, startLine, endLine, templateId, droppedText);
-  
-          setTimeout(() => {
-            this.decorations = snippetsManager.assignDecorations(view);
-          }, 10); // A small delay to ensure updates are applied after the text is pasted
-        });
-  
         /**
          * Event listener for drop events
          * 
@@ -240,12 +173,12 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
         
         // Update the current view reference
         currentView = update.view;
-        
-        if (update.docChanged || update.transactions.length > 0) {
+
+      if (update.docChanged || update.transactions.length > 0) {
           snippetsManager.update(update.view, update);
           this.decorations = snippetsManager.assignDecorations(update.view);
-          
         }
+
       }
     },
     {
@@ -253,6 +186,6 @@ export function CodeMirrorExtension(snippetsManager: SnippetsManager): Extension
       decorations: v => v.decorations
     }
   );
-  
-  return [viewPlugin];
+
+  return [viewPlugin,customKeymap,keymap.of(defaultKeymap)];
 }
