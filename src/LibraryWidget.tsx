@@ -318,9 +318,10 @@ export class LibraryWidget extends ReactWidget {
     this.loadTemplates();
   }
 
-  createTemplate(codeSnippet: string) {
+  async createTemplate(codeSnippet: string): Promise<Template | undefined> { // TemplatesManager.create returns undefined if template not successfully created
+    const template = await this.templateManager.create(codeSnippet);
     this.update();
-    return this.templateManager.create(codeSnippet);
+    return template;
   }
 
   deleteTemplate = (id: string, name: string) => {

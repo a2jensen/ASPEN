@@ -45,7 +45,7 @@ export class TemplatesManager {
      * 2. Adds the template to the in-memory array
      * 3. Persists the template as a JSON file in the /snippets directory
      */
-    create( codeSnippet : string ){
+    async create( codeSnippet : string ){
         const template : Template = {
             id: `${Date.now()}`,  // Use timestamp as unique ID
             name: `Template ${this.templates.length + 1}`,  // Auto-generate name based on count
@@ -59,17 +59,19 @@ export class TemplatesManager {
         this.activeTemplateHighlightIds.add(template.id);
         console.log("Active template highlight IDs:", this.activeTemplateHighlightIds);
 
-        this.contentsManager.save(`/snippets/${template.name}.json`, {
+        // saving a file should be asynchronous
+        try {
+          await this.contentsManager.save(`/snippets/${template.name}.json`, {
             type: "file",
             format: "text",
             content: JSON.stringify(template,null,2)
-        }).then(() => {
-            console.log(`Saved ${template.name} to file successfully.`);
-        }).catch(error => {
-            console.error("Error saving file", error);
-        });
-        // TODO: May need to call this.update() to refresh the widget state
-        return template;
+          });
+          console.log(`Saved ${template.name} to file successfully.`);
+          return template;
+        }
+        catch(error) {
+          console.error("Error saving file", error);
+        }
     }
 
     /**
