@@ -2,7 +2,7 @@ import { TemplatesManager } from "./TemplatesManager";
 import { SnippetsManager } from "./snippetManager";
 import { LibraryWidget } from "./LibraryWidget";
 import { Snippet } from "./types"
-import { diffChars } from "diff";
+//import { diffChars } from "diff";
 
 export class Synchronization {
     private templatesManager : TemplatesManager
@@ -22,21 +22,17 @@ export class Synchronization {
         console.log("--------within the diffs function-----------")
         const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
-        // this should only loop once
-        // first loop, difference detected. in snippet manager we loop over and update all snippets
-        // following loops, we compare and see that they are all the same so char.added is false
-        for (const snippet of relatedSnippets){
-            const diff = diffChars(snippet.content,updatedText);
-            for (const char of diff){
-                if (char.added) {
-                    // apply highlights
-                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, insertedText);
-                    break;
-                } else {
-                    continue
-                }
-            }
+        // collect all snippet contents
+        const contents = relatedSnippets.map(s => s.content);
+
+        const allIdentical = contents.every(c => c === contents[0])
+        if (allIdentical){
+            console.log("All instances are identical")
+            return
         }
+
+        this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange,insertedText)
+
         // highlight @ line x -> charRange [b,z] on every snippet
         console.log("--------exiting the diffs function-----------")
     }

@@ -23,6 +23,7 @@ export class SnippetsManager {
   public cellCounter; /** Counter for generating unique cell IDs */
   public snippetTracker: Snippet[]; /** Array to keep track of all active snippets */
   public cellMap: Map<EditorView, string>; /** Map editor views with their unique cell IDs */
+  public highlightsFinished : boolean;
   //private contentsManager : ContentsManager;
   
   /**
@@ -32,6 +33,7 @@ export class SnippetsManager {
     this.snippetTracker = [];
     this.cellMap = new Map();
     this.cellCounter = 0;
+    this.highlightsFinished = false;
     //this.contentsManager = contentsManager;
   }
 
@@ -291,6 +293,7 @@ assignDecorations(view: EditorView): DecorationSet {
    */
   applyHighlights = (templateId : string , relativePosline : number, charRange : number[], insertedText: string ) => {
     console.log("******Within the APPLY HIGHLIGHTS function!******")
+    this.highlightsFinished = false;
     let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
 
     for (const snippet of relatedSnippets) {
@@ -315,25 +318,31 @@ assignDecorations(view: EditorView): DecorationSet {
       const targetLine = doc.line(targetLineNumber);
       //const absoluteFrom = targetLine.from + charRange[0];
       //const absoluteTo = targetLine.from + charRange[1];
-      const absoluteFrom2 = Math.min(
+      const absoluteFrom = Math.min(
         targetLine.from + charRange[0],
         targetLine.to // <- this is the end of the actual line
       );
+
+      // WE NEED A DATA STRUCTURE TO KEEP TRACK OF THE TARGET VIEW AS WELL AS THE ABSOLUTE FROM
       
       // build decoration
       setTimeout(() => {
         console.log("inside set timeout")
 
         console.log(`Before dispatch for ${snippet.cell_id}`, targetView?.state.doc.toString());
-        targetView?.dispatch({changes : { from : absoluteFrom2, to: absoluteFrom2, insert: insertedText}})
+        targetView?.dispatch(
+          {changes : { 
+            from : absoluteFrom, to: absoluteFrom, insert: insertedText}
+          }
+        )
         console.log(`After dispatch for ${snippet.cell_id}`, targetView?.state.doc.toString());
 
         // setting up a new decoration at the specific index range [absoluteFrom, absoluteFrom + 1] (this could be edited as it right now causes wrong behavior)
         // ranges are char level indexes...
         const builder = new RangeSetBuilder<Decoration>();
         builder.add(
-          absoluteFrom2,
-          absoluteFrom2 + insertedText.length,
+          absoluteFrom,
+          absoluteFrom + insertedText.length,
           Decoration.mark({
             class : 'highlight-variant-change'
           })
@@ -347,9 +356,12 @@ assignDecorations(view: EditorView): DecorationSet {
             EditorView.decorations.of(decorationSet)
           ])
         });   
+
+        //this.highlightsFinished = true
       }, 0);
 
     }
 
+    // SET TIMEOUT NEEDS TO BE MOVED DOWN HERE!
   }
 }

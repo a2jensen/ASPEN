@@ -224,6 +224,18 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
         currentView = update.view;
         snippetsManager.cellMap
 
+         // this is always called
+         if (update.docChanged || update.transactions.length > 0) {
+          snippetsManager.update(update.view, update);
+          this.decorations = snippetsManager.assignDecorations(update.view);
+        }
+
+        // check to ensure that highlights do not loop forever
+        // if true, then that indicates
+        if (snippetsManager.highlightsFinished) {
+          return;
+        }
+
 
         //const changes = update.changes
         const checker = update.view.state.doc.lines
@@ -258,18 +270,18 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
               const lineNumber = startLine.number; // used to + 1... idk why
               const lineOffset = startLine.from;
 
-              const charStart = fromB - lineOffset;
-              const charEnd = charStart + inserted.length
-
+              const charStart = fromB - lineOffset;      
               const insertedText = inserted.toString();
+              const insertedLength = insertedText.length;
+              const charEnd = charStart + insertedLength;
               const deletedText = doc.sliceString(fromA, toA);
 
               if (lineNumber >= snippet.start_line && lineNumber <= snippet.end_line) {
-                console.log(`🟡 Snippet: ${snippet.id}`);
-                console.log(`  📍 Line: ${lineNumber}`);
-                console.log(`  ✏️ Char range: [${charStart}:${charEnd}]`);
-                console.log(`  ➕ Inserted text: "${insertedText}"`);
-                console.log(`  ❌ Deleted text: "${deletedText}"`);
+                console.log(` Snippet: ${snippet.id}`);
+                console.log(` Line: ${lineNumber}`);
+                console.log(`  Char range: [${charStart}:${charEnd}]`);
+                console.log(` Inserted text: "${insertedText}"`);
+                console.log(`  Deleted text: "${deletedText}"`);
 
                 const relativePosLine = lineNumber - snippet.start_line;
                 const charRange = [charStart, charEnd]
@@ -284,12 +296,6 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
           }
         }    
         console.log(notebookTracker)
-
-        // this is always called
-        if (update.docChanged || update.transactions.length > 0) {
-          snippetsManager.update(update.view, update);
-          this.decorations = snippetsManager.assignDecorations(update.view);
-        }
       }
     },
     {
