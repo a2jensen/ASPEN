@@ -120,7 +120,7 @@ function activate( app: JupyterFrontEnd , restorer: ILayoutRestorer, extensions:
           console.log("Event Listener Dispatched!!!");
         }
         else {
-        console.error("Template creation failed.")
+          console.error("Template creation failed.")
         }
       }
     },
