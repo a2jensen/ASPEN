@@ -193,7 +193,6 @@ assignDecorations(view: EditorView): DecorationSet {
   for (const snippet of snippetsInCell) {
     const startLine = view.state.doc.line(snippet.start_line);
     const endLine = view.state.doc.line(snippet.end_line);
-    
     // Remove empty snippets (where start line equals end line)
     if (startLine == endLine) {
       continue;
@@ -288,10 +287,8 @@ assignDecorations(view: EditorView): DecorationSet {
   /***
    * 
    */
-  applyHighlights = (templateId : string , relativePosline : number, charRange : number[], insertedText: string ) => {
+  applyHighlights = (templateId : string, relativePosline : number, charRange : number[], insertedText: string, relatedSnippets: Snippet[], insertion: boolean) => {
     console.log("******Within the APPLY HIGHLIGHTS function!******")
-    let relatedSnippets : Snippet[] = this.snippetTracker.filter(snippet => snippet.template_id === templateId)
-
     for (const snippet of relatedSnippets) {
       // find the target view
       let targetView : EditorView | undefined;
@@ -309,10 +306,11 @@ assignDecorations(view: EditorView): DecorationSet {
       const doc = targetView.state.doc;
       
       // get the line and chars in the view we want to edit
-      const targetLineNumber = snippet.start_line + relativePosline - 1;
+      const targetLineNumber = snippet.start_line + relativePosline;
+      console.log("target line ", targetLineNumber);
       // grabbing the line 
       const targetLine = doc.line(targetLineNumber);
-      const absoluteFrom = targetLine.from + charRange[1];
+      const absoluteFrom = targetLine.from + charRange[0];
       console.log("from: ", absoluteFrom);
       console.log("insertedText length ", insertedText.length);
       //const absoluteTo = targetLine.from + charRange[1];
@@ -320,20 +318,29 @@ assignDecorations(view: EditorView): DecorationSet {
       // build decoration
       setTimeout(() => {
         console.log("inside set timeout")
-
-        // 
-        targetView?.dispatch({changes : { from : absoluteFrom, to: absoluteFrom + insertedText.length, insert: insertedText}})
-
-        // setting up a new decoration at the specific index range [absoluteFrom, absoluteFrom + 1] (this could be edited as it right now causes wrong behavior)
-        // ranges are char level indexes...
         const builder = new RangeSetBuilder<Decoration>();
-        builder.add(
-          absoluteFrom,
-          absoluteFrom + insertedText.length,
-          Decoration.mark({
-            class : 'highlight-variant'
-          })
-        );
+        if(insertion){
+          targetView?.dispatch({changes : { from : absoluteFrom, to: absoluteFrom + insertedText.length, insert: insertedText}})
+          // setting up a new decoration at the specific index range [absoluteFrom, absoluteFrom + 1] (this could be edited as it right now causes wrong behavior)
+          // ranges are char level indexes...
+          builder.add(
+            absoluteFrom,
+            absoluteFrom + insertedText.length,
+            Decoration.mark({
+              class : 'insertion-highlight'
+            })
+          );
+        }
+        else{
+          builder.add(
+            absoluteFrom,
+            // since its by character level we can just do + 1
+            absoluteFrom + 1,
+            Decoration.mark({
+              class : 'deletion-highlight'
+            })
+          );
+        }
 
         const decorationSet = builder.finish();
       

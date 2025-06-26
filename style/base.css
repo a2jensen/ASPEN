@@ -105,7 +105,9 @@
 .template-date {
 
 }
-
-.highlight-variant {
-  background-color: #bfd8bd;
+.insertion-highlight {
+  background-color: #cfe1b9;
+}
+.deletion-highlight {
+  background-color: #f7cad0;
 }

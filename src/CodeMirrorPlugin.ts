@@ -271,24 +271,22 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
               const charEnd = charStart + inserted.length
 
               const insertedText = inserted.toString();
-              const deletedText = doc.sliceString(fromA, toA);
+              console.log("fromA - toA ", fromA, toA);
+
+              // this calculation is from the new doc -> im going to use diff to find deletedText across snippets
+              // const deletedText = doc.sliceString(fromA, toA);
 
               const fromPos = doc.line(snippet.start_line).from;
               const toPos = doc.line(snippet.end_line).to;
               const updatedContent = doc.sliceString(fromPos, toPos);
+              // update the snippet content
+              snippet.content = updatedContent;
 
-              // i dont think we need to worry about this case
-              /** 
-              if(deletedText.length > 0){
-                updatedContent = snippet.content(:) + snippet.content()
-              }
-              */
               if (lineNumber >= snippet.start_line && lineNumber <= snippet.end_line) {
                 console.log(`🟡 Snippet: ${snippet.id}`);
                 console.log(`  📍 Line: ${lineNumber}`);
                 console.log(`  ✏️ Char range: [${charStart}:${charEnd}]`);
                 console.log(`  ➕ Inserted text: "${insertedText}"`);
-                console.log(`  ❌ Deleted text: "${deletedText}"`);
 
                 const relativePosLine = lineNumber - snippet.start_line;
                 const charRange = [charStart, charEnd]
@@ -297,7 +295,12 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
                 // this.highlightedRanges.push({ from: fromB, to: toB });
                 console.log("updated content", updatedContent);
                 if(update.selectionSet){
-                  synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, updatedContent, insertedText)
+                  if(insertedText.length == 0){
+                    synchronizationManager.diffs(snippet.template_id, snippet.id, relativePosLine, charRange, snippet.content, insertedText);
+                  }
+                  else{
+                    synchronizationManager.diffs(snippet.template_id, snippet.id, relativePosLine, charRange, snippet.content, insertedText);
+                  }
                 }
                
                 // Optional: store this edit somewhere

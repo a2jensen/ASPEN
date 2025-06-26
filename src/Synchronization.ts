@@ -19,30 +19,30 @@ export class Synchronization {
     /**
      * Function that is called everytime an edit to a snippet instance is made.  called within the code mirror plugin.
      */
-    diffs(templateId : string ,relativePosLine : number, charRange : number[], updatedText : string, inserted: string) : void {
+    diffs(templateId : string, snippetId: string, relativePosLine : number, charRange : number[], updatedText : string, inserted: string) : void {
         console.log("--------within the diffs function-----------")
-        const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => snippet.template_id === templateId)
+        const relatedSnippets : Snippet[] = this.snippetsManager.snippetTracker.filter(snippet => (snippet.template_id === templateId) && (snippet.id != snippetId))
         console.log('related snippets: ', relatedSnippets);
         // this should only loop once
         // first loop, difference detected. in snippet manager we loop over and update all snippets
         // following loops, we compare and see that they are all the same so char.added is false
         for (const snippet of relatedSnippets){
-            const diff = diffChars(snippet.content,updatedText);
+            const diff = diffChars(snippet.content, updatedText);
             console.log(diff);
             for (const char of diff){
-                if (char.added || char.removed) {
-                    // apply highlights
-                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, inserted);
+                if(char.added){
+                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, inserted, relatedSnippets, true);
                     break;
-                } else {
-                    continue
                 }
-            }
+                else if(char.removed){
+                    this.snippetsManager.applyHighlights(templateId, relativePosLine, charRange, inserted, relatedSnippets, false);
+                    break;
+                }
+            } 
         }
         // highlight @ line x -> charRange [b,z] on every snippet
         console.log("--------exiting the diffs function-----------")
-    }
-    
+    } 
 
     /**
      * 2 cases to consider: user makes changes to template and synchs, user makes changes to instance and synchs
