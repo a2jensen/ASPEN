@@ -310,25 +310,30 @@ assignDecorations(view: EditorView): DecorationSet {
       const doc = targetView.state.doc;
       
       // get the line and chars in the view we want to edit
-      const targetLineNumber = snippet.start_line + relativePosline - 1;
+      const targetLineNumber = snippet.start_line + relativePosline;
       // grabbing the line 
       const targetLine = doc.line(targetLineNumber);
-      const absoluteFrom = targetLine.from + charRange[0];
+      //const absoluteFrom = targetLine.from + charRange[0];
       //const absoluteTo = targetLine.from + charRange[1];
+      const absoluteFrom2 = Math.min(
+        targetLine.from + charRange[0],
+        targetLine.to // <- this is the end of the actual line
+      );
       
       // build decoration
       setTimeout(() => {
         console.log("inside set timeout")
 
-        // 
-        targetView?.dispatch({changes : { from : absoluteFrom, to: absoluteFrom + insertedText.length, insert: insertedText}})
+        console.log(`Before dispatch for ${snippet.cell_id}`, targetView?.state.doc.toString());
+        targetView?.dispatch({changes : { from : absoluteFrom2, to: absoluteFrom2, insert: insertedText}})
+        console.log(`After dispatch for ${snippet.cell_id}`, targetView?.state.doc.toString());
 
         // setting up a new decoration at the specific index range [absoluteFrom, absoluteFrom + 1] (this could be edited as it right now causes wrong behavior)
         // ranges are char level indexes...
         const builder = new RangeSetBuilder<Decoration>();
         builder.add(
-          absoluteFrom,
-          absoluteFrom + insertedText.length,
+          absoluteFrom2,
+          absoluteFrom2 + insertedText.length,
           Decoration.mark({
             class : 'highlight-variant-change'
           })

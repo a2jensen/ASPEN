@@ -165,10 +165,11 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
   
           const selection = view.state.selection.main;
           const dropPos = selection.from;
+          console.log("DROP POS", dropPos)
           const startLine = view.state.doc.lineAt(dropPos).number;
-          //console.log("Start line", startLine);
+          console.log("Start line!!!!!!!!!!!", startLine);
           const endLine = startLine + droppedText.split('\n').length - 1;
-          //console.log("End line,", endLine);
+          console.log("End line!!!!!!!!!!!!,", endLine);
           const templateId = parsedText.templateID;
           
           snippetsManager.update(currentView!);
@@ -180,7 +181,7 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
             return;
           }
           
-          snippetsManager.create(currentView!, startLine, endLine, templateId, droppedText, notebookId, cellId);
+          snippetsManager.create(currentView!, startLine , endLine , templateId, droppedText, notebookId, cellId);
       
           
 
@@ -276,10 +277,6 @@ export function CodeMirrorExtension(synchronizationManager : Synchronization , s
                 
                 // this.highlightedRanges.push({ from: fromB, to: toB });
                 synchronizationManager.diffs(snippet.template_id, relativePosLine, charRange, snippet.content, insertedText)
-                
-                // Optional: store this edit somewhere
-                // snippet.changes.push({ lineNumber, charStart, insertedText });
-                
               }
 
             })
